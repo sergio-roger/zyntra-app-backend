@@ -1,0 +1,34 @@
+### Variables
+@baseUrl = http://localhost:3000/api
+
+### Register a new business
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Zyntra Marketing",
+  "email": "test@zyntra.com",
+  "password": "Password123"
+}
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@zyntra.com",
+  "password": "Password123"
+}
+
+### Get Profile (requires login first to set cookie/session)
+GET {{baseUrl}}/auth/me
+Content-Type: application/json
+
+### Refresh Session (requires valid session cookie)
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json

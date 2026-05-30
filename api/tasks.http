@@ -1,0 +1,57 @@
+### Zyntra Agents Test API
+
+@baseUrl = http://localhost:3000/api
+@email = test@zyntra.com
+@password = password123
+
+### 1. Registrar un nuevo negocio (Zyntra Branding)
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "name": "Zyntra Agency"
+}
+
+### 2. Login para obtener sesión
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### 3. Crear una Tarea de Agente (Content Crew)
+# @name createContentTask
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{
+  "type": "content",
+  "input": {
+    "topic": "Marketing con IA para Restaurantes",
+    "extra_context": "Enfoque en fidelización de clientes."
+  }
+}
+
+### 4. Crear una Tarea de Agente (Social Crew)
+# @name createSocialTask
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{
+  "type": "social",
+  "input": {
+    "topic": "Lanzamiento de nuevo producto Zyntra",
+    "duration_days": 5
+  }
+}
+
+### 5. Consultar estado de una tarea
+# Sustituir {id} por el id devuelto en la creación
+@taskId = 662b1a8d0000000000000001
+GET {{baseUrl}}/tasks/{{taskId}}
