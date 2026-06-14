@@ -15,7 +15,7 @@ export enum LifecycleStageType {
   LOST = 'lost',
 }
 
-@Entity('lifecycle_stages')
+@Entity({ name: 'lifecycle_stages', schema: 'public' })
 @Index(['business_id', 'position'])
 export class LifecycleStage {
   @PrimaryGeneratedColumn('uuid')

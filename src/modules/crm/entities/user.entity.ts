@@ -10,6 +10,7 @@ import {
   Index,
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
+import { Plan } from '@auth/entities/plan.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { Team } from './team.entity';
 
@@ -25,6 +26,13 @@ export class CrmUser {
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
   business: Business;
+
+  @Column({ type: 'uuid', nullable: true })
+  plan_id: string;
+
+  @ManyToOne(() => Plan, { nullable: true, eager: false })
+  @JoinColumn({ name: 'plan_id' })
+  plan: Plan;
 
   @Column()
   name: string;

@@ -22,7 +22,7 @@ export enum ChatbotLocale {
   PT = 'pt',
 }
 
-@Entity('chatbot_configs')
+@Entity({ name: 'chatbot_configs', schema: 'public' })
 export class ChatbotConfig {
   @PrimaryGeneratedColumn('uuid')
   id: string;

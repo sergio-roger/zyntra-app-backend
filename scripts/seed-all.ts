@@ -531,6 +531,7 @@ async function bootstrap() {
       await userRepo.save(
         userRepo.create({
           business_id: business.id,
+          plan_id: plan.id,
           name: entry.adminUser.name,
           email: entry.adminUser.email,
           password_hash: passwordHash,

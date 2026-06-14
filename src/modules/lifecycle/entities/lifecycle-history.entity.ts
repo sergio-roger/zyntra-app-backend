@@ -10,7 +10,7 @@ import {
 import { Contact } from '@crm/entities/contact.entity';
 import { LifecycleStage } from './lifecycle-stage.entity';
 
-@Entity('lifecycle_history')
+@Entity({ name: 'lifecycle_history', schema: 'public' })
 @Index(['contact_id', 'created_at'])
 export class LifecycleHistory {
   @PrimaryGeneratedColumn('uuid')

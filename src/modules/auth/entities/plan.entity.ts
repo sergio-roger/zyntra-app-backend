@@ -15,7 +15,7 @@ export enum BillingCycle {
   YEARLY = 'yearly',
 }
 
-@Entity('plans')
+@Entity({ name: 'plans', schema: 'public' })
 export class Plan {
   @PrimaryGeneratedColumn('uuid')
   id: string;

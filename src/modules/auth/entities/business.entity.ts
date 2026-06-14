@@ -16,7 +16,7 @@ export enum PlanStatus {
   CANCELLED = 'cancelled',
 }
 
-@Entity('businesses')
+@Entity({ name: 'businesses', schema: 'public' })
 export class Business {
   @PrimaryGeneratedColumn('uuid')
   id: string;
