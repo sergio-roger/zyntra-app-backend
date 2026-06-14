@@ -60,11 +60,9 @@ jobs:
           BRANCH=${{ github.ref_name }}
           USER=${{ secrets.DOCKER_USERNAME }}
           if [ "$BRANCH" = "main" ]; then
-            TAGS="$USER/zyntra-backend:prod,$USER/zyntra-backend:latest,$USER/zyntra-backend:prod-$SHA"
-          elif [ "$BRANCH" = "develop" ]; then
-            TAGS="$USER/zyntra-backend:dev,$USER/zyntra-backend:latest,$USER/zyntra-backend:dev-$SHA"
+            TAGS="$USER/zyntra-backend:latest,$USER/zyntra-backend:prod-$SHA"
           else
-            TAGS="$USER/zyntra-backend:$BRANCH,$USER/zyntra-backend:$BRANCH-$SHA"
+            TAGS="$USER/zyntra-backend:latest,$USER/zyntra-backend:dev-$SHA"
           fi
 
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
