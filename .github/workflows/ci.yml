@@ -62,10 +62,11 @@ jobs:
           if [ "$BRANCH" = "main" ]; then
             TAGS="$USER/zyntra-backend:prod,$USER/zyntra-backend:latest,$USER/zyntra-backend:prod-$SHA"
           elif [ "$BRANCH" = "develop" ]; then
-            TAGS="$USER/zyntra-backend:dev,$USER/zyntra-backend:dev-$SHA"
+            TAGS="$USER/zyntra-backend:dev,$USER/zyntra-backend:latest,$USER/zyntra-backend:dev-$SHA"
           else
             TAGS="$USER/zyntra-backend:$BRANCH,$USER/zyntra-backend:$BRANCH-$SHA"
           fi
+
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
