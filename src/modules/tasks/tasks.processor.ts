@@ -43,21 +43,24 @@ export class TasksProcessor extends QueueEventsHost {
   }) {
     this.logger.log(`Job ${jobId} detectado como COMPLETADO`);
 
-    let parsed: any = returnvalue;
+    let parsed: unknown = returnvalue;
     try {
       if (
         typeof returnvalue === 'string' &&
         (returnvalue.startsWith('{') || returnvalue.startsWith('['))
       ) {
-        parsed = JSON.parse(returnvalue);
+        parsed = JSON.parse(returnvalue) as unknown;
       }
-    } catch (e) {
+    } catch {
       this.logger.warn(
         `returnvalue de job ${jobId} no es JSON, se guardará como texto plano`,
       );
     }
 
-    const output = parsed?.output ?? parsed;
+    const output =
+      parsed && typeof parsed === 'object' && 'output' in parsed
+        ? (parsed as Record<string, unknown>).output
+        : parsed;
 
     try {
       await this.taskModel.findByIdAndUpdate(jobId, {

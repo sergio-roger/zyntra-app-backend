@@ -15,7 +15,10 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { Business } from '@auth/entities/business.entity';
 import { CustomFieldsService } from './custom-fields.service';
-import { CreateCustomFieldDto, UpdateCustomFieldDto } from './dto/custom-field.dto';
+import {
+  CreateCustomFieldDto,
+  UpdateCustomFieldDto,
+} from './dto/custom-field.dto';
 
 @ApiTags('crm-fields')
 @ApiBearerAuth()
@@ -32,7 +35,10 @@ export class CustomFieldsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a custom field' })
-  create(@CurrentBusiness() business: Business, @Body() dto: CreateCustomFieldDto) {
+  create(
+    @CurrentBusiness() business: Business,
+    @Body() dto: CreateCustomFieldDto,
+  ) {
     return this.fieldsService.create(business, dto);
   }
 

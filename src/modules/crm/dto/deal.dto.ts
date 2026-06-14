@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsNumber, IsEnum, IsUUID, IsDateString, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsUUID,
+  IsDateString,
+  Min,
+  Max,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { emptyToUndefined } from '@/common/transformers/string.transformer';
@@ -10,12 +19,15 @@ export class CreateDealDto {
   @IsString()
   title: string;
 
-  @ApiProperty({ example: 'Detalle de la oportunidad de negocio', required: false })
+  @ApiProperty({
+    example: 'Detalle de la oportunidad de negocio',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 1500.50 })
+  @ApiProperty({ example: 1500.5 })
   @IsNumber()
   @Min(0)
   value: number;
@@ -65,13 +77,17 @@ export class ConvertToDealDto {
   @IsString()
   title: string;
 
-  @ApiProperty({ example: 1500.50, required: false })
+  @ApiProperty({ example: 1500.5, required: false })
   @IsNumber()
   @Min(0)
   @IsOptional()
   value?: number;
 
-  @ApiProperty({ enum: DealStage, default: DealStage.PROSPECTING, required: false })
+  @ApiProperty({
+    enum: DealStage,
+    default: DealStage.PROSPECTING,
+    required: false,
+  })
   @IsEnum(DealStage)
   @IsOptional()
   stage?: DealStage;

@@ -27,43 +27,43 @@ import { DealsController } from './deals.controller';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Contact, 
-      ContactActivity, 
-      Tag, 
-      CustomField, 
+      Contact,
+      ContactActivity,
+      Tag,
+      CustomField,
       CrmTask,
       CrmUser,
       Team,
-      Deal
+      Deal,
     ]),
     AuthModule,
   ],
   controllers: [
-    ContactsController, 
-    TagsController, 
+    ContactsController,
+    TagsController,
     CustomFieldsController,
     CrmTasksController,
     CrmUsersController,
     TeamsController,
-    DealsController
+    DealsController,
   ],
   providers: [
-    ContactsService, 
-    TagsService, 
+    ContactsService,
+    TagsService,
     CustomFieldsService,
     CrmTasksService,
     CrmUsersService,
     TeamsService,
-    DealsService
+    DealsService,
   ],
   exports: [
-    ContactsService, 
-    TagsService, 
+    ContactsService,
+    TagsService,
     CustomFieldsService,
     CrmTasksService,
     CrmUsersService,
     TeamsService,
-    DealsService
+    DealsService,
   ],
 })
 export class CrmModule {}

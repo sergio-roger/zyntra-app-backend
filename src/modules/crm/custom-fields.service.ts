@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CustomField } from './entities/custom-field.entity';
 import { Business } from '@auth/entities/business.entity';
-import { CreateCustomFieldDto, UpdateCustomFieldDto } from './dto/custom-field.dto';
+import {
+  CreateCustomFieldDto,
+  UpdateCustomFieldDto,
+} from './dto/custom-field.dto';
 
 @Injectable()
 export class CustomFieldsService {
@@ -19,11 +26,15 @@ export class CustomFieldsService {
     });
   }
 
-  async create(business: Business, dto: CreateCustomFieldDto): Promise<CustomField> {
+  async create(
+    business: Business,
+    dto: CreateCustomFieldDto,
+  ): Promise<CustomField> {
     const existing = await this.fieldRepo.findOne({
       where: { business_id: business.id, name: dto.name },
     });
-    if (existing) throw new ConflictException('Ya existe un campo con este nombre técnico');
+    if (existing)
+      throw new ConflictException('Ya existe un campo con este nombre técnico');
 
     const field = this.fieldRepo.create({
       ...dto,
@@ -32,7 +43,11 @@ export class CustomFieldsService {
     return this.fieldRepo.save(field);
   }
 
-  async update(business: Business, id: string, dto: UpdateCustomFieldDto): Promise<CustomField> {
+  async update(
+    business: Business,
+    id: string,
+    dto: UpdateCustomFieldDto,
+  ): Promise<CustomField> {
     const field = await this.fieldRepo.findOne({
       where: { id, business_id: business.id },
     });

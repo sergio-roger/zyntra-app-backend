@@ -5,17 +5,18 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  ManyToMany,
   JoinColumn,
   Index,
   DeleteDateColumn,
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
-import { Contact } from './contact.entity';
 
 @Entity({ name: 'tags', schema: 'crm' })
 @Index(['business_id'])
-@Index('UQ_business_tag_name', ['business_id', 'name'], { unique: true, where: '"deleted_at" IS NULL' })
+@Index('UQ_business_tag_name', ['business_id', 'name'], {
+  unique: true,
+  where: '"deleted_at" IS NULL',
+})
 export class Tag {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -41,7 +42,7 @@ export class Tag {
 
   @UpdateDateColumn()
   updated_at: Date;
- 
+
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date | null;
 }

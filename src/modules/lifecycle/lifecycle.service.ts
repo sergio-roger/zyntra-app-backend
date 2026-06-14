@@ -1,7 +1,10 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
-import { LifecycleStage, LifecycleStageType } from './entities/lifecycle-stage.entity';
+import {
+  LifecycleStage,
+  LifecycleStageType,
+} from './entities/lifecycle-stage.entity';
 import { LifecycleHistory } from './entities/lifecycle-history.entity';
 
 @Injectable()
@@ -104,22 +107,33 @@ export class LifecycleService {
     return this.stageRepository.save(entities);
   }
 
-  async updateStages(businessId: string, stages: any[]): Promise<LifecycleStage[]> {
+  async updateStages(
+    businessId: string,
+    stages: Partial<LifecycleStage>[],
+  ): Promise<LifecycleStage[]> {
     // 1. Identify which stages to keep/update
-    const stageIdsToKeep = stages.filter(s => s.id).map(s => s.id);
+    const stageIdsToKeep = stages
+      .filter((s) => s.id)
+      .map((s) => s.id as string);
 
     // 2. Delete stages that are NOT in the incoming array and NOT system-managed
     // This ensures the DB reflects the user's deletions in the UI
-    const existingStages = await this.stageRepository.find({ where: { business_id: businessId } });
-    const stagesToDelete = existingStages.filter(s => !s.is_system && !stageIdsToKeep.includes(s.id));
-    
+    const existingStages = await this.stageRepository.find({
+      where: { business_id: businessId },
+    });
+    const stagesToDelete = existingStages.filter(
+      (s) => !s.is_system && !stageIdsToKeep.includes(s.id),
+    );
+
     if (stagesToDelete.length > 0) {
       await this.stageRepository.remove(stagesToDelete);
     }
 
     // 3. Prepare entities for save (TypeORM .save() handles both insert and update)
     const entitiesToSave: LifecycleStage[] = stages.map((s, index) => {
-      const stage = this.stageRepository.create(s as DeepPartial<LifecycleStage>);
+      const stage = this.stageRepository.create(
+        s as DeepPartial<LifecycleStage>,
+      );
       stage.business_id = businessId;
       stage.position = index;
       return stage;

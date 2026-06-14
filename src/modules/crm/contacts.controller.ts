@@ -141,7 +141,10 @@ export class ContactsController {
   @Post('contacts/import')
   @ApiOperation({ summary: 'Import multiple contacts' })
   @ApiCreatedResponse()
-  import(@CurrentBusiness() business: Business, @Body() contacts: CreateContactDto[]) {
+  import(
+    @CurrentBusiness() business: Business,
+    @Body() contacts: CreateContactDto[],
+  ) {
     return this.contacts.import(business, contacts);
   }
 }

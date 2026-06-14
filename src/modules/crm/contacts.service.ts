@@ -43,10 +43,13 @@ export class ContactsService {
       .where('c.business_id = :bid', { bid: business.id });
 
     if (query.stage) qb.andWhere('c.stage = :stage', { stage: query.stage });
-    if (query.source) qb.andWhere('c.source = :source', { source: query.source });
+    if (query.source)
+      qb.andWhere('c.source = :source', { source: query.source });
     if (query.tag) qb.andWhere('t.id = :tagId', { tagId: query.tag });
     if (query.is_archived !== undefined) {
-      qb.andWhere('c.is_archived = :isArchived', { isArchived: query.is_archived });
+      qb.andWhere('c.is_archived = :isArchived', {
+        isArchived: query.is_archived,
+      });
     }
     if (query.search) {
       qb.andWhere(
@@ -100,13 +103,12 @@ export class ContactsService {
       order: { updated_at: 'DESC' },
     });
 
-    const result = Object.values(ContactStage).reduce<Record<string, Contact[]>>(
-      (acc, stage) => {
-        acc[stage] = [];
-        return acc;
-      },
-      {},
-    );
+    const result = Object.values(ContactStage).reduce<
+      Record<string, Contact[]>
+    >((acc, stage) => {
+      acc[stage] = [];
+      return acc;
+    }, {});
 
     for (const contact of contacts) {
       if (contact.stage && result[contact.stage]) {
@@ -114,7 +116,7 @@ export class ContactsService {
       }
     }
 
-    return result as Record<ContactStage, Contact[]>;
+    return result;
   }
 
   async findOne(business: Business, id: string): Promise<Contact> {
@@ -133,7 +135,7 @@ export class ContactsService {
     const contact = this.contactsRepo.create({
       ...contactData,
       business_id: business.id,
-      tags: tags ? tags.map(id => ({ id } as Tag)) : [],
+      tags: tags ? tags.map((id) => ({ id }) as Tag) : [],
       last_activity_at: new Date(),
       stage: stage ?? null,
     });
@@ -150,7 +152,7 @@ export class ContactsService {
 
     // Handle tags if present
     if (dto.tags) {
-      contact.tags = dto.tags.map(id => ({ id } as Tag));
+      contact.tags = dto.tags.map((id) => ({ id }) as Tag);
       delete dto.tags;
     }
 
@@ -239,7 +241,11 @@ export class ContactsService {
     return this.contactsRepo.save(contact);
   }
 
-  async convertToDeal(business: Business, id: string, dto: ConvertToDealDto): Promise<Deal> {
+  async convertToDeal(
+    business: Business,
+    id: string,
+    dto: ConvertToDealDto,
+  ): Promise<Deal> {
     const contact = await this.findOne(business, id);
 
     const deal = this.dealsRepo.create({
@@ -248,7 +254,9 @@ export class ContactsService {
       title: dto.title,
       value: dto.value ?? 0,
       stage: dto.stage ?? DealStage.PROSPECTING,
-      expected_close_date: dto.expected_close_date ? new Date(dto.expected_close_date) : null,
+      expected_close_date: dto.expected_close_date
+        ? new Date(dto.expected_close_date)
+        : null,
       description: dto.description,
     });
     const savedDeal = await this.dealsRepo.save(deal);
@@ -270,14 +278,17 @@ export class ContactsService {
     return savedDeal;
   }
 
-  async import(business: Business, contacts: CreateContactDto[]): Promise<{ count: number }> {
+  async import(
+    business: Business,
+    contacts: CreateContactDto[],
+  ): Promise<{ count: number }> {
     await this.assertWithinPlanLimit(business, contacts.length);
 
     const entities = contacts.map((dto) =>
       this.contactsRepo.create({
         ...dto,
         business_id: business.id,
-        tags: dto.tags ? dto.tags.map((id) => ({ id } as Tag)) : [],
+        tags: dto.tags ? dto.tags.map((id) => ({ id }) as Tag) : [],
         last_activity_at: new Date(),
       }),
     );
@@ -292,7 +303,10 @@ export class ContactsService {
     return { count: entities.length };
   }
 
-  private async assertWithinPlanLimit(business: Business, newCount = 1): Promise<void> {
+  private async assertWithinPlanLimit(
+    business: Business,
+    newCount = 1,
+  ): Promise<void> {
     const limit = business.plan_object?.contact_limit;
     if (limit === undefined || limit === null || limit === 999999) return;
 

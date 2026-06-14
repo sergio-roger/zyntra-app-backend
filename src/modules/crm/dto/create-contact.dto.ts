@@ -69,5 +69,4 @@ export class CreateContactDto {
   @IsOptional()
   @IsObject()
   custom_fields?: Record<string, any>;
-
 }

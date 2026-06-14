@@ -67,11 +67,11 @@ export class Contact {
   source: ContactSource;
 
   @ManyToMany(() => Tag)
-  @JoinTable({ 
+  @JoinTable({
     name: 'contact_tags',
     schema: 'crm',
     joinColumn: { name: 'contact_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' }
+    inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
   })
   tags: Tag[];
 

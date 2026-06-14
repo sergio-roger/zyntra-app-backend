@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrmUser } from './entities/user.entity';
@@ -33,7 +37,8 @@ export class CrmUsersService {
     const existing = await this.userRepo.findOne({
       where: { email: dto.email, business_id: business.id },
     });
-    if (existing) throw new ConflictException('Email already registered for this business');
+    if (existing)
+      throw new ConflictException('Email already registered for this business');
 
     const user = this.userRepo.create({
       ...dto,

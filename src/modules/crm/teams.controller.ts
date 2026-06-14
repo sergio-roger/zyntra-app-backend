@@ -47,7 +47,10 @@ export class TeamsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a team' })
-  remove(@CurrentBusiness() business: Business, @Param('id', ParseUUIDPipe) id: string) {
+  remove(
+    @CurrentBusiness() business: Business,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.teamsService.remove(business, id);
   }
 }

@@ -47,7 +47,10 @@ export class CrmUsersController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user' })
-  remove(@CurrentBusiness() business: Business, @Param('id', ParseUUIDPipe) id: string) {
+  remove(
+    @CurrentBusiness() business: Business,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.usersService.remove(business, id);
   }
 }

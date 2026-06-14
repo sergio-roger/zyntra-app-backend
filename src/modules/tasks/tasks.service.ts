@@ -29,7 +29,7 @@ export class TasksService {
     private chatbotConfigRepo: Repository<ChatbotConfig>,
     @InjectQueue('agent-tasks')
     private tasksQueue: Queue,
-  ) { }
+  ) {}
 
   async create(businessId: string, dto: CreateTaskDto): Promise<AgentTask> {
     // 1. Verificar que el negocio existe y su plan
@@ -43,7 +43,7 @@ export class TasksService {
 
     // 2. Validar límites según el plan dinámico
     const limit = business.plan_object?.task_limit;
-    
+
     // Si el límite es 0, no incluye agentes
     if (limit === 0) {
       throw new ForbiddenException(
@@ -79,19 +79,26 @@ export class TasksService {
       business_id: businessId,
       type: dto.type,
       status: AgentTaskStatus.PENDING,
-      input: dto.input,
+      input: dto.input as unknown,
     });
     console.log('DEBUG: Tarea creada en MongoDB con ID:', task._id);
 
     // 4. Construir el BusinessContext para el worker Python
+    const configRecord = chatbotConfig as unknown as Record<string, unknown>;
     const businessContext = {
       business_id: business.id,
       name: business.name,
       plan: business.plan_object?.name || 'Standard',
-      industry: (chatbotConfig as any)?.industry || 'N/A',
+      industry:
+        configRecord && typeof configRecord.industry === 'string'
+          ? configRecord.industry
+          : 'N/A',
       tone: chatbotConfig?.tone || 'friendly',
       locale: chatbotConfig?.locale || 'es',
-      target_audience: (chatbotConfig as any)?.target_audience || 'N/A',
+      target_audience:
+        configRecord && typeof configRecord.target_audience === 'string'
+          ? configRecord.target_audience
+          : 'N/A',
       active_channels: chatbotConfig?.active_channels || ['web'],
       system_prompt_extra: chatbotConfig?.system_prompt_extra || '',
       faqs_top: (chatbotConfig?.faqs || []).slice(0, 5),
@@ -103,9 +110,10 @@ export class TasksService {
       {
         task_id: task._id.toString(),
         task_type: task.type,
-        task_input: task.input,
+        task_input: task.input as unknown,
         business_context: businessContext,
       },
+
       {
         jobId: task._id.toString(),
         removeOnComplete: false,

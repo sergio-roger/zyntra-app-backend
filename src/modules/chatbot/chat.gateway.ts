@@ -52,20 +52,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // ─── Connection lifecycle ──────────────────────────────────────────────────
 
   handleConnection(client: Socket) {
-    const auth = client.handshake.auth as Record<string, unknown>;
+    const auth = client.handshake.auth;
     const token =
       (auth.token as string | undefined) ||
-      (client.handshake.headers.authorization as string | undefined)?.replace(
-        'Bearer ',
-        '',
-      );
+      client.handshake.headers.authorization?.replace('Bearer ', '');
 
     // Visitor (widget) flow — no JWT, must declare businessId.
     if (!token) {
       const businessId = auth.businessId as string | undefined;
       const conversationId = auth.conversationId as string | undefined;
       if (!businessId) {
-        this.logger.warn(`Socket ${client.id} rejected: missing businessId/token`);
+        this.logger.warn(
+          `Socket ${client.id} rejected: missing businessId/token`,
+        );
         client.disconnect();
         return;
       }

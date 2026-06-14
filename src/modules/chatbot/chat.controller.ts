@@ -23,7 +23,7 @@ import type { RequestWithUser } from '@common/interfaces/request-with-user.inter
 @ApiTags('Chat')
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
   @Get('public-config')
   @ApiOperation({ summary: 'Get public chatbot configuration' })

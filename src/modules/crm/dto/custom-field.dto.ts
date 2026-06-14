@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsString, IsEnum, IsOptional, IsBoolean, IsArray, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+  IsArray,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CustomFieldType } from '@crm/enums/custom-field-type.enum';
 

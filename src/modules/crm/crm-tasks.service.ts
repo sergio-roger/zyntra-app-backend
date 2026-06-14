@@ -17,7 +17,10 @@ export class CrmTasksService {
     private readonly contactsService: ContactsService,
   ) {}
 
-  async list(business: Business, query: { status?: TaskStatus; contact_id?: string }) {
+  async list(
+    business: Business,
+    query: { status?: TaskStatus; contact_id?: string },
+  ) {
     const qb = this.tasksRepo
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.contact', 'c')
@@ -62,7 +65,11 @@ export class CrmTasksService {
     const saved = await this.tasksRepo.save(task);
 
     // If task is completed and has a contact, create an activity
-    if (saved.status === TaskStatus.COMPLETED && oldStatus !== TaskStatus.COMPLETED && saved.contact_id) {
+    if (
+      saved.status === TaskStatus.COMPLETED &&
+      oldStatus !== TaskStatus.COMPLETED &&
+      saved.contact_id
+    ) {
       await this.contactsService.addActivity(business, saved.contact_id, {
         type: ActivityType.NOTE, // Or a new TASK_COMPLETED type
         content: `Tarea completada: ${saved.title}`,

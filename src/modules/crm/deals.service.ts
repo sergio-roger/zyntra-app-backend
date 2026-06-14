@@ -9,6 +9,7 @@ import { CreateDealDto, UpdateDealDto, ListDealsDto } from '@crm/dto/deal.dto';
 import { ActivityType } from '@crm/enums/activity-type.enum';
 import { ActivityCreatedBy } from '@crm/enums/activity-created-by.enum';
 import { DealStage } from '@crm/enums/deal-stage.enum';
+import { DealStatus } from '@crm/enums/deal-status.enum';
 
 @Injectable()
 export class DealsService {
@@ -32,15 +33,20 @@ export class DealsService {
       .where('d.business_id = :bid', { bid: business.id });
 
     if (query.stage) qb.andWhere('d.stage = :stage', { stage: query.stage });
-    if (query.status) qb.andWhere('d.status = :status', { status: query.status });
-    if (query.contact_id) qb.andWhere('d.contact_id = :cid', { cid: query.contact_id });
-    if (query.assigned_to_id) qb.andWhere('d.assigned_to_id = :uid', { uid: query.assigned_to_id });
-    
+    if (query.status)
+      qb.andWhere('d.status = :status', { status: query.status });
+    if (query.contact_id)
+      qb.andWhere('d.contact_id = :cid', { cid: query.contact_id });
+    if (query.assigned_to_id)
+      qb.andWhere('d.assigned_to_id = :uid', { uid: query.assigned_to_id });
+
     if (query.search) {
       qb.andWhere(
         new Brackets((q) => {
-          q.where('d.title ILIKE :s', { s: `%${query.search}%` })
-            .orWhere('c.name ILIKE :s', { s: `%${query.search}%` });
+          q.where('d.title ILIKE :s', { s: `%${query.search}%` }).orWhere(
+            'c.name ILIKE :s',
+            { s: `%${query.search}%` },
+          );
         }),
       );
     }
@@ -79,7 +85,7 @@ export class DealsService {
       ...dto,
       business_id: business.id,
     });
-    
+
     const saved = await this.dealsRepo.save(deal);
 
     // Log activity on contact
@@ -96,7 +102,11 @@ export class DealsService {
     return saved;
   }
 
-  async update(business: Business, id: string, dto: UpdateDealDto): Promise<Deal> {
+  async update(
+    business: Business,
+    id: string,
+    dto: UpdateDealDto,
+  ): Promise<Deal> {
     const deal = await this.findOne(business, id);
     const previousStage = deal.stage;
     const previousStatus = deal.status;
@@ -140,7 +150,7 @@ export class DealsService {
 
   async kanban(business: Business): Promise<Record<DealStage, Deal[]>> {
     const deals = await this.dealsRepo.find({
-      where: { business_id: business.id, status: 'open' as any }, // Only open deals in kanban
+      where: { business_id: business.id, status: DealStatus.OPEN }, // Only open deals in kanban
       relations: ['contact', 'assigned_to'],
       order: { updated_at: 'DESC' },
     });
@@ -159,6 +169,6 @@ export class DealsService {
       }
     }
 
-    return result as Record<DealStage, Deal[]>;
+    return result;
   }
 }

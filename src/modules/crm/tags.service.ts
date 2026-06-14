@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tag } from './entities/tag.entity';
@@ -32,7 +36,8 @@ export class TagsService {
     const existing = await this.tagsRepo.findOne({
       where: { business_id: business.id, name: dto.name },
     });
-    if (existing) throw new ConflictException('Ya existe una etiqueta con este nombre');
+    if (existing)
+      throw new ConflictException('Ya existe una etiqueta con este nombre');
 
     const tag = this.tagsRepo.create({
       ...dto,
@@ -41,14 +46,19 @@ export class TagsService {
     return this.tagsRepo.save(tag);
   }
 
-  async update(business: Business, id: string, dto: UpdateTagDto): Promise<Tag> {
+  async update(
+    business: Business,
+    id: string,
+    dto: UpdateTagDto,
+  ): Promise<Tag> {
     const tag = await this.findOne(business, id);
-    
+
     if (dto.name && dto.name !== tag.name) {
       const existing = await this.tagsRepo.findOne({
         where: { business_id: business.id, name: dto.name },
       });
-      if (existing) throw new ConflictException('Ya existe una etiqueta con este nombre');
+      if (existing)
+        throw new ConflictException('Ya existe una etiqueta con este nombre');
     }
 
     Object.assign(tag, dto);

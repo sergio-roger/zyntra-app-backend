@@ -16,7 +16,7 @@ import { TasksService } from './tasks.service';
 @UseGuards(JwtAuthGuard)
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasks: TasksService) { }
+  constructor(private readonly tasks: TasksService) {}
 
   @Post()
   @ApiOperation({ summary: 'Launch a new AI agent task' })

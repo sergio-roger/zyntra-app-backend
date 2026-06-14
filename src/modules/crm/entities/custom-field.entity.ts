@@ -14,7 +14,10 @@ import { CustomFieldType } from '@crm/enums/custom-field-type.enum';
 
 @Entity({ name: 'custom_fields', schema: 'crm' })
 @Index(['business_id'])
-@Index('UQ_business_field_name', ['business_id', 'name'], { unique: true, where: '"deleted_at" IS NULL' })
+@Index('UQ_business_field_name', ['business_id', 'name'], {
+  unique: true,
+  where: '"deleted_at" IS NULL',
+})
 export class CustomField {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -53,7 +56,7 @@ export class CustomField {
 
   @UpdateDateColumn()
   updated_at: Date;
- 
+
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date | null;
 }

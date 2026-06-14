@@ -46,7 +46,7 @@ export class ContactActivity {
 
   @CreateDateColumn()
   created_at: Date;
- 
+
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date | null;
 }

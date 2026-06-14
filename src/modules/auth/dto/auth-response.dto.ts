@@ -8,7 +8,7 @@ class PlanDto {
   @ApiProperty({ example: 'Impulse Pro' })
   name: string;
 
-  @ApiProperty({ example: 199.00 })
+  @ApiProperty({ example: 199.0 })
   price: number;
 
   @ApiProperty({ example: 'monthly' })

@@ -54,7 +54,10 @@ export class CrmTasksController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a task' })
-  remove(@CurrentBusiness() business: Business, @Param('id', ParseUUIDPipe) id: string) {
+  remove(
+    @CurrentBusiness() business: Business,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.tasksService.remove(business, id);
   }
 }

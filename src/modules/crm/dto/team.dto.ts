@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsHexColor, IsArray, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsHexColor,
+  IsArray,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateTeamDto {
   @ApiProperty({ example: 'Ventas' })

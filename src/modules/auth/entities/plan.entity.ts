@@ -34,7 +34,7 @@ export class Plan {
   billing_cycle: BillingCycle;
 
   @Column({ default: false })
-  is_popular: Boolean;
+  is_popular: boolean;
 
   @Column({ default: 0 })
   contact_limit: number;

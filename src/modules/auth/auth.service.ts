@@ -31,7 +31,7 @@ export class AuthService {
     @InjectRepository(Plan)
     private planRepository: Repository<Plan>,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const { name, email, password } = registerDto;
