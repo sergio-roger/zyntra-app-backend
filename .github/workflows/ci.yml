@@ -76,3 +76,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             NODE_ENV=production
+
+      - name: Trigger Dokploy Deployment
+        run: |
+          curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
+
