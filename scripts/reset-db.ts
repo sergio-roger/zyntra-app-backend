@@ -36,7 +36,9 @@ async function bootstrap() {
   }
 
   await client.end();
-  console.log('\n✅ All tables dropped. TypeORM will recreate them on next start.\n');
+  console.log(
+    '\n✅ All tables dropped. TypeORM will recreate them on next start.\n',
+  );
 }
 
 bootstrap().catch((err) => {

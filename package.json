@@ -20,7 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:plans": "ts-node -r tsconfig-paths/register scripts/seed-plans.ts",
     "seed": "ts-node -r tsconfig-paths/register scripts/seed-all.ts",
-    "db:reset": "ts-node -r tsconfig-paths/register scripts/reset-db.ts"
+    "db:reset": "ts-node -r tsconfig-paths/register scripts/reset-db.ts",
+    "db:clean-seed": "npm run db:reset && npm run seed"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",

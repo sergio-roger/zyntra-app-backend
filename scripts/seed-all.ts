@@ -1,23 +1,23 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../src/app.module';
-import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { Plan, BillingCycle } from '../src/modules/auth/entities/plan.entity';
-import { PlanDescription } from '../src/modules/auth/entities/plan-description.entity';
+import { DataSource } from 'typeorm';
+import { AppModule } from '../src/app.module';
 import {
   Business,
   PlanStatus,
 } from '../src/modules/auth/entities/business.entity';
+import { PlanDescription } from '../src/modules/auth/entities/plan-description.entity';
+import { BillingCycle, Plan } from '../src/modules/auth/entities/plan.entity';
+import { Contact } from '../src/modules/crm/entities/contact.entity';
+import { Tag } from '../src/modules/crm/entities/tag.entity';
 import { CrmUser } from '../src/modules/crm/entities/user.entity';
+import { ContactSource } from '../src/modules/crm/enums/contact-source.enum';
+import { ContactStage } from '../src/modules/crm/enums/contact-stage.enum';
 import { UserRole } from '../src/modules/crm/enums/user-role.enum';
 import {
   LifecycleStage,
   LifecycleStageType,
 } from '../src/modules/lifecycle/entities/lifecycle-stage.entity';
-import { Tag } from '../src/modules/crm/entities/tag.entity';
-import { Contact } from '../src/modules/crm/entities/contact.entity';
-import { ContactStage } from '../src/modules/crm/enums/contact-stage.enum';
-import { ContactSource } from '../src/modules/crm/enums/contact-source.enum';
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
 
@@ -637,9 +637,12 @@ async function bootstrap() {
   }
 
   console.log('\n✨ Seed finished successfully!\n');
-  console.log('  📧 Admin credentials (all businesses):');
+  console.log(
+    '  📧 Business/Company login credentials (all plans use password: Zyntra2025!):',
+  );
   for (const entry of BUSINESSES_DATA) {
-    console.log(`     • ${entry.adminUser.email}  /  Zyntra2025!`);
+    console.log(`     • ${entry.business.email} (Company)`);
+    console.log(`     • ${entry.adminUser.email} (CRM Admin)`);
   }
   console.log('');
 
