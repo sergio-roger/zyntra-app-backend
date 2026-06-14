@@ -64,4 +64,4 @@ COPY --from=development /usr/src/app/dist ./dist
 
 EXPOSE ${PORT}
 
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]
