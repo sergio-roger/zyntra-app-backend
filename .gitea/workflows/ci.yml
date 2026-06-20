@@ -22,9 +22,9 @@ jobs:
       - name: Run unit tests
         run: npm run test
 
-  build-and-push-hub-prod:
+  build-and-push-docker:
     needs: test-and-lint
-    if: gitea.event_name == 'push' && gitea.ref_name == 'main'
+    if: gitea.event_name == 'push' && (gitea.ref_name == 'main' || gitea.ref_name == 'develop')
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
@@ -45,64 +45,23 @@ jobs:
 
       - name: Get short SHA
         id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $gitea_OUTPUT
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITEA_OUTPUT
 
       - name: Determine tags
         id: meta
         run: |
           SHA=${{ steps.vars.outputs.sha_short }}
+          BRANCH=${{ gitea.ref_name }}
           REGISTRY=${{ secrets.HARBOR_URL }}
-          PROJECT=zyntra
-          TAGS="$REGISTRY/$PROJECT/backend:latest,$REGISTRY/$PROJECT/backend:prod-$SHA"
-          echo "tags=$TAGS" >> $gitea_OUTPUT
+          PROJECT=zyntra                              # nombre del proyecto en Harbor
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            NODE_ENV=production
+          if [ "$BRANCH" = "main" ]; then
+            TAGS="$REGISTRY/$PROJECT/backend:latest,$REGISTRY/$PROJECT/backend:prod-$SHA"
+          else
+            TAGS="$REGISTRY/$PROJECT/backend:dev-latest,$REGISTRY/$PROJECT/backend:dev-$SHA"
+          fi
 
-      - name: Trigger Dokploy Deployment
-        run: |
-          curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
-
-  build-and-push-hub-dev:
-    needs: test-and-lint
-    if: gitea.event_name == 'push' && gitea.ref_name == 'develop'
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Harbor
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.HARBOR_URL }}
-          username: ${{ secrets.HARBOR_USER }}
-          password: ${{ secrets.HARBOR_PASS }}
-
-      - name: Get short SHA
-        id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $gitea_OUTPUT
-
-      - name: Determine tags
-        id: meta
-        run: |
-          SHA=${{ steps.vars.outputs.sha_short }}
-          REGISTRY=${{ secrets.HARBOR_URL }}
-          PROJECT=zyntra
-          TAGS="$REGISTRY/$PROJECT/backend:dev-latest,$REGISTRY/$PROJECT/backend:dev-$SHA"
-          echo "tags=$TAGS" >> $gitea_OUTPUT
+          echo "tags=$TAGS" >> $GITEA_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
