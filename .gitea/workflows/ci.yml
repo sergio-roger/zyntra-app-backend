@@ -98,6 +98,20 @@ jobs:
           TAGS="$REGISTRY/$PROJECT/backend:dev-latest,$REGISTRY/$PROJECT/backend:dev-$SHA"
           echo "tags=$TAGS" >> $GITEA_OUTPUT
 
+      - name: Diagnose Harbor permissions
+        run: |
+          echo "=== Project info ==="
+          curl -s -u "${{ secrets.HARBOR_USER }}:${{ secrets.HARBOR_PASS }}" \
+            "https://${{ secrets.HARBOR_URL }}/api/v2.0/projects?name=zyntra" | head -c 500
+          echo ""
+          echo "=== Current user info ==="
+          curl -s -u "${{ secrets.HARBOR_USER }}:${{ secrets.HARBOR_PASS }}" \
+            "https://${{ secrets.HARBOR_URL }}/api/v2.0/users/current" | head -c 500
+          echo ""
+          echo "=== Repository list ==="
+          curl -s -u "${{ secrets.HARBOR_USER }}:${{ secrets.HARBOR_PASS }}" \
+            "https://${{ secrets.HARBOR_URL }}/api/v2.0/projects/zyntra/repositories" | head -c 500
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
