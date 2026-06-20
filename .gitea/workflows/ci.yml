@@ -50,7 +50,7 @@ jobs:
           SHA=${{ steps.vars.outputs.sha_short }}
           REGISTRY=${{ secrets.HARBOR_URL }}
           PROJECT=zyntra
-          TAGS="$REGISTRY/$PROJECT/backend:latest,$REGISTRY/$PROJECT/backend:prod-$SHA"
+          TAGS="$REGISTRY/$PROJECT/marketing-backend:latest,$REGISTRY/$PROJECT/marketing-backend:prod-$SHA"
           echo "tags=$TAGS" >> $GITEA_OUTPUT
 
       - name: Build and push Docker image
@@ -60,6 +60,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          provenance: false
           build-args: |
             NODE_ENV=production
 
@@ -95,7 +96,7 @@ jobs:
           SHA=${{ steps.vars.outputs.sha_short }}
           REGISTRY=${{ secrets.HARBOR_URL }}
           PROJECT=zyntra
-          TAGS="$REGISTRY/$PROJECT/backend:dev-latest,$REGISTRY/$PROJECT/backend:dev-$SHA"
+          TAGS="$REGISTRY/$PROJECT/marketing-backend:dev-latest,$REGISTRY/$PROJECT/marketing-backend:dev-$SHA"
           echo "tags=$TAGS" >> $GITEA_OUTPUT
 
       - name: Diagnose Harbor permissions
@@ -123,6 +124,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          provenance: false
           build-args: |
             NODE_ENV=production
 
