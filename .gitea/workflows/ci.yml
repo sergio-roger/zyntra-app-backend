@@ -99,24 +99,6 @@ jobs:
           TAGS="$REGISTRY/$PROJECT/marketing-backend:dev-latest,$REGISTRY/$PROJECT/marketing-backend:dev-$SHA"
           echo "tags=$TAGS" >> $GITEA_OUTPUT
 
-      - name: Diagnose Harbor permissions
-        run: |
-          echo "=== Project quota ==="
-          curl -s -u "${{ secrets.HARBOR_USER }}:${{ secrets.HARBOR_PASS }}" \
-            "https://${{ secrets.HARBOR_URL }}/api/v2.0/quotas?reference=project&reference_id=zyntra" | head -c 500
-          echo ""
-          echo "=== Immutable tag rules ==="
-          curl -s -u "${{ secrets.HARBOR_USER }}:${{ secrets.HARBOR_PASS }}" \
-            "https://${{ secrets.HARBOR_URL }}/api/v2.0/projects/zyntra/immutabletagrules" | head -c 500
-          echo ""
-          echo "=== Robot account permissions ==="
-          curl -s -u "${{ secrets.HARBOR_USER }}:${{ secrets.HARBOR_PASS }}" \
-            "https://${{ secrets.HARBOR_URL }}/api/v2.0/projects/zyntra/robots" | head -c 500
-          echo ""
-          echo "=== Backend repository exists ==="
-          curl -s -u "${{ secrets.HARBOR_USER }}:${{ secrets.HARBOR_PASS }}" \
-            "https://${{ secrets.HARBOR_URL }}/api/v2.0/projects/zyntra/repositories/backend" | head -c 500
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
