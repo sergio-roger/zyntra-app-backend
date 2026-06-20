@@ -10,6 +10,15 @@ jobs:
   test-and-lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Configure DNS for self-hosted runner
+        run: |
+          if [ "$GITHUB_SERVER_URL" != "https://github.com" ]; then
+            HOST_IP=$(ip route | grep default | awk '{print $3}')
+            if [ -n "$HOST_IP" ]; then
+              echo "$HOST_IP code.zyntra-ts.com" | sudo tee -a /etc/hosts
+            fi
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -34,6 +43,15 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
+      - name: Configure DNS for self-hosted runner
+        run: |
+          if [ "$GITHUB_SERVER_URL" != "https://github.com" ]; then
+            HOST_IP=$(ip route | grep default | awk '{print $3}')
+            if [ -n "$HOST_IP" ]; then
+              echo "$HOST_IP code.zyntra-ts.com" | sudo tee -a /etc/hosts
+            fi
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
