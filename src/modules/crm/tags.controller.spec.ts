@@ -66,7 +66,11 @@ describe('TagsController', () => {
   describe('create', () => {
     it('should call tagsService.create with current business and dto', async () => {
       const createDto = { name: 'Support', color: '#f59e0b' };
-      mockTagsService.create.mockResolvedValue({ id: 'new-uuid', ...createDto, business_id: mockBusiness.id });
+      mockTagsService.create.mockResolvedValue({
+        id: 'new-uuid',
+        ...createDto,
+        business_id: mockBusiness.id,
+      });
 
       const result = await controller.create(mockBusiness, createDto);
 
@@ -78,11 +82,22 @@ describe('TagsController', () => {
   describe('update', () => {
     it('should call tagsService.update with current business, id, and dto', async () => {
       const updateDto = { name: 'Support Tier 1' };
-      mockTagsService.update.mockResolvedValue({ ...mockTag, name: updateDto.name });
+      mockTagsService.update.mockResolvedValue({
+        ...mockTag,
+        name: updateDto.name,
+      });
 
-      const result = await controller.update(mockBusiness, 'tag-uuid-1', updateDto);
+      const result = await controller.update(
+        mockBusiness,
+        'tag-uuid-1',
+        updateDto,
+      );
 
-      expect(service.update).toHaveBeenCalledWith(mockBusiness, 'tag-uuid-1', updateDto);
+      expect(service.update).toHaveBeenCalledWith(
+        mockBusiness,
+        'tag-uuid-1',
+        updateDto,
+      );
       expect(result.name).toBe(updateDto.name);
     });
   });
