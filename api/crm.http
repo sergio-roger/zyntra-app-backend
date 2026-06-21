@@ -1,0 +1,132 @@
+### Variables
+@baseUrl = http://localhost:3000/api
+
+# Note: Run auth.http login first to authenticate session cookie.
+
+# ==============================================================================
+# ─── CRM CONTACTS ─────────────────────────────────────────────────────────────
+# ==============================================================================
+
+### List all contacts
+GET {{baseUrl}}/crm/contacts
+Content-Type: application/json
+
+### Get contact by ID
+GET {{baseUrl}}/crm/contacts/replace-with-contact-uuid
+Content-Type: application/json
+
+### Create contact
+POST {{baseUrl}}/crm/contacts
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "phone": "+1234567890",
+  "company_name": "Doe Enterprises",
+  "deal_value": 1500
+}
+
+### Update contact
+PATCH {{baseUrl}}/crm/contacts/replace-with-contact-uuid
+Content-Type: application/json
+
+{
+  "name": "Jane Smith"
+}
+
+### Delete contact (Requires Admin or Manager)
+DELETE {{baseUrl}}/crm/contacts/replace-with-contact-uuid
+Content-Type: application/json
+
+
+# ==============================================================================
+# ─── CRM DEALS ────────────────────────────────────────────────────────────────
+# ==============================================================================
+
+### List all deals
+GET {{baseUrl}}/crm/deals
+Content-Type: application/json
+
+### Create deal
+POST {{baseUrl}}/crm/deals
+Content-Type: application/json
+
+{
+  "title": "New Sales Deal",
+  "value": 2500,
+  "stage": "prospecting",
+  "status": "open",
+  "contact_id": "replace-with-contact-uuid"
+}
+
+### Delete deal (Requires Admin or Manager)
+DELETE {{baseUrl}}/crm/deals/replace-with-deal-uuid
+Content-Type: application/json
+
+
+# ==============================================================================
+# ─── CRM TASKS (Ownership Rules Apply to Agents) ──────────────────────────────
+# ==============================================================================
+
+### List all tasks
+GET {{baseUrl}}/crm/tasks
+Content-Type: application/json
+
+### Create task
+POST {{baseUrl}}/crm/tasks
+Content-Type: application/json
+
+{
+  "title": "Follow up call",
+  "description": "Call client to clarify proposal",
+  "status": "pending",
+  "priority": "high",
+  "due_date": "2026-06-30T10:00:00.000Z",
+  "assigned_to": "replace-with-user-uuid",
+  "contact_id": "replace-with-contact-uuid"
+}
+
+### Update task (Agents can only edit if assigned to them)
+PATCH {{baseUrl}}/crm/tasks/replace-with-task-uuid
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+
+### Delete task
+DELETE {{baseUrl}}/crm/tasks/replace-with-task-uuid
+Content-Type: application/json
+
+
+# ==============================================================================
+# ─── SETTINGS: TEAMS & CRM USERS (RBAC rules apply) ───────────────────────────
+# ==============================================================================
+
+### List CRM Users (Requires Admin or Manager)
+GET {{baseUrl}}/settings/users
+Content-Type: application/json
+
+### Create CRM User (Requires Admin)
+POST {{baseUrl}}/settings/users
+Content-Type: application/json
+
+{
+  "name": "Collaborator Agent",
+  "email": "agent@example.com",
+  "role": "agent"
+}
+
+### List Teams (All authenticated users)
+GET {{baseUrl}}/settings/teams
+Content-Type: application/json
+
+### Create Team (Requires Admin)
+POST {{baseUrl}}/settings/teams
+Content-Type: application/json
+
+{
+  "name": "Sales Team Ecuador",
+  "description": "Ecuador region sales representatives"
+}
