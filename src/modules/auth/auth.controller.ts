@@ -22,7 +22,9 @@ import { AuthResponseDto, LogoutResponseDto } from './dto/auth-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '@common/decorators/public.decorator';
 import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
+import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import { Business } from './entities/business.entity';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -112,7 +114,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Get menu tree filtered by role' })
   async getMenus(
     @CurrentCrmUser() caller: { id: string | null; role: string },
+    @CurrentBusiness() business: Business,
   ) {
-    return this.authService.getMenuTree(caller.role as any);
+    return this.authService.getMenuTree(caller.role as any, business.id);
   }
 }

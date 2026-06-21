@@ -4,12 +4,13 @@ import {
   Put,
   Param,
   Body,
-  UseGuards,
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '@common/decorators/roles.decorator';
+import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { UserRole } from '@crm/enums/user-role.enum';
+import { Business } from './entities/business.entity';
 import { AuthService } from './auth.service';
 
 @ApiTags('settings-permissions')
@@ -33,11 +34,17 @@ export class SettingsPermissionsController {
 
   @Get('permissions/:role')
   @ApiOperation({ summary: 'Get permissions by role name' })
-  async getPermissionsByRole(@Param('role') role: string) {
+  async getPermissionsByRole(
+    @Param('role') role: string,
+    @CurrentBusiness() business: Business,
+  ) {
     if (!['manager', 'agent'].includes(role)) {
       throw new BadRequestException('Invalid role name');
     }
-    const menuIds = await this.authService.getPermissionsByRole(role);
+    const menuIds = await this.authService.getPermissionsByRole(
+      role,
+      business.id,
+    );
     return { role, menu_ids: menuIds };
   }
 
@@ -46,11 +53,16 @@ export class SettingsPermissionsController {
   async updatePermissionsByRole(
     @Param('role') role: string,
     @Body() body: { menu_ids: string[] },
+    @CurrentBusiness() business: Business,
   ) {
     if (!['manager', 'agent'].includes(role)) {
       throw new BadRequestException('Invalid role name');
     }
-    await this.authService.updatePermissionsByRole(role, body.menu_ids);
+    await this.authService.updatePermissionsByRole(
+      role,
+      body.menu_ids,
+      business.id,
+    );
     return { success: true };
   }
 }

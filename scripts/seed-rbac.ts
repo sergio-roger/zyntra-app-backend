@@ -113,6 +113,14 @@ const MENUS_DATA = [
     description:
       'Configuraciones generales de la plataforma, perfiles, canales y seguridad.',
   },
+  // Dashboard subitems
+  {
+    key: 'dashboard_home',
+    label: 'Inicio',
+    path: '/dashboard/home',
+    parent_key: 'dashboard',
+    description: 'Vista general e inicio.',
+  },
   // CRM subitems
   {
     key: 'crm_contacts',
@@ -363,6 +371,7 @@ const MANAGER_MENUS = MENUS_DATA.filter(
 
 const AGENT_MENUS = [
   'dashboard',
+  'dashboard_home',
   'crm',
   'crm_contacts',
   'crm_leads',
@@ -459,7 +468,11 @@ async function bootstrap() {
 
       if (!existing) {
         await permRepo.save(
-          permRepo.create({ role_id: role.id, menu_id: menu.id }),
+          permRepo.create({
+            business_id: null,
+            role_id: role.id,
+            menu_id: menu.id,
+          }),
         );
         created++;
       } else {

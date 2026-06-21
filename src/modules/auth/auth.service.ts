@@ -247,7 +247,7 @@ export class AuthService {
     resetTokens.delete(token);
   }
 
-  async getMenuTree(role: UserRole): Promise<MenuNode[]> {
+  async getMenuTree(role: UserRole, businessId: string): Promise<MenuNode[]> {
     try {
       const conn = this.businessRepository.manager.connection as any;
       if (!conn) return [];
@@ -260,13 +260,15 @@ export class AuthService {
 
       const roleId = roleRow[0].id;
 
+      await this.ensureBusinessPermissions(businessId, roleId as string);
+
       const rows = await conn.query(
         `SELECT m.id, m.key, m.label, m.path, m.parent_key
          FROM security.permissions p
          JOIN security.menus m ON m.id = p.menu_id
-         WHERE p.role_id = $1
+         WHERE p.role_id = $1 AND p.business_id = $2
          ORDER BY m.parent_key NULLS FIRST, m.key`,
-        [roleId],
+        [roleId, businessId],
       );
 
       const roots = rows.filter((m: any) => m.parent_key === null);
@@ -277,6 +279,33 @@ export class AuthService {
     } catch {
       return [];
     }
+  }
+
+  private async ensureBusinessPermissions(
+    businessId: string,
+    roleId: string,
+  ): Promise<void> {
+    const existing = await this.permissionRepository.count({
+      where: { business_id: businessId, role_id: roleId },
+    });
+    if (existing > 0) return;
+
+    // Copy from global templates (business_id IS NULL)
+    const templates = await this.permissionRepository
+      .createQueryBuilder('p')
+      .where('p.role_id = :roleId', { roleId })
+      .andWhere('p.business_id IS NULL')
+      .getMany();
+    if (templates.length === 0) return;
+
+    const copies = templates.map((t) =>
+      this.permissionRepository.create({
+        business_id: businessId,
+        role_id: t.role_id,
+        menu_id: t.menu_id,
+      }),
+    );
+    await this.permissionRepository.save(copies);
   }
 
   async getAllRoles(): Promise<Role[]> {
@@ -291,34 +320,50 @@ export class AuthService {
     });
   }
 
-  async getPermissionsByRole(roleName: string): Promise<string[]> {
+  async getPermissionsByRole(
+    roleName: string,
+    businessId: string,
+  ): Promise<string[]> {
     const role = await this.roleRepository.findOne({ where: { name: roleName } });
     if (!role) {
       throw new BadRequestException(`Role with name ${roleName} not found`);
     }
 
+    await this.ensureBusinessPermissions(businessId, role.id);
+
     const permissions = await this.permissionRepository.find({
-      where: { role_id: role.id },
+      where: { business_id: businessId, role_id: role.id },
     });
 
     return permissions.map((p) => p.menu_id);
   }
 
-  async updatePermissionsByRole(roleName: string, menuIds: string[]): Promise<void> {
-    const role = await this.roleRepository.findOne({ where: { name: roleName } });
+  async updatePermissionsByRole(
+    roleName: string,
+    menuIds: string[],
+    businessId: string,
+  ): Promise<void> {
+    const role = await this.roleRepository.findOne({
+      where: { name: roleName },
+    });
     if (!role) {
       throw new BadRequestException(`Role with name ${roleName} not found`);
     }
 
-    // Wrap in transaction or delete & insert
     await this.permissionRepository.manager.transaction(async (manager) => {
-      // 1. Delete all current permissions for the role
-      await manager.delete(Permission, { role_id: role.id });
+      // Delete only this business's permissions for the role
+      await manager.delete(Permission, {
+        business_id: businessId,
+        role_id: role.id,
+      });
 
-      // 2. Insert new permissions if any menuIds are provided
       if (menuIds && menuIds.length > 0) {
         const entities = menuIds.map((menuId) =>
-          manager.create(Permission, { role_id: role.id, menu_id: menuId }),
+          manager.create(Permission, {
+            business_id: businessId,
+            role_id: role.id,
+            menu_id: menuId,
+          }),
         );
         await manager.save(entities);
       }
