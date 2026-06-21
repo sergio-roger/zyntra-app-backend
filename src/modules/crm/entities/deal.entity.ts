@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   OneToMany,
   JoinColumn,
@@ -89,4 +90,7 @@ export class Deal {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  @DeleteDateColumn({ nullable: true })
+  deleted_at: Date | null;
 }

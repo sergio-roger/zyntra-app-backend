@@ -55,6 +55,6 @@ export class CrmUsersService {
 
   async remove(business: Business, id: string) {
     const user = await this.findOne(business, id);
-    await this.userRepo.remove(user);
+    await this.userRepo.softRemove(user);
   }
 }

@@ -109,6 +109,6 @@ export class CrmTasksService {
 
   async remove(business: Business, id: string) {
     const task = await this.findOne(business, id);
-    await this.tasksRepo.remove(task);
+    await this.tasksRepo.softRemove(task);
   }
 }

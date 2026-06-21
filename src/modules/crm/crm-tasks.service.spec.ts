@@ -29,7 +29,7 @@ describe('CrmTasksService — ownership rules', () => {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
-    remove: jest.fn(),
+    softRemove: jest.fn(),
   };
 
   const contactsService = { addActivity: jest.fn() };
@@ -139,6 +139,29 @@ describe('CrmTasksService — ownership rules', () => {
         't.assigned_to = :uid',
         { uid: 'agent-uuid' },
       );
+    });
+  });
+
+  describe('remove() — soft-delete rule', () => {
+    it('calls softRemove — not hard remove', async () => {
+      const task = makeTask('agent-uuid');
+      tasksRepo.findOne.mockResolvedValue(task);
+      tasksRepo.softRemove.mockResolvedValue({ ...task, deleted_at: new Date() });
+
+      await service.remove(mockBusiness, 'task-uuid');
+
+      expect(tasksRepo.softRemove).toHaveBeenCalledWith(task);
+      expect(tasksRepo.softRemove).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws NotFoundException when task does not exist', async () => {
+      tasksRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.remove(mockBusiness, 'no-such-uuid'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(tasksRepo.softRemove).not.toHaveBeenCalled();
     });
   });
 });

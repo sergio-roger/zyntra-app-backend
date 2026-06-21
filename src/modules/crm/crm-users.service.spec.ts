@@ -28,7 +28,7 @@ describe('CrmUsersService', () => {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
-    remove: jest.fn(),
+    softRemove: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -155,9 +155,12 @@ describe('CrmUsersService', () => {
   });
 
   describe('remove', () => {
-    it('should remove the user', async () => {
+    it('calls softRemove — not hard remove — ensuring soft-delete rule', async () => {
       mockRepository.findOne.mockResolvedValue(mockCrmUser);
-      mockRepository.remove.mockResolvedValue(mockCrmUser);
+      mockRepository.softRemove.mockResolvedValue({
+        ...mockCrmUser,
+        deleted_at: new Date(),
+      });
 
       await service.remove(mockBusiness, mockCrmUser.id);
 
@@ -165,7 +168,17 @@ describe('CrmUsersService', () => {
         where: { id: mockCrmUser.id, business_id: mockBusiness.id },
         relations: ['teams'],
       });
-      expect(repo.remove).toHaveBeenCalledWith(mockCrmUser);
+      expect(repo.softRemove).toHaveBeenCalledWith(mockCrmUser);
+    });
+
+    it('throws NotFoundException when user does not exist', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.remove(mockBusiness, 'no-such-uuid'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(repo.softRemove).not.toHaveBeenCalled();
     });
   });
 });
