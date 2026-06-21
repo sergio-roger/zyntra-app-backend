@@ -14,6 +14,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { PlanModuleGuard } from './common/guards/plan-module.guard';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -69,6 +70,7 @@ import { BullModule } from '@nestjs/bullmq';
     AppService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PlanModuleGuard },
   ],
 })
 export class AppModule {}

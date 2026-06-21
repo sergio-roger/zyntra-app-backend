@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
+import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { CrmTasksService } from './crm-tasks.service';
@@ -25,6 +26,7 @@ import { TaskStatus } from '@crm/enums/task-status.enum';
 @ApiTags('crm-tasks')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@RequiresModule('crm_tasks')
 @Controller('crm/tasks')
 export class CrmTasksController {
   constructor(private readonly tasksService: CrmTasksService) {}

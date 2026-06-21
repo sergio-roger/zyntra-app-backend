@@ -20,6 +20,7 @@ import {
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
+import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { ContactsService } from '@crm/contacts.service';
@@ -33,6 +34,7 @@ import { ActivityType } from '@crm/enums/activity-type.enum';
 @ApiTags('crm')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@RequiresModule('crm_contacts')
 @Controller('crm')
 export class ContactsController {
   constructor(private readonly contacts: ContactsService) {}
