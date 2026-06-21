@@ -28,8 +28,8 @@ export class PlanModuleGuard implements CanActivate {
     if (!menuKey) return true; // No requirement = free access by plan
 
     const request = context.switchToHttp().getRequest();
-    const business = request.user?.business;
-    if (!business) return false;
+    const business = request.user;
+    if (!business?.plan_id) return false;
 
     const planModuleRepo = this.dataSource.getRepository(PlanModule);
 
