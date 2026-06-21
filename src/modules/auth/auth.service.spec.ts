@@ -97,6 +97,21 @@ describe('AuthService — unified login', () => {
         service.login({ email: 'biz@test.com', password: 'WrongPass!' }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('throws UnauthorizedException when Business has plan_id null', async () => {
+      businessRepo.findOne.mockResolvedValueOnce({
+        ...mockBusiness,
+        plan_id: null,
+      });
+
+      await expect(
+        service.login({ email: 'biz@test.com', password: 'Password123!' }),
+      ).rejects.toThrow(
+        new UnauthorizedException(
+          'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
+        ),
+      );
+    });
   });
 
   describe('login() as CrmUser', () => {
@@ -133,6 +148,23 @@ describe('AuthService — unified login', () => {
       await expect(
         service.login({ email: 'inactive@test.com', password: 'Password123!' }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when CrmUser belongs to a business with plan_id null', async () => {
+      businessRepo.findOne.mockResolvedValueOnce(null);
+      crmUserRepo.findOne.mockResolvedValueOnce(mockCrmUser);
+      businessRepo.findOne.mockResolvedValueOnce({
+        ...mockBusiness,
+        plan_id: null,
+      });
+
+      await expect(
+        service.login({ email: 'agent@test.com', password: 'Password123!' }),
+      ).rejects.toThrow(
+        new UnauthorizedException(
+          'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
+        ),
+      );
     });
   });
 

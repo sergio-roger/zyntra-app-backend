@@ -18,6 +18,15 @@ const ROLES_DATA = [
     iconColor: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
   },
   {
+    name: 'superAdmin',
+    label: 'Super Administrador',
+    description: 'Administrador global de la plataforma con control y acceso total e ilimitado.',
+    isEditable: false,
+    badge: 'Global Admin',
+    badgeColor: 'bg-purple-500/10 text-purple-400',
+    iconColor: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+  },
+  {
     name: 'manager',
     label: 'Gerente',
     description: 'Supervisión y gestión operativa del equipo, clientes, canales y agentes de inteligencia artificial.',
@@ -385,6 +394,7 @@ const AGENT_MENUS = [
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
+  superAdmin: ADMIN_MENUS,
   admin: ADMIN_MENUS,
   manager: MANAGER_MENUS,
   agent: AGENT_MENUS,

@@ -113,9 +113,16 @@ export class AuthService {
       },
     });
 
-    if (business && (await bcrypt.compare(password, business.password_hash))) {
-      const reloaded = await this.validateBusiness(business.id);
-      return this.generateBusinessToken(reloaded!);
+    if (business) {
+      if (business.plan_id === null) {
+        throw new UnauthorizedException(
+          'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
+        );
+      }
+      if (await bcrypt.compare(password, business.password_hash)) {
+        const reloaded = await this.validateBusiness(business.id);
+        return this.generateBusinessToken(reloaded!);
+      }
     }
 
     // 2. Try CrmUser login
@@ -130,16 +137,22 @@ export class AuthService {
       },
     });
 
-    if (
-      crmUser &&
-      crmUser.password_hash &&
-      (await bcrypt.compare(password, crmUser.password_hash))
-    ) {
+    if (crmUser) {
       const businessEntity = await this.validateBusiness(crmUser.business_id);
-      if (!businessEntity) {
-        throw new UnauthorizedException('Credenciales incorrectas');
+      if (businessEntity && businessEntity.plan_id === null) {
+        throw new UnauthorizedException(
+          'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
+        );
       }
-      return this.generateCrmUserToken(businessEntity, crmUser);
+      if (
+        crmUser.password_hash &&
+        (await bcrypt.compare(password, crmUser.password_hash))
+      ) {
+        if (!businessEntity) {
+          throw new UnauthorizedException('Credenciales incorrectas');
+        }
+        return this.generateCrmUserToken(businessEntity, crmUser);
+      }
     }
 
     throw new UnauthorizedException('Credenciales incorrectas');

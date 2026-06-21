@@ -545,6 +545,75 @@ async function bootstrap() {
     }
   }
 
+  // ── 2.1. Superadmin Business + Super Admin User ───────────────────────────────
+  console.log('\n👑 [2.1] Seeding global superadmin business and user...');
+  let superBusiness = await businessRepo.findOne({
+    where: { email: 'superadmin@zyntra.com' },
+  });
+  if (!superBusiness) {
+    superBusiness = await businessRepo.save(
+      businessRepo.create({
+        name: 'Zyntra Global Admin',
+        email: 'superadmin@zyntra.com',
+        password_hash: passwordHash,
+        plan_status: PlanStatus.ACTIVE,
+        trial_ends_at: trialEndsAt,
+      }),
+    );
+    console.log(`  ✅ Superadmin Business created: ${superBusiness.name}`);
+  } else {
+    console.log(`  ℹ️  Superadmin Business already exists: ${superBusiness.name}`);
+  }
+
+  if (!superBusiness) {
+    throw new Error('Failed to seed or find superadmin business');
+  }
+
+  const existingSuperUser = await userRepo.findOne({
+    where: { business_id: superBusiness.id, email: 'superuser@zyntra.com' },
+  });
+  if (!existingSuperUser) {
+    await userRepo.save(
+      userRepo.create({
+        business_id: superBusiness.id,
+        name: 'Super Admin',
+        email: 'superuser@zyntra.com',
+        password_hash: passwordHash,
+        role: UserRole.SUPER_ADMIN,
+        is_active: true,
+      }),
+    );
+    console.log(`  ✅ Super Admin user created: superuser@zyntra.com`);
+  } else {
+    console.log(`  ℹ️  Super Admin user already exists: superuser@zyntra.com`);
+  }
+
+  // Seeding lifecycle stages & tags for superBusiness
+  const existingSuperStages = await stageRepo.find({
+    where: { business_id: superBusiness.id },
+  });
+  if (existingSuperStages.length === 0) {
+    const stages = DEFAULT_LIFECYCLE_STAGES.map((s) =>
+      stageRepo.create({ ...s, business_id: superBusiness.id }),
+    );
+    await stageRepo.save(stages);
+  }
+  for (const tagData of DEFAULT_TAGS) {
+    const existingTag = await tagRepo.findOne({
+      where: { business_id: superBusiness.id, name: tagData.name },
+    });
+    if (!existingTag) {
+      await tagRepo.save(
+        tagRepo.create({
+          business_id: superBusiness.id,
+          name: tagData.name,
+          color: tagData.color,
+          description: tagData.description,
+        }),
+      );
+    }
+  }
+
   // ── 3. Lifecycle stages + tags per business ───────────────────────────────
 
   console.log('\n📋 [3/4] Seeding lifecycle stages and tags...');
@@ -644,6 +713,8 @@ async function bootstrap() {
     console.log(`     • ${entry.business.email} (Company)`);
     console.log(`     • ${entry.adminUser.email} (CRM Admin)`);
   }
+  console.log(`     • superadmin@zyntra.com (Company - Global Admin)`);
+  console.log(`     • superuser@zyntra.com (Super Admin CRM)`);
   console.log('');
 
   await app.close();
