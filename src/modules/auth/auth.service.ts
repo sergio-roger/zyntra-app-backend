@@ -17,6 +17,9 @@ import { LoginDto } from './dto/login.dto';
 import { CrmUser } from '@crm/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { Role } from './entities/role.entity';
+import { Menu } from './entities/menu.entity';
+import { Permission } from './entities/permission.entity';
 
 // TODO: Replace with persisted PasswordResetToken entity + email delivery (SMTP/Resend).
 // In-memory store is fine for dev / single-instance only.
@@ -44,6 +47,12 @@ export class AuthService {
     private planRepository: Repository<Plan>,
     @InjectRepository(CrmUser)
     private crmUserRepository: Repository<CrmUser>,
+    @InjectRepository(Role)
+    private roleRepository: Repository<Role>,
+    @InjectRepository(Menu)
+    private menuRepository: Repository<Menu>,
+    @InjectRepository(Permission)
+    private permissionRepository: Repository<Permission>,
     private jwtService: JwtService,
   ) {}
 
@@ -268,5 +277,45 @@ export class AuthService {
     } catch {
       return [];
     }
+  }
+
+  async getAllMenus(): Promise<Menu[]> {
+    return this.menuRepository.find({
+      order: { parent_key: 'ASC', key: 'ASC' },
+    });
+  }
+
+  async getPermissionsByRole(roleName: string): Promise<string[]> {
+    const role = await this.roleRepository.findOne({ where: { name: roleName } });
+    if (!role) {
+      throw new BadRequestException(`Role with name ${roleName} not found`);
+    }
+
+    const permissions = await this.permissionRepository.find({
+      where: { role_id: role.id },
+    });
+
+    return permissions.map((p) => p.menu_id);
+  }
+
+  async updatePermissionsByRole(roleName: string, menuIds: string[]): Promise<void> {
+    const role = await this.roleRepository.findOne({ where: { name: roleName } });
+    if (!role) {
+      throw new BadRequestException(`Role with name ${roleName} not found`);
+    }
+
+    // Wrap in transaction or delete & insert
+    await this.permissionRepository.manager.transaction(async (manager) => {
+      // 1. Delete all current permissions for the role
+      await manager.delete(Permission, { role_id: role.id });
+
+      // 2. Insert new permissions if any menuIds are provided
+      if (menuIds && menuIds.length > 0) {
+        const entities = menuIds.map((menuId) =>
+          manager.create(Permission, { role_id: role.id, menu_id: menuId }),
+        );
+        await manager.save(entities);
+      }
+    });
   }
 }

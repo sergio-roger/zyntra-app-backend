@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { SettingsPermissionsController } from './settings-permissions.controller';
 import { Business } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
 import { PlanDescription } from './entities/plan-description.entity';
@@ -36,7 +37,7 @@ import { CrmUser } from '@crm/entities/user.entity';
     }),
   ],
   providers: [AuthService, JwtStrategy],
-  controllers: [AuthController],
+  controllers: [AuthController, SettingsPermissionsController],
   exports: [AuthService],
 })
 export class AuthModule {}

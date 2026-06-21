@@ -8,6 +8,9 @@ import { Business, PlanStatus } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
 import { CrmUser } from '@crm/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
+import { Role } from './entities/role.entity';
+import { Menu } from './entities/menu.entity';
+import { Permission } from './entities/permission.entity';
 
 const HASHED = bcrypt.hashSync('Password123!', 10);
 
@@ -41,6 +44,10 @@ describe('AuthService — unified login', () => {
 
   const crmUserRepo = { findOne: jest.fn() };
 
+  const roleRepo = { findOne: jest.fn() };
+  const menuRepo = { find: jest.fn() };
+  const permissionRepo = { find: jest.fn() };
+
   const jwtService = { sign: jest.fn().mockReturnValue('mock-token') };
 
   beforeEach(async () => {
@@ -50,6 +57,9 @@ describe('AuthService — unified login', () => {
         { provide: getRepositoryToken(Business), useValue: businessRepo },
         { provide: getRepositoryToken(Plan), useValue: planRepo },
         { provide: getRepositoryToken(CrmUser), useValue: crmUserRepo },
+        { provide: getRepositoryToken(Role), useValue: roleRepo },
+        { provide: getRepositoryToken(Menu), useValue: menuRepo },
+        { provide: getRepositoryToken(Permission), useValue: permissionRepo },
         { provide: JwtService, useValue: jwtService },
       ],
     }).compile();
