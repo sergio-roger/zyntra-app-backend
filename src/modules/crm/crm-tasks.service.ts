@@ -8,16 +8,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ContactsService } from './contacts.service';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
-import { CrmTask } from './entities/task.entity';
-import { ActivityType } from './enums/activity-type.enum';
-
-export interface CallerContext {
-  id: string | null;
-  role: UserRole;
-}
+import { ContactsService } from '@crm/contacts.service';
+import { CreateTaskDto } from '@crm/dto/create-task.dto';
+import { UpdateTaskDto } from '@crm/dto/update-task.dto';
+import { CrmTask } from '@crm/entities/task.entity';
+import { ActivityType } from '@crm/enums/activity-type.enum';
+import { CallerContext } from '@crm/interfaces/caller-context.interface';
 
 @Injectable()
 export class CrmTasksService {
