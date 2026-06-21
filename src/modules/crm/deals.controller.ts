@@ -39,7 +39,9 @@ export class DealsController {
   }
 
   @Get('kanban')
-  @ApiOperation({ summary: 'List open deals grouped by stage for Kanban board' })
+  @ApiOperation({
+    summary: 'List open deals grouped by stage for Kanban board',
+  })
   kanban(@CurrentBusiness() business: Business) {
     return this.deals.kanban(business);
   }

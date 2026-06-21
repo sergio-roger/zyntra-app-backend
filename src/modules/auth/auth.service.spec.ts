@@ -28,13 +28,6 @@ const mockCrmUser: Partial<CrmUser> = {
   is_active: true,
 };
 
-const mockInactiveCrmUser: Partial<CrmUser> = {
-  ...mockCrmUser,
-  id: 'user-inactive',
-  email: 'inactive@test.com',
-  is_active: false,
-};
-
 describe('AuthService — unified login', () => {
   let service: AuthService;
 
@@ -69,10 +62,13 @@ describe('AuthService — unified login', () => {
   describe('login() as Business', () => {
     it('returns access_token without crm_user_id when Business credentials match', async () => {
       businessRepo.findOne
-        .mockResolvedValueOnce(mockBusiness)  // password check
+        .mockResolvedValueOnce(mockBusiness) // password check
         .mockResolvedValueOnce(mockBusiness); // validateBusiness reload
 
-      const result = await service.login({ email: 'biz@test.com', password: 'Password123!' });
+      const result = await service.login({
+        email: 'biz@test.com',
+        password: 'Password123!',
+      });
 
       expect(result.access_token).toBe('mock-token');
       expect(result.user.crm_user_id).toBeNull();
@@ -92,11 +88,14 @@ describe('AuthService — unified login', () => {
   describe('login() as CrmUser', () => {
     it('returns access_token with crm_user_id and role when CrmUser credentials match', async () => {
       businessRepo.findOne
-        .mockResolvedValueOnce(null)          // no Business with this email
+        .mockResolvedValueOnce(null) // no Business with this email
         .mockResolvedValueOnce(mockBusiness); // validateBusiness reload
       crmUserRepo.findOne.mockResolvedValueOnce(mockCrmUser);
 
-      const result = await service.login({ email: 'agent@test.com', password: 'Password123!' });
+      const result = await service.login({
+        email: 'agent@test.com',
+        password: 'Password123!',
+      });
 
       expect(result.access_token).toBe('mock-token');
       expect(result.user.crm_user_id).toBe(mockCrmUser.id);

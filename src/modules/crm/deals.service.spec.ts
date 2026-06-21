@@ -44,7 +44,10 @@ describe('DealsService — soft-delete', () => {
         DealsService,
         { provide: getRepositoryToken(Deal), useValue: dealsRepo },
         { provide: getRepositoryToken(Contact), useValue: contactsRepo },
-        { provide: getRepositoryToken(ContactActivity), useValue: activitiesRepo },
+        {
+          provide: getRepositoryToken(ContactActivity),
+          useValue: activitiesRepo,
+        },
       ],
     }).compile();
 
@@ -57,7 +60,10 @@ describe('DealsService — soft-delete', () => {
     it('calls softRemove — not remove — on the repo', async () => {
       const deal = makeDeal();
       dealsRepo.findOne.mockResolvedValue(deal);
-      dealsRepo.softRemove.mockResolvedValue({ ...deal, deleted_at: new Date() });
+      dealsRepo.softRemove.mockResolvedValue({
+        ...deal,
+        deleted_at: new Date(),
+      });
 
       await service.remove(mockBusiness, 'deal-uuid');
 
@@ -68,7 +74,10 @@ describe('DealsService — soft-delete', () => {
     it('does NOT call hard remove', async () => {
       const deal = makeDeal();
       dealsRepo.findOne.mockResolvedValue(deal);
-      dealsRepo.softRemove.mockResolvedValue({ ...deal, deleted_at: new Date() });
+      dealsRepo.softRemove.mockResolvedValue({
+        ...deal,
+        deleted_at: new Date(),
+      });
 
       await service.remove(mockBusiness, 'deal-uuid');
 
@@ -79,9 +88,9 @@ describe('DealsService — soft-delete', () => {
     it('throws NotFoundException when deal does not exist', async () => {
       dealsRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.remove(mockBusiness, 'no-such-uuid')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.remove(mockBusiness, 'no-such-uuid'),
+      ).rejects.toThrow(NotFoundException);
       expect(dealsRepo.softRemove).not.toHaveBeenCalled();
     });
 
@@ -89,7 +98,10 @@ describe('DealsService — soft-delete', () => {
       const deal = makeDeal();
       const deletedAt = new Date('2026-01-01T00:00:00Z');
       dealsRepo.findOne.mockResolvedValue(deal);
-      dealsRepo.softRemove.mockResolvedValue({ ...deal, deleted_at: deletedAt });
+      dealsRepo.softRemove.mockResolvedValue({
+        ...deal,
+        deleted_at: deletedAt,
+      });
 
       // softRemove is called; the returned entity has deleted_at set
       await service.remove(mockBusiness, 'deal-uuid');

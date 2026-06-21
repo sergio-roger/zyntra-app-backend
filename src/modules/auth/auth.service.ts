@@ -164,7 +164,10 @@ export class AuthService {
     };
   }
 
-  private generateCrmUserToken(business: Business, crmUser: Pick<CrmUser, 'id' | 'role' | 'business_id'>) {
+  private generateCrmUserToken(
+    business: Business,
+    crmUser: Pick<CrmUser, 'id' | 'role' | 'business_id'>,
+  ) {
     const payload: JwtPayload = {
       sub: business.id,
       email: business.email,
@@ -237,7 +240,7 @@ export class AuthService {
 
   async getMenuTree(role: UserRole): Promise<MenuNode[]> {
     try {
-      const conn = (this.businessRepository.manager.connection) as any;
+      const conn = this.businessRepository.manager.connection as any;
       if (!conn) return [];
 
       const roleRow = await conn.query(

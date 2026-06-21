@@ -91,7 +91,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh session token' })
   @ApiOkResponse({ type: AuthResponseDto })
   refresh(@Request() req: RequestWithUser) {
-    const { access_token, user } = this.authService.refresh(req.user as any);
+    const { access_token, user } = this.authService.refresh(req.user);
     if (req.session) {
       req.session.jwt = access_token;
     }
@@ -110,7 +110,9 @@ export class AuthController {
   @Get('menus')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get menu tree filtered by role' })
-  async getMenus(@CurrentCrmUser() caller: { id: string | null; role: string }) {
+  async getMenus(
+    @CurrentCrmUser() caller: { id: string | null; role: string },
+  ) {
     return this.authService.getMenuTree(caller.role as any);
   }
 }

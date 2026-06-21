@@ -1,26 +1,26 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-  Headers,
-  HttpCode,
-  HttpStatus,
-  HttpException,
-  UseGuards,
-  Req,
-  Param,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { ChatService } from './chat.service';
-import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
-import { LeadCaptureDto } from './dto/lead-capture.dto';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@crm/enums/user-role.enum';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import { UserRole } from '@crm/enums/user-role.enum';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ChatService } from './chat.service';
+import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
+import { LeadCaptureDto } from './dto/lead-capture.dto';
 
 @ApiTags('Chat')
 @Controller('chat')
@@ -63,7 +63,7 @@ export class ChatController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get chatbot embed snippet' })
-  async getEmbedSnippet(@Req() req: RequestWithUser) {
+  getEmbedSnippet(@Req() req: RequestWithUser) {
     const businessId = (req.user as { id?: string }).id;
     if (!businessId) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);

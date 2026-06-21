@@ -7,7 +7,10 @@ import { Business } from '@auth/entities/business.entity';
 import { Tag } from './entities/tag.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 
-const mockBusiness = { id: 'business-uuid-1234', name: 'Test Business' } as Business;
+const mockBusiness = {
+  id: 'business-uuid-1234',
+  name: 'Test Business',
+} as Business;
 
 const mockTag = {
   id: 'tag-uuid-1',
@@ -60,7 +63,11 @@ describe('TagsController', () => {
   describe('create', () => {
     it('should call tagsService.create', async () => {
       const createDto = { name: 'Support', color: '#f59e0b' };
-      mockTagsService.create.mockResolvedValue({ id: 'new-uuid', ...createDto, business_id: mockBusiness.id });
+      mockTagsService.create.mockResolvedValue({
+        id: 'new-uuid',
+        ...createDto,
+        business_id: mockBusiness.id,
+      });
       const result = await controller.create(mockBusiness, createDto);
       expect(service.create).toHaveBeenCalledWith(mockBusiness, createDto);
       expect(result).toHaveProperty('id');
@@ -70,9 +77,20 @@ describe('TagsController', () => {
   describe('update', () => {
     it('should call tagsService.update', async () => {
       const updateDto = { name: 'Support Tier 1' };
-      mockTagsService.update.mockResolvedValue({ ...mockTag, name: updateDto.name });
-      const result = await controller.update(mockBusiness, 'tag-uuid-1', updateDto);
-      expect(service.update).toHaveBeenCalledWith(mockBusiness, 'tag-uuid-1', updateDto);
+      mockTagsService.update.mockResolvedValue({
+        ...mockTag,
+        name: updateDto.name,
+      });
+      const result = await controller.update(
+        mockBusiness,
+        'tag-uuid-1',
+        updateDto,
+      );
+      expect(service.update).toHaveBeenCalledWith(
+        mockBusiness,
+        'tag-uuid-1',
+        updateDto,
+      );
       expect(result.name).toBe(updateDto.name);
     });
   });
@@ -88,25 +106,37 @@ describe('TagsController', () => {
 
 describe('TagsController — RBAC metadata', () => {
   it('findAll has no role restriction (all authenticated)', () => {
-    const roles = Reflect.getMetadata('roles', TagsController.prototype.findAll);
+    const roles = Reflect.getMetadata(
+      'roles',
+      TagsController.prototype.findAll,
+    );
     expect(roles).toBeUndefined();
   });
 
   it('create requires ADMIN or MANAGER', () => {
-    const roles: UserRole[] = Reflect.getMetadata('roles', TagsController.prototype.create);
+    const roles: UserRole[] = Reflect.getMetadata(
+      'roles',
+      TagsController.prototype.create,
+    );
     expect(roles).toContain(UserRole.ADMIN);
     expect(roles).toContain(UserRole.MANAGER);
     expect(roles).not.toContain(UserRole.AGENT);
   });
 
   it('update requires ADMIN or MANAGER', () => {
-    const roles: UserRole[] = Reflect.getMetadata('roles', TagsController.prototype.update);
+    const roles: UserRole[] = Reflect.getMetadata(
+      'roles',
+      TagsController.prototype.update,
+    );
     expect(roles).toContain(UserRole.ADMIN);
     expect(roles).toContain(UserRole.MANAGER);
   });
 
   it('remove requires ADMIN or MANAGER', () => {
-    const roles: UserRole[] = Reflect.getMetadata('roles', TagsController.prototype.remove);
+    const roles: UserRole[] = Reflect.getMetadata(
+      'roles',
+      TagsController.prototype.remove,
+    );
     expect(roles).toContain(UserRole.ADMIN);
     expect(roles).toContain(UserRole.MANAGER);
   });

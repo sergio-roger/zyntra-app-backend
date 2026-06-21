@@ -2,29 +2,6 @@ import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { ROLES_KEY } from '@common/decorators/roles.decorator';
-
-function buildContext(role: string | undefined, requiredRoles?: UserRole[], isPublic = false): ExecutionContext {
-  const reflector = {
-    getAllAndOverride: jest.fn((key: string) => {
-      if (key === 'isPublic') return isPublic;
-      if (key === ROLES_KEY) return requiredRoles;
-      return undefined;
-    }),
-  };
-
-  const guard = new RolesGuard(reflector as unknown as Reflector);
-
-  const mockContext = {
-    getHandler: jest.fn(),
-    getClass: jest.fn(),
-    switchToHttp: () => ({
-      getRequest: () => ({ user: role ? { role } : undefined }),
-    }),
-  } as unknown as ExecutionContext;
-
-  return { guard, mockContext, reflector } as any;
-}
 
 describe('RolesGuard', () => {
   let guard: RolesGuard;

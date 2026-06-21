@@ -55,10 +55,15 @@ describe('CrmTasksService — ownership rules', () => {
       tasksRepo.save.mockResolvedValue(task);
 
       await expect(
-        service.update(mockBusiness, 'task-uuid', { title: 'Updated' }, {
-          id: 'admin-uuid',
-          role: UserRole.ADMIN,
-        }),
+        service.update(
+          mockBusiness,
+          'task-uuid',
+          { title: 'Updated' },
+          {
+            id: 'admin-uuid',
+            role: UserRole.ADMIN,
+          },
+        ),
       ).resolves.toBeDefined();
     });
 
@@ -68,10 +73,15 @@ describe('CrmTasksService — ownership rules', () => {
       tasksRepo.save.mockResolvedValue(task);
 
       await expect(
-        service.update(mockBusiness, 'task-uuid', { title: 'Updated' }, {
-          id: 'manager-uuid',
-          role: UserRole.MANAGER,
-        }),
+        service.update(
+          mockBusiness,
+          'task-uuid',
+          { title: 'Updated' },
+          {
+            id: 'manager-uuid',
+            role: UserRole.MANAGER,
+          },
+        ),
       ).resolves.toBeDefined();
     });
 
@@ -81,10 +91,15 @@ describe('CrmTasksService — ownership rules', () => {
       tasksRepo.save.mockResolvedValue(task);
 
       await expect(
-        service.update(mockBusiness, 'task-uuid', { title: 'Updated' }, {
-          id: 'agent-uuid',
-          role: UserRole.AGENT,
-        }),
+        service.update(
+          mockBusiness,
+          'task-uuid',
+          { title: 'Updated' },
+          {
+            id: 'agent-uuid',
+            role: UserRole.AGENT,
+          },
+        ),
       ).resolves.toBeDefined();
     });
 
@@ -93,10 +108,15 @@ describe('CrmTasksService — ownership rules', () => {
       tasksRepo.findOne.mockResolvedValue(task);
 
       await expect(
-        service.update(mockBusiness, 'task-uuid', { title: 'Hijack' }, {
-          id: 'agent-uuid',
-          role: UserRole.AGENT,
-        }),
+        service.update(
+          mockBusiness,
+          'task-uuid',
+          { title: 'Hijack' },
+          {
+            id: 'agent-uuid',
+            role: UserRole.AGENT,
+          },
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -104,10 +124,15 @@ describe('CrmTasksService — ownership rules', () => {
       tasksRepo.findOne.mockResolvedValue(null);
 
       await expect(
-        service.update(mockBusiness, 'no-such-uuid', {}, {
-          id: 'admin-uuid',
-          role: UserRole.ADMIN,
-        }),
+        service.update(
+          mockBusiness,
+          'no-such-uuid',
+          {},
+          {
+            id: 'admin-uuid',
+            role: UserRole.ADMIN,
+          },
+        ),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -126,7 +151,11 @@ describe('CrmTasksService — ownership rules', () => {
     });
 
     it('ADMIN gets all tasks (no assigned_to filter)', async () => {
-      await service.list(mockBusiness, {}, { id: 'admin-uuid', role: UserRole.ADMIN });
+      await service.list(
+        mockBusiness,
+        {},
+        { id: 'admin-uuid', role: UserRole.ADMIN },
+      );
       expect(mockQb.andWhere).not.toHaveBeenCalledWith(
         expect.stringContaining('assigned_to'),
         expect.anything(),
@@ -134,11 +163,14 @@ describe('CrmTasksService — ownership rules', () => {
     });
 
     it('AGENT gets only their own tasks (assigned_to filter applied)', async () => {
-      await service.list(mockBusiness, {}, { id: 'agent-uuid', role: UserRole.AGENT });
-      expect(mockQb.andWhere).toHaveBeenCalledWith(
-        't.assigned_to = :uid',
-        { uid: 'agent-uuid' },
+      await service.list(
+        mockBusiness,
+        {},
+        { id: 'agent-uuid', role: UserRole.AGENT },
       );
+      expect(mockQb.andWhere).toHaveBeenCalledWith('t.assigned_to = :uid', {
+        uid: 'agent-uuid',
+      });
     });
   });
 
@@ -146,7 +178,10 @@ describe('CrmTasksService — ownership rules', () => {
     it('calls softRemove — not hard remove', async () => {
       const task = makeTask('agent-uuid');
       tasksRepo.findOne.mockResolvedValue(task);
-      tasksRepo.softRemove.mockResolvedValue({ ...task, deleted_at: new Date() });
+      tasksRepo.softRemove.mockResolvedValue({
+        ...task,
+        deleted_at: new Date(),
+      });
 
       await service.remove(mockBusiness, 'task-uuid');
 

@@ -7,7 +7,10 @@ import { Business } from '@auth/entities/business.entity';
 import { CrmUser } from './entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 
-const mockBusiness = { id: 'business-uuid-1234', name: 'Test Business' } as Business;
+const mockBusiness = {
+  id: 'business-uuid-1234',
+  name: 'Test Business',
+} as Business;
 
 const mockCrmUser = {
   id: 'user-uuid-1',
@@ -60,8 +63,16 @@ describe('CrmUsersController', () => {
 
   describe('create', () => {
     it('should call usersService.create with current business and dto', async () => {
-      const createDto = { name: 'Alice Smith', email: 'alice@example.com', role: UserRole.AGENT };
-      mockUsersService.create.mockResolvedValue({ id: 'new-uuid', ...createDto, business_id: mockBusiness.id });
+      const createDto = {
+        name: 'Alice Smith',
+        email: 'alice@example.com',
+        role: UserRole.AGENT,
+      };
+      mockUsersService.create.mockResolvedValue({
+        id: 'new-uuid',
+        ...createDto,
+        business_id: mockBusiness.id,
+      });
       const result = await controller.create(mockBusiness, createDto);
       expect(service.create).toHaveBeenCalledWith(mockBusiness, createDto);
       expect(result).toHaveProperty('id');
@@ -71,9 +82,20 @@ describe('CrmUsersController', () => {
   describe('update', () => {
     it('should call usersService.update', async () => {
       const updateDto = { name: 'John Doe Updated' };
-      mockUsersService.update.mockResolvedValue({ ...mockCrmUser, name: updateDto.name });
-      const result = await controller.update(mockBusiness, 'user-uuid-1', updateDto);
-      expect(service.update).toHaveBeenCalledWith(mockBusiness, 'user-uuid-1', updateDto);
+      mockUsersService.update.mockResolvedValue({
+        ...mockCrmUser,
+        name: updateDto.name,
+      });
+      const result = await controller.update(
+        mockBusiness,
+        'user-uuid-1',
+        updateDto,
+      );
+      expect(service.update).toHaveBeenCalledWith(
+        mockBusiness,
+        'user-uuid-1',
+        updateDto,
+      );
       expect(result.name).toBe(updateDto.name);
     });
   });

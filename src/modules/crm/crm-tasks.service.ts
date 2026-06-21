@@ -1,17 +1,17 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
-import { CrmTask } from './entities/task.entity';
 import { Business } from '@auth/entities/business.entity';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskStatus } from '@crm/enums/task-status.enum';
 import { UserRole } from '@crm/enums/user-role.enum';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ContactsService } from './contacts.service';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+import { CrmTask } from './entities/task.entity';
 import { ActivityType } from './enums/activity-type.enum';
 
 export interface CallerContext {
@@ -57,7 +57,7 @@ export class CrmTasksService {
 
   async findOne(business: Business, id: string) {
     const task = await this.tasksRepo.findOne({
-      where: { id, business_id: business.id } as FindOptionsWhere<CrmTask>,
+      where: { id, business_id: business.id },
       relations: ['contact'],
     });
     if (!task) throw new NotFoundException('Task not found');
@@ -81,10 +81,7 @@ export class CrmTasksService {
   ) {
     const task = await this.findOne(business, id);
 
-    if (
-      caller?.role === UserRole.AGENT &&
-      task.assigned_to !== caller.id
-    ) {
+    if (caller?.role === UserRole.AGENT && task.assigned_to !== caller.id) {
       throw new ForbiddenException('Solo puedes editar tareas asignadas a ti');
     }
 
