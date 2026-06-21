@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { LifecycleStage } from './entities/lifecycle-stage.entity';
-import { LifecycleHistory } from './entities/lifecycle-history.entity';
-import { LifecycleService } from './lifecycle.service';
-import { LifecycleController } from './lifecycle.controller';
+import { LifecycleHistory } from '@/modules/lifecycle/entities/lifecycle-history.entity';
+import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { LifecycleController } from '@/modules/lifecycle/lifecycle.controller';
+import { LifecycleService } from '@/modules/lifecycle/lifecycle.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([LifecycleStage, LifecycleHistory])],

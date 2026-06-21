@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Business } from '@auth/entities/business.entity';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
-import { Business } from '@auth/entities/business.entity';
-import { LifecycleService } from './lifecycle.service';
-import { LifecycleStage } from './entities/lifecycle-stage.entity';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { LifecycleService } from '@/modules/lifecycle/lifecycle.service';
 
 @ApiTags('lifecycle')
 @ApiBearerAuth()

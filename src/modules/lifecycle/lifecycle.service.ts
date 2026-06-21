@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeepPartial } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
+import { LifecycleHistory } from '@/modules/lifecycle/entities/lifecycle-history.entity';
 import {
   LifecycleStage,
   LifecycleStageType,
-} from './entities/lifecycle-stage.entity';
-import { LifecycleHistory } from './entities/lifecycle-history.entity';
+} from '@/modules/lifecycle/entities/lifecycle-stage.entity';
 
 @Injectable()
 export class LifecycleService {

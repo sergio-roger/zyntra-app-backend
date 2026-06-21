@@ -1,13 +1,13 @@
+import { Business } from '@auth/entities/business.entity';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { LifecycleService } from './lifecycle.service';
+import { LifecycleHistory } from '@/modules/lifecycle/entities/lifecycle-history.entity';
 import {
   LifecycleStage,
   LifecycleStageType,
-} from './entities/lifecycle-stage.entity';
-import { LifecycleHistory } from './entities/lifecycle-history.entity';
-import { Business } from '@auth/entities/business.entity';
+} from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { LifecycleService } from '@/modules/lifecycle/lifecycle.service';
 
 const mockBusiness = {
   id: 'business-uuid-1234',

@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { LifecycleController } from './lifecycle.controller';
-import { LifecycleService } from './lifecycle.service';
 import { Business } from '@auth/entities/business.entity';
-import { LifecycleStage } from './entities/lifecycle-stage.entity';
+import { Test, TestingModule } from '@nestjs/testing';
+import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { LifecycleController } from '@/modules/lifecycle/lifecycle.controller';
+import { LifecycleService } from '@/modules/lifecycle/lifecycle.service';
 
 const mockBusiness = {
   id: 'business-uuid-1234',

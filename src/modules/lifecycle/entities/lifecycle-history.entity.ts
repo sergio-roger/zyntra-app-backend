@@ -8,7 +8,7 @@ import {
   Index,
 } from 'typeorm';
 import { Contact } from '@crm/entities/contact.entity';
-import { LifecycleStage } from './lifecycle-stage.entity';
+import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
 
 @Entity({ name: 'lifecycle_history', schema: 'public' })
 @Index(['contact_id', 'created_at'])
