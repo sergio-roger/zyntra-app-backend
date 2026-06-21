@@ -27,8 +27,10 @@ export class PlanModuleGuard implements CanActivate {
     );
     if (!menuKey) return true; // No requirement = free access by plan
 
-    const request = context.switchToHttp().getRequest();
-    const business = request.user;
+    const { user: business, method } = context.switchToHttp().getRequest<{
+      user?: { plan_id?: string };
+      method?: string;
+    }>();
     if (!business?.plan_id) return false;
 
     const planModuleRepo = this.dataSource.getRepository(PlanModule);
@@ -62,8 +64,8 @@ export class PlanModuleGuard implements CanActivate {
     }
 
     if (level === ModuleAccessLevel.READ_ONLY) {
-      const method = request.method.toUpperCase();
-      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const currentMethod = (method ?? 'GET').toUpperCase();
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(currentMethod)) {
         throw new ForbiddenException({
           code: 'MODULE_READ_ONLY',
           module: menuKey,

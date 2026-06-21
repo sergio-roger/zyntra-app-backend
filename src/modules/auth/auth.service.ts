@@ -253,7 +253,11 @@ export class AuthService {
     resetTokens.delete(token);
   }
 
-  async getMenuTree(role: UserRole, businessId: string, planId?: string): Promise<MenuNode[]> {
+  async getMenuTree(
+    role: UserRole,
+    businessId: string,
+    planId?: string,
+  ): Promise<MenuNode[]> {
     try {
       const conn = this.businessRepository.manager.connection as any;
       if (!conn) return [];
@@ -296,7 +300,8 @@ export class AuthService {
 
       const resolveAccess = (key: string, parentKey: string | null): string => {
         if (moduleMap.has(key)) return moduleMap.get(key)!;
-        if (parentKey && moduleMap.has(parentKey)) return moduleMap.get(parentKey)!;
+        if (parentKey && moduleMap.has(parentKey))
+          return moduleMap.get(parentKey)!;
         return 'full';
       };
 
@@ -364,7 +369,9 @@ export class AuthService {
     roleName: string,
     businessId: string,
   ): Promise<string[]> {
-    const role = await this.roleRepository.findOne({ where: { name: roleName } });
+    const role = await this.roleRepository.findOne({
+      where: { name: roleName },
+    });
     if (!role) {
       throw new BadRequestException(`Role with name ${roleName} not found`);
     }

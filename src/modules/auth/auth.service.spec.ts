@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { Business, PlanStatus } from './entities/business.entity';
@@ -154,10 +158,14 @@ describe('AuthService — unified login', () => {
 
     it('throws BadRequestException when Impulse Pro plan is not seeded', async () => {
       businessRepo.findOne.mockResolvedValueOnce(null); // no conflict
-      planRepo.findOne.mockResolvedValueOnce(null);     // plan not found
+      planRepo.findOne.mockResolvedValueOnce(null); // plan not found
 
       await expect(
-        service.register({ name: 'Nueva', email: 'nueva@test.com', password: 'Pass123!' }),
+        service.register({
+          name: 'Nueva',
+          email: 'nueva@test.com',
+          password: 'Pass123!',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -165,13 +173,17 @@ describe('AuthService — unified login', () => {
       businessRepo.findOne.mockResolvedValueOnce(mockBusiness); // email exists
 
       await expect(
-        service.register({ name: 'Dup', email: 'biz@test.com', password: 'Pass123!' }),
+        service.register({
+          name: 'Dup',
+          email: 'biz@test.com',
+          password: 'Pass123!',
+        }),
       ).rejects.toThrow(ConflictException);
     });
 
     it('creates business with plan_id from Impulse Pro when plan is seeded', async () => {
       businessRepo.findOne
-        .mockResolvedValueOnce(null)        // no conflict
+        .mockResolvedValueOnce(null) // no conflict
         .mockResolvedValueOnce(savedBusiness); // validateBusiness reload
       planRepo.findOne.mockResolvedValueOnce(mockPlan);
       businessRepo.create.mockReturnValueOnce(savedBusiness);

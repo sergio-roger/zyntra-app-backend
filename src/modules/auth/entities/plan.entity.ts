@@ -76,4 +76,3 @@ export class Plan {
   @UpdateDateColumn()
   updated_at: Date;
 }
-

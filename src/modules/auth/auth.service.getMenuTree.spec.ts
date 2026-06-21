@@ -24,32 +24,164 @@ import { Permission } from './entities/permission.entity';
 // ─── Datos de menús (refleja seed-rbac.ts) ───────────────────────────────────
 
 const ROOT_MENUS = [
-  { id: 'm-dashboard', key: 'dashboard', label: 'Dashboard', path: '/dashboard', parent_key: null },
+  {
+    id: 'm-dashboard',
+    key: 'dashboard',
+    label: 'Dashboard',
+    path: '/dashboard',
+    parent_key: null,
+  },
   { id: 'm-crm', key: 'crm', label: 'CRM', path: '/crm', parent_key: null },
-  { id: 'm-agents-ia', key: 'agents_ia', label: 'Agentes IA', path: '/agents-ia', parent_key: null },
-  { id: 'm-inbox', key: 'inbox', label: 'Inbox', path: '/inbox', parent_key: null },
-  { id: 'm-funnels', key: 'funnels', label: 'Funnels', path: '/funnels', parent_key: null },
-  { id: 'm-avatar', key: 'avatar', label: 'Avatar', path: '/avatar', parent_key: null },
-  { id: 'm-analytics', key: 'analytics', label: 'Analytics', path: '/analytics', parent_key: null },
-  { id: 'm-billing', key: 'billing', label: 'Billing', path: '/billing', parent_key: null },
-  { id: 'm-settings', key: 'settings', label: 'Configuración', path: '/settings', parent_key: null },
+  {
+    id: 'm-agents-ia',
+    key: 'agents_ia',
+    label: 'Agentes IA',
+    path: '/agents-ia',
+    parent_key: null,
+  },
+  {
+    id: 'm-inbox',
+    key: 'inbox',
+    label: 'Inbox',
+    path: '/inbox',
+    parent_key: null,
+  },
+  {
+    id: 'm-funnels',
+    key: 'funnels',
+    label: 'Funnels',
+    path: '/funnels',
+    parent_key: null,
+  },
+  {
+    id: 'm-avatar',
+    key: 'avatar',
+    label: 'Avatar',
+    path: '/avatar',
+    parent_key: null,
+  },
+  {
+    id: 'm-analytics',
+    key: 'analytics',
+    label: 'Analytics',
+    path: '/analytics',
+    parent_key: null,
+  },
+  {
+    id: 'm-billing',
+    key: 'billing',
+    label: 'Billing',
+    path: '/billing',
+    parent_key: null,
+  },
+  {
+    id: 'm-settings',
+    key: 'settings',
+    label: 'Configuración',
+    path: '/settings',
+    parent_key: null,
+  },
 ];
 
 const CHILD_MENUS = [
-  { id: 'm-dashboard-home', key: 'dashboard_home', label: 'Inicio', path: '/dashboard/home', parent_key: 'dashboard' },
-  { id: 'm-crm-contacts', key: 'crm_contacts', label: 'Contactos', path: '/crm/contacts', parent_key: 'crm' },
-  { id: 'm-crm-leads', key: 'crm_leads', label: 'Leads', path: '/crm/leads', parent_key: 'crm' },
-  { id: 'm-crm-deals', key: 'crm_deals', label: 'Deals', path: '/crm/deals', parent_key: 'crm' },
-  { id: 'm-crm-tasks', key: 'crm_tasks', label: 'Tareas', path: '/crm/tasks', parent_key: 'crm' },
-  { id: 'm-funnels-dashboard', key: 'funnels_dashboard', label: 'Dashboard', path: '/funnels/dashboard', parent_key: 'funnels' },
-  { id: 'm-funnels-builder', key: 'funnels_builder', label: 'Builder', path: '/funnels/builder', parent_key: 'funnels' },
-  { id: 'm-funnels-templates', key: 'funnels_templates', label: 'Templates', path: '/funnels/templates', parent_key: 'funnels' },
-  { id: 'm-funnels-automations', key: 'funnels_automations', label: 'Automatizaciones', path: '/funnels/automations', parent_key: 'funnels' },
-  { id: 'm-inbox-channels', key: 'inbox_channels', label: 'Canales', path: '/inbox/channels', parent_key: 'inbox' },
-  { id: 'm-settings-users', key: 'settings_users', label: 'Usuarios', path: '/settings/users', parent_key: 'settings' },
-  { id: 'm-settings-teams', key: 'settings_teams', label: 'Equipos', path: '/settings/teams', parent_key: 'settings' },
-  { id: 'm-settings-lifecycle', key: 'settings_lifecycle', label: 'Lifecycle', path: '/settings/lifecycle', parent_key: 'settings' },
-  { id: 'm-settings-channels', key: 'settings_channels', label: 'Canales', path: '/settings/channels', parent_key: 'settings' },
+  {
+    id: 'm-dashboard-home',
+    key: 'dashboard_home',
+    label: 'Inicio',
+    path: '/dashboard/home',
+    parent_key: 'dashboard',
+  },
+  {
+    id: 'm-crm-contacts',
+    key: 'crm_contacts',
+    label: 'Contactos',
+    path: '/crm/contacts',
+    parent_key: 'crm',
+  },
+  {
+    id: 'm-crm-leads',
+    key: 'crm_leads',
+    label: 'Leads',
+    path: '/crm/leads',
+    parent_key: 'crm',
+  },
+  {
+    id: 'm-crm-deals',
+    key: 'crm_deals',
+    label: 'Deals',
+    path: '/crm/deals',
+    parent_key: 'crm',
+  },
+  {
+    id: 'm-crm-tasks',
+    key: 'crm_tasks',
+    label: 'Tareas',
+    path: '/crm/tasks',
+    parent_key: 'crm',
+  },
+  {
+    id: 'm-funnels-dashboard',
+    key: 'funnels_dashboard',
+    label: 'Dashboard',
+    path: '/funnels/dashboard',
+    parent_key: 'funnels',
+  },
+  {
+    id: 'm-funnels-builder',
+    key: 'funnels_builder',
+    label: 'Builder',
+    path: '/funnels/builder',
+    parent_key: 'funnels',
+  },
+  {
+    id: 'm-funnels-templates',
+    key: 'funnels_templates',
+    label: 'Templates',
+    path: '/funnels/templates',
+    parent_key: 'funnels',
+  },
+  {
+    id: 'm-funnels-automations',
+    key: 'funnels_automations',
+    label: 'Automatizaciones',
+    path: '/funnels/automations',
+    parent_key: 'funnels',
+  },
+  {
+    id: 'm-inbox-channels',
+    key: 'inbox_channels',
+    label: 'Canales',
+    path: '/inbox/channels',
+    parent_key: 'inbox',
+  },
+  {
+    id: 'm-settings-users',
+    key: 'settings_users',
+    label: 'Usuarios',
+    path: '/settings/users',
+    parent_key: 'settings',
+  },
+  {
+    id: 'm-settings-teams',
+    key: 'settings_teams',
+    label: 'Equipos',
+    path: '/settings/teams',
+    parent_key: 'settings',
+  },
+  {
+    id: 'm-settings-lifecycle',
+    key: 'settings_lifecycle',
+    label: 'Lifecycle',
+    path: '/settings/lifecycle',
+    parent_key: 'settings',
+  },
+  {
+    id: 'm-settings-channels',
+    key: 'settings_channels',
+    label: 'Canales',
+    path: '/settings/channels',
+    parent_key: 'settings',
+  },
 ];
 
 const ALL_MENUS = [...ROOT_MENUS, ...CHILD_MENUS];
@@ -125,9 +257,13 @@ function buildMockQuery(planModules: typeof PM_BRANDSTART, menus = ALL_MENUS) {
     if (sql.includes('plan_modules')) {
       return Promise.resolve(planModules);
     }
-    if (sql.includes('FROM security.permissions') && sql.includes('JOIN security.menus')) {
+    if (
+      sql.includes('FROM security.permissions') &&
+      sql.includes('JOIN security.menus')
+    ) {
       // BUG: si businessId es undefined/null, la query retorna vacío
-      if (params[1] === undefined || params[1] === null) return Promise.resolve([]);
+      if (params[1] === undefined || params[1] === null)
+        return Promise.resolve([]);
       return Promise.resolve(menus);
     }
     return Promise.resolve([]);
@@ -156,7 +292,10 @@ async function buildService(
   planModules: typeof PM_BRANDSTART,
   menus = ALL_MENUS,
   permissionCount = 1,
-): Promise<{ service: AuthService; permissionRepo: ReturnType<typeof buildPermissionRepoMock> }> {
+): Promise<{
+  service: AuthService;
+  permissionRepo: ReturnType<typeof buildPermissionRepoMock>;
+}> {
   const mockQuery = buildMockQuery(planModules, menus);
   const permissionRepo = buildPermissionRepoMock(permissionCount);
 
@@ -172,8 +311,14 @@ async function buildService(
       AuthService,
       { provide: getRepositoryToken(Business), useValue: businessRepo },
       { provide: getRepositoryToken(Plan), useValue: { findOne: jest.fn() } },
-      { provide: getRepositoryToken(CrmUser), useValue: { findOne: jest.fn() } },
-      { provide: getRepositoryToken(Role), useValue: { findOne: jest.fn(), find: jest.fn() } },
+      {
+        provide: getRepositoryToken(CrmUser),
+        useValue: { findOne: jest.fn() },
+      },
+      {
+        provide: getRepositoryToken(Role),
+        useValue: { findOne: jest.fn(), find: jest.fn() },
+      },
       { provide: getRepositoryToken(Menu), useValue: { find: jest.fn() } },
       { provide: getRepositoryToken(Permission), useValue: permissionRepo },
       { provide: JwtService, useValue: { sign: jest.fn() } },
@@ -186,7 +331,6 @@ async function buildService(
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('AuthService — getMenuTree() por plan de empresa', () => {
-
   // ── BrandStart (pago único, funcionalidad base) ───────────────────────────
 
   describe('Plan BrandStart — empresa con acceso base', () => {
@@ -243,7 +387,9 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
 
     it('settings_lifecycle (hijo) tiene access_level "read_only" por definición explícita', () => {
       const settings = tree.find((n) => n.key === 'settings');
-      const lifecycle = settings?.children.find((c) => c.key === 'settings_lifecycle');
+      const lifecycle = settings?.children.find(
+        (c) => c.key === 'settings_lifecycle',
+      );
       expect(lifecycle?.access_level).toBe('read_only');
     });
 
@@ -301,19 +447,25 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
 
     it('funnels_dashboard (hijo) tiene "full" aunque el padre sea "read_only" (override explícito)', () => {
       const funnels = tree.find((n) => n.key === 'funnels');
-      const dashboard = funnels?.children.find((c) => c.key === 'funnels_dashboard');
+      const dashboard = funnels?.children.find(
+        (c) => c.key === 'funnels_dashboard',
+      );
       expect(dashboard?.access_level).toBe('full');
     });
 
     it('funnels_builder (hijo) tiene access_level "locked"', () => {
       const funnels = tree.find((n) => n.key === 'funnels');
-      const builder = funnels?.children.find((c) => c.key === 'funnels_builder');
+      const builder = funnels?.children.find(
+        (c) => c.key === 'funnels_builder',
+      );
       expect(builder?.access_level).toBe('locked');
     });
 
     it('funnels_templates (hijo) tiene access_level "read_only"', () => {
       const funnels = tree.find((n) => n.key === 'funnels');
-      const templates = funnels?.children.find((c) => c.key === 'funnels_templates');
+      const templates = funnels?.children.find(
+        (c) => c.key === 'funnels_templates',
+      );
       expect(templates?.access_level).toBe('read_only');
     });
 
@@ -345,8 +497,15 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
     });
 
     it.each([
-      'dashboard', 'crm', 'agents_ia', 'inbox', 'funnels',
-      'avatar', 'analytics', 'billing', 'settings',
+      'dashboard',
+      'crm',
+      'agents_ia',
+      'inbox',
+      'funnels',
+      'avatar',
+      'analytics',
+      'billing',
+      'settings',
     ])('módulo raíz "%s" tiene access_level "full"', (key) => {
       const node = tree.find((n) => n.key === key);
       expect(node?.access_level).toBe('full');
@@ -382,25 +541,41 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
 
     it('retorna [] cuando businessId es undefined (simula guard ausente)', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
-      const tree = await service.getMenuTree(UserRole.ADMIN, undefined as any, 'any-plan-id');
+      const tree = await service.getMenuTree(
+        UserRole.ADMIN,
+        undefined as any,
+        'any-plan-id',
+      );
       expect(tree).toEqual([]);
     });
 
     it('retorna [] cuando businessId es null', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
-      const tree = await service.getMenuTree(UserRole.ADMIN, null as any, 'any-plan-id');
+      const tree = await service.getMenuTree(
+        UserRole.ADMIN,
+        null as any,
+        'any-plan-id',
+      );
       expect(tree).toEqual([]);
     });
 
     it('retorna [] cuando role es undefined (simula token corrupto)', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
-      const tree = await service.getMenuTree(undefined as any, 'biz-123', 'plan-123');
+      const tree = await service.getMenuTree(
+        undefined as any,
+        'biz-123',
+        'plan-123',
+      );
       expect(tree).toEqual([]);
     });
 
     it('retorna [] cuando el rol no existe en security.roles', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
-      const tree = await service.getMenuTree('superuser' as any, 'biz-123', 'plan-123');
+      const tree = await service.getMenuTree(
+        'superuser' as any,
+        'biz-123',
+        'plan-123',
+      );
       expect(tree).toEqual([]);
     });
 
@@ -408,7 +583,11 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
       // permissionCount=0 → entra a ensureBusinessPermissions → QB.getMany retorna []
       // → no hay copies → query de menus retorna [] (sin permisos)
       const { service } = await buildService(PM_IMPULSE_PRO, [], 0);
-      const tree = await service.getMenuTree(UserRole.ADMIN, 'biz-sin-permisos', 'plan-id');
+      const tree = await service.getMenuTree(
+        UserRole.ADMIN,
+        'biz-sin-permisos',
+        'plan-id',
+      );
       expect(tree).toEqual([]);
     });
   });
@@ -417,7 +596,11 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
 
   describe('ensureBusinessPermissions — primera vez que una empresa pide menús', () => {
     it('copia plantillas globales cuando la empresa no tiene permisos previos', async () => {
-      const { service, permissionRepo } = await buildService(PM_IMPULSE_PRO, ALL_MENUS, 0);
+      const { service, permissionRepo } = await buildService(
+        PM_IMPULSE_PRO,
+        ALL_MENUS,
+        0,
+      );
 
       const globalTemplates = ALL_MENUS.map((m) => ({
         id: `perm-${m.id}`,
@@ -437,11 +620,18 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
 
       const saved = permissionRepo.save.mock.calls[0][0] as any[];
       expect(saved.length).toBe(globalTemplates.length);
-      expect(saved[0]).toMatchObject({ business_id: 'biz-nueva', role_id: 'role-admin-id' });
+      expect(saved[0]).toMatchObject({
+        business_id: 'biz-nueva',
+        role_id: 'role-admin-id',
+      });
     });
 
     it('NO copia plantillas si la empresa ya tiene permisos (count > 0)', async () => {
-      const { service, permissionRepo } = await buildService(PM_IMPULSE_PRO, ALL_MENUS, 5);
+      const { service, permissionRepo } = await buildService(
+        PM_IMPULSE_PRO,
+        ALL_MENUS,
+        5,
+      );
 
       await service.getMenuTree(UserRole.ADMIN, 'biz-existente', 'plan-id');
 
@@ -456,22 +646,32 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
   describe('Acceso por rol — mismo plan, distintos roles', () => {
     it('admin obtiene el árbol completo de menús', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
-      const tree = await service.getMenuTree(UserRole.ADMIN, 'biz-123', 'plan-id');
+      const tree = await service.getMenuTree(
+        UserRole.ADMIN,
+        'biz-123',
+        'plan-id',
+      );
       expect(tree.length).toBeGreaterThan(0);
     });
 
     it('manager obtiene el árbol (si existe el rol en DB)', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
-      const tree = await service.getMenuTree(UserRole.MANAGER, 'biz-123', 'plan-id');
+      const tree = await service.getMenuTree(
+        UserRole.MANAGER,
+        'biz-123',
+        'plan-id',
+      );
       expect(tree.length).toBeGreaterThan(0);
     });
 
     it('agent obtiene el árbol (si existe el rol en DB)', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
-      const tree = await service.getMenuTree(UserRole.AGENT, 'biz-123', 'plan-id');
+      const tree = await service.getMenuTree(
+        UserRole.AGENT,
+        'biz-123',
+        'plan-id',
+      );
       expect(tree.length).toBeGreaterThan(0);
     });
   });
-
 });
-

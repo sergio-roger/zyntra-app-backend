@@ -117,6 +117,10 @@ export class AuthController {
     @CurrentCrmUser() caller: { id: string | null; role: string },
     @CurrentBusiness() business: Business,
   ) {
-    return this.authService.getMenuTree(caller.role as any, business.id, business.plan_id);
+    return this.authService.getMenuTree(
+      caller.role as any,
+      business.id,
+      business.plan_id,
+    );
   }
 }
