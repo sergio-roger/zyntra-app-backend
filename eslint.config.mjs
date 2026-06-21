@@ -29,6 +29,7 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
 
       // Surgical ban on `import type` for files that NestJS needs at runtime:
       //   - DTOs: class-validator decorators must be readable by ValidationPipe.

@@ -109,7 +109,7 @@ describe('TagsController — RBAC metadata', () => {
     const roles = Reflect.getMetadata(
       'roles',
       TagsController.prototype.findAll,
-    );
+    ) as UserRole[] | undefined;
     expect(roles).toBeUndefined();
   });
 
@@ -117,7 +117,7 @@ describe('TagsController — RBAC metadata', () => {
     const roles: UserRole[] = Reflect.getMetadata(
       'roles',
       TagsController.prototype.create,
-    );
+    ) as UserRole[];
     expect(roles).toContain(UserRole.ADMIN);
     expect(roles).toContain(UserRole.MANAGER);
     expect(roles).not.toContain(UserRole.AGENT);
@@ -127,7 +127,7 @@ describe('TagsController — RBAC metadata', () => {
     const roles: UserRole[] = Reflect.getMetadata(
       'roles',
       TagsController.prototype.update,
-    );
+    ) as UserRole[];
     expect(roles).toContain(UserRole.ADMIN);
     expect(roles).toContain(UserRole.MANAGER);
   });
@@ -136,7 +136,7 @@ describe('TagsController — RBAC metadata', () => {
     const roles: UserRole[] = Reflect.getMetadata(
       'roles',
       TagsController.prototype.remove,
-    );
+    ) as UserRole[];
     expect(roles).toContain(UserRole.ADMIN);
     expect(roles).toContain(UserRole.MANAGER);
   });

@@ -115,7 +115,7 @@ describe('CrmUsersController — RBAC metadata', () => {
     const roles: UserRole[] = Reflect.getMetadata(
       'roles',
       CrmUsersController.prototype.list,
-    );
+    ) as UserRole[];
     expect(roles).toContain(UserRole.ADMIN);
     expect(roles).toContain(UserRole.MANAGER);
     expect(roles).not.toContain(UserRole.AGENT);
@@ -125,7 +125,7 @@ describe('CrmUsersController — RBAC metadata', () => {
     const roles: UserRole[] = Reflect.getMetadata(
       'roles',
       CrmUsersController.prototype.create,
-    );
+    ) as UserRole[];
     expect(roles).toEqual([UserRole.ADMIN]);
   });
 
@@ -133,7 +133,7 @@ describe('CrmUsersController — RBAC metadata', () => {
     const roles: UserRole[] = Reflect.getMetadata(
       'roles',
       CrmUsersController.prototype.update,
-    );
+    ) as UserRole[];
     expect(roles).toEqual([UserRole.ADMIN]);
   });
 
@@ -141,7 +141,7 @@ describe('CrmUsersController — RBAC metadata', () => {
     const roles: UserRole[] = Reflect.getMetadata(
       'roles',
       CrmUsersController.prototype.remove,
-    );
+    ) as UserRole[];
     expect(roles).toEqual([UserRole.ADMIN]);
   });
 });

@@ -105,7 +105,7 @@ describe('DealsService — soft-delete', () => {
 
       // softRemove is called; the returned entity has deleted_at set
       await service.remove(mockBusiness, 'deal-uuid');
-      const [[calledWith]] = dealsRepo.softRemove.mock.calls;
+      const [[calledWith]] = dealsRepo.softRemove.mock.calls as Deal[][];
       expect(calledWith.id).toBe('deal-uuid');
     });
   });

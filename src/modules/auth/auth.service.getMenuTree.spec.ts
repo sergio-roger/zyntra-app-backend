@@ -244,7 +244,7 @@ const PM_CORE_DIGITAL = [
 // ─── Helper: mock de conn.query por tipo de SQL ───────────────────────────────
 
 function buildMockQuery(planModules: typeof PM_BRANDSTART, menus = ALL_MENUS) {
-  return jest.fn().mockImplementation((sql: string, params: any[]) => {
+  return jest.fn().mockImplementation((sql: string, params: string[]) => {
     if (sql.includes('security.roles')) {
       const roleMap: Record<string, string> = {
         admin: 'role-admin-id',
@@ -281,7 +281,7 @@ function buildPermissionRepoMock(existingCount = 1) {
   return {
     count: jest.fn().mockResolvedValue(existingCount),
     createQueryBuilder: jest.fn().mockReturnValue(mockQb),
-    create: jest.fn().mockImplementation((data) => data),
+    create: jest.fn().mockImplementation(<T>(data: T): T => data),
     save: jest.fn().mockResolvedValue([]),
     find: jest.fn().mockResolvedValue([]),
     _mockQb: mockQb,
@@ -543,7 +543,7 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
       const tree = await service.getMenuTree(
         UserRole.ADMIN,
-        undefined as any,
+        undefined as unknown as string,
         'any-plan-id',
       );
       expect(tree).toEqual([]);
@@ -553,7 +553,7 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
       const tree = await service.getMenuTree(
         UserRole.ADMIN,
-        null as any,
+        null as unknown as string,
         'any-plan-id',
       );
       expect(tree).toEqual([]);
@@ -562,7 +562,7 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
     it('retorna [] cuando role es undefined (simula token corrupto)', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
       const tree = await service.getMenuTree(
-        undefined as any,
+        undefined as unknown as UserRole,
         'biz-123',
         'plan-123',
       );
@@ -572,7 +572,7 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
     it('retorna [] cuando el rol no existe en security.roles', async () => {
       const { service } = await buildService(PM_IMPULSE_PRO);
       const tree = await service.getMenuTree(
-        'superuser' as any,
+        'superuser' as unknown as UserRole,
         'biz-123',
         'plan-123',
       );
@@ -618,7 +618,9 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
       expect(permissionRepo.createQueryBuilder).toHaveBeenCalledWith('p');
       expect(permissionRepo.save).toHaveBeenCalled();
 
-      const saved = permissionRepo.save.mock.calls[0][0] as any[];
+      const saved = (
+        permissionRepo.save.mock.calls as unknown[][]
+      )[0][0] as Record<string, unknown>[];
       expect(saved.length).toBe(globalTemplates.length);
       expect(saved[0]).toMatchObject({
         business_id: 'biz-nueva',

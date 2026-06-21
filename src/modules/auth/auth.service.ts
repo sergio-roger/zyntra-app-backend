@@ -160,7 +160,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: business.id,
       email: business.email,
-      plan: (business as any).plan_object?.name || 'none',
+      plan: business.plan_object?.name || 'none',
       plan_status: business.plan_status,
       business_id: business.id,
     };
@@ -171,7 +171,7 @@ export class AuthService {
         id: business.id,
         name: business.name,
         email: business.email,
-        plan: (business as any).plan_object,
+        plan: business.plan_object,
         plan_status: business.plan_status,
         role: UserRole.ADMIN,
         crm_user_id: null,
@@ -186,7 +186,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: business.id,
       email: business.email,
-      plan: (business as any).plan_object?.name || 'none',
+      plan: business.plan_object?.name || 'none',
       plan_status: business.plan_status,
       business_id: business.id,
       crm_user_id: crmUser.id,
@@ -199,7 +199,7 @@ export class AuthService {
         id: business.id,
         name: business.name,
         email: business.email,
-        plan: (business as any).plan_object,
+        plan: business.plan_object,
         plan_status: business.plan_status,
         role: crmUser.role,
         crm_user_id: crmUser.id,
@@ -259,13 +259,12 @@ export class AuthService {
     planId?: string,
   ): Promise<MenuNode[]> {
     try {
-      const conn = this.businessRepository.manager.connection as any;
-      if (!conn) return [];
+      const conn = this.businessRepository.manager.connection;
 
-      const roleRow = await conn.query(
+      const roleRow = (await conn.query(
         `SELECT id FROM security.roles WHERE name = $1 LIMIT 1`,
         [role],
-      );
+      )) as { id: string }[];
       if (!roleRow || roleRow.length === 0) {
         this.logger.warn(
           `getMenuTree: role "${role}" not found in security.roles — run "npm run seed:rbac" to seed roles and menus`,
@@ -275,24 +274,26 @@ export class AuthService {
 
       const roleId = roleRow[0].id;
 
-      await this.ensureBusinessPermissions(businessId, roleId as string);
+      await this.ensureBusinessPermissions(businessId, roleId);
 
-      const rows = await conn.query(
+      // Mapear el resultado de la consulta raw directamente a la estructura MenuNode[] para consistencia de tipos
+      const rows = (await conn.query(
         `SELECT m.id, m.key, m.label, m.path, m.parent_key
          FROM security.permissions p
          JOIN security.menus m ON m.id = p.menu_id
          WHERE p.role_id = $1 AND p.business_id = $2
          ORDER BY m.parent_key NULLS FIRST, m.key`,
         [roleId, businessId],
-      );
+      )) as MenuNode[];
 
       // Build plan-module access map (key → access_level)
       const moduleMap = new Map<string, string>();
       if (planId) {
-        const planModules = await conn.query(
+        // Castear a clave-valor del módulo para resolver tipos al poblar el mapa de accesos
+        const planModules = (await conn.query(
           `SELECT menu_key, access_level FROM public.plan_modules WHERE plan_id = $1`,
           [planId],
-        );
+        )) as { menu_key: string; access_level: string }[];
         for (const pm of planModules) {
           moduleMap.set(pm.menu_key, pm.access_level);
         }
@@ -305,15 +306,24 @@ export class AuthService {
         return 'full';
       };
 
-      const roots = rows.filter((m: any) => m.parent_key === null);
-      return roots.map((root: any) => ({
-        ...root,
+      const roots = rows.filter((m) => m.parent_key === null);
+      return roots.map((root) => ({
+        id: root.id,
+        key: root.key,
+        label: root.label,
+        path: root.path,
+        parent_key: root.parent_key,
         access_level: resolveAccess(root.key, root.parent_key),
         children: rows
-          .filter((m: any) => m.parent_key === root.key)
-          .map((child: any) => ({
-            ...child,
+          .filter((m) => m.parent_key === root.key)
+          .map((child) => ({
+            id: child.id,
+            key: child.key,
+            label: child.label,
+            path: child.path,
+            parent_key: child.parent_key,
             access_level: resolveAccess(child.key, child.parent_key),
+            children: [],
           })),
       }));
     } catch {

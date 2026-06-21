@@ -1,30 +1,31 @@
+import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
+import { Public } from '@common/decorators/public.decorator';
+import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import { UserRole } from '@crm/enums/user-role.enum';
 import {
-  Controller,
-  Post,
   Body,
+  Controller,
   Get,
-  UseGuards,
+  Post,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
   ApiBearerAuth,
-  ApiOkResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthResponseDto, LogoutResponseDto } from './dto/auth-response.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { Public } from '@common/decorators/public.decorator';
-import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
-import { CurrentBusiness } from '@common/decorators/current-business.decorator';
-import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Business } from './entities/business.entity';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -118,7 +119,7 @@ export class AuthController {
     @CurrentBusiness() business: Business,
   ) {
     return this.authService.getMenuTree(
-      caller.role as any,
+      caller.role as UserRole,
       business.id,
       business.plan_id,
     );

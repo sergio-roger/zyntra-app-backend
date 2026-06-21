@@ -36,7 +36,7 @@ export class CrmUsersService {
   }
 
   async create(business: Business, dto: CreateCrmUserDto) {
-    const limit = (business as any).plan_object?.user_limit;
+    const limit = business.plan_object?.user_limit;
     if (limit !== undefined && limit !== null && limit !== 999999) {
       const currentCount = await this.userRepo.count({
         where: { business_id: business.id, is_active: true },
@@ -48,7 +48,7 @@ export class CrmUsersService {
             resource: 'crm_users',
             limit,
             current: currentCount,
-            message: `Tu plan "${(business as any).plan_object?.name}" permite hasta ${limit} usuarios. Ya alcanzaste el límite.`,
+            message: `Tu plan "${business.plan_object?.name}" permite hasta ${limit} usuarios. Ya alcanzaste el límite.`,
           },
           HttpStatus.PAYMENT_REQUIRED,
         );
