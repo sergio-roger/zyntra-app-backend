@@ -107,7 +107,20 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: AuthResponseDto })
   getProfile(@Request() req: RequestWithUser) {
-    return req.user;
+    const user = req.user as Business & {
+      crm_user_id?: string | null;
+      role?: string;
+      plan?: any;
+    };
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      plan_status: user.plan_status,
+      crm_user_id: user.crm_user_id,
+      plan: user.plan_object || user.plan,
+    };
   }
 
   @UseGuards(JwtAuthGuard)

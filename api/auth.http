@@ -17,7 +17,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "brandstart@demo.zyntra.com",
+  "email": "impulsepro@demo.zyntra.com",
   "password": "Zyntra2025!"
 }
 
@@ -46,3 +46,23 @@ Content-Type: application/json
 ### Logout
 POST {{baseUrl}}/auth/logout
 Content-Type: application/json
+
+
+### =========================================================================
+### PRODUCTION TESTS (https://marketing.zyntra-ts.com/backend/api)
+### =========================================================================
+
+### Prod Login as Business (Implicit ADMIN role)
+# @name prodLoginBusiness
+POST {{prodBaseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "brandstart@demo.zyntra.com",
+  "password": "Zyntra2025!"
+}
+
+### Prod Get Menu Tree (requires prodLoginBusiness first to set cookie/session)
+GET {{prodBaseUrl}}/auth/menus
+Content-Type: application/json
+

@@ -108,7 +108,7 @@ async function bootstrap() {
       is_popular: false,
       contact_limit: 999999,
       task_limit: 999999,
-      user_limit: 999999,
+      user_limit: 10,
       ai_agent_limit: 10,
       chatbot_limit: 5,
       funnel_limit: 999999,
