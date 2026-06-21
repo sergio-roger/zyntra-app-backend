@@ -44,7 +44,7 @@ describe('AuthService — unified login', () => {
 
   const crmUserRepo = { findOne: jest.fn() };
 
-  const roleRepo = { findOne: jest.fn() };
+  const roleRepo = { findOne: jest.fn(), find: jest.fn() };
   const menuRepo = { find: jest.fn() };
   const permissionRepo = { find: jest.fn() };
 
@@ -140,6 +140,22 @@ describe('AuthService — unified login', () => {
       await expect(
         service.login({ email: 'nobody@test.com', password: 'whatever' }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('getAllRoles()', () => {
+    it('returns all roles ordered by name', async () => {
+      const mockRoles = [
+        { id: '1', name: 'admin', label: 'Administrador' },
+        { id: '2', name: 'agent', label: 'Agente' },
+      ];
+      roleRepo.find.mockResolvedValueOnce(mockRoles);
+
+      const result = await service.getAllRoles();
+      expect(result).toEqual(mockRoles);
+      expect(roleRepo.find).toHaveBeenCalledWith({
+        order: { name: 'ASC' },
+      });
     });
   });
 });

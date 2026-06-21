@@ -25,6 +25,9 @@ export class Menu {
   @Column({ type: 'varchar', length: 100, nullable: true })
   parent_key: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 

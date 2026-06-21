@@ -279,6 +279,12 @@ export class AuthService {
     }
   }
 
+  async getAllRoles(): Promise<Role[]> {
+    return this.roleRepository.find({
+      order: { name: 'ASC' },
+    });
+  }
+
   async getAllMenus(): Promise<Menu[]> {
     return this.menuRepository.find({
       order: { parent_key: 'ASC', key: 'ASC' },

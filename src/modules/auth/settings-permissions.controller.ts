@@ -19,6 +19,12 @@ import { AuthService } from './auth.service';
 export class SettingsPermissionsController {
   constructor(private readonly authService: AuthService) {}
 
+  @Get('roles')
+  @ApiOperation({ summary: 'Get all user roles' })
+  getAllRoles() {
+    return this.authService.getAllRoles();
+  }
+
   @Get('menus')
   @ApiOperation({ summary: 'Get all system menus' })
   getAllMenus() {

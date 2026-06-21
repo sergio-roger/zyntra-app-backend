@@ -17,6 +17,21 @@ export class Role {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  label: string;
+
+  @Column({ name: 'is_editable', type: 'boolean', default: true })
+  isEditable: boolean;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  badge: string;
+
+  @Column({ name: 'badge_color', type: 'varchar', length: 100, nullable: true })
+  badgeColor: string;
+
+  @Column({ name: 'icon_color', type: 'varchar', length: 100, nullable: true })
+  iconColor: string;
+
   @CreateDateColumn()
   created_at: Date;
 
