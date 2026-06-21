@@ -12,7 +12,9 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
 import { Business } from '@auth/entities/business.entity';
+import { UserRole } from '@crm/enums/user-role.enum';
 import { CrmUsersService } from './crm-users.service';
 import { CreateCrmUserDto, UpdateCrmUserDto } from './dto/crm-user.dto';
 
@@ -24,18 +26,21 @@ export class CrmUsersController {
   constructor(private readonly usersService: CrmUsersService) {}
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'List all business users' })
   list(@CurrentBusiness() business: Business) {
     return this.usersService.list(business);
   }
 
   @Post()
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new user' })
   create(@CurrentBusiness() business: Business, @Body() dto: CreateCrmUserDto) {
     return this.usersService.create(business, dto);
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update a user' })
   update(
     @CurrentBusiness() business: Business,
@@ -46,6 +51,7 @@ export class CrmUsersController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete a user' })
   remove(
     @CurrentBusiness() business: Business,

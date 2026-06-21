@@ -8,11 +8,23 @@ import { AuthController } from './auth.controller';
 import { Business } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
 import { PlanDescription } from './entities/plan-description.entity';
+import { Role } from './entities/role.entity';
+import { Menu } from './entities/menu.entity';
+import { Permission } from './entities/permission.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { CrmUser } from '@crm/entities/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Business, Plan, PlanDescription]),
+    TypeOrmModule.forFeature([
+      Business,
+      Plan,
+      PlanDescription,
+      CrmUser,
+      Role,
+      Menu,
+      Permission,
+    ]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

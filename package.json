@@ -21,7 +21,8 @@
     "seed:plans": "ts-node -r tsconfig-paths/register scripts/seed-plans.ts",
     "seed": "ts-node -r tsconfig-paths/register scripts/seed-all.ts",
     "db:reset": "ts-node -r tsconfig-paths/register scripts/reset-db.ts",
-    "db:clean-seed": "npm run db:reset && npm run seed"
+    "db:clean-seed": "npm run db:reset && npm run seed",
+    "seed:rbac": "ts-node -r tsconfig-paths/register scripts/seed-rbac.ts"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",

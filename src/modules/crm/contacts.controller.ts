@@ -19,7 +19,9 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
 import { Business } from '@auth/entities/business.entity';
+import { UserRole } from '@crm/enums/user-role.enum';
 import { ContactsService } from '@crm/contacts.service';
 import { CreateContactDto } from '@crm/dto/create-contact.dto';
 import { UpdateContactDto } from '@crm/dto/update-contact.dto';
@@ -80,6 +82,7 @@ export class ContactsController {
   }
 
   @Delete('contacts/:id')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
   @ApiOperation({ summary: 'Soft-delete a contact' })
   async remove(
@@ -119,6 +122,7 @@ export class ContactsController {
   }
 
   @Patch('contacts/:id/archive')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Archive a lead' })
   archive(
     @CurrentBusiness() business: Business,
@@ -139,6 +143,7 @@ export class ContactsController {
   }
 
   @Post('contacts/import')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Import multiple contacts' })
   @ApiCreatedResponse()
   import(

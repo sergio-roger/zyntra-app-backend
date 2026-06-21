@@ -1,13 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { CrmTask } from './entities/task.entity';
 import { Business } from '@auth/entities/business.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskStatus } from '@crm/enums/task-status.enum';
+import { UserRole } from '@crm/enums/user-role.enum';
 import { ContactsService } from './contacts.service';
 import { ActivityType } from './enums/activity-type.enum';
+
+export interface CallerContext {
+  id: string | null;
+  role: UserRole;
+}
 
 @Injectable()
 export class CrmTasksService {
@@ -20,6 +30,7 @@ export class CrmTasksService {
   async list(
     business: Business,
     query: { status?: TaskStatus; contact_id?: string },
+    caller?: CallerContext,
   ) {
     const qb = this.tasksRepo
       .createQueryBuilder('t')
@@ -34,6 +45,11 @@ export class CrmTasksService {
       qb.andWhere('t.contact_id = :cid', { cid: query.contact_id });
     }
 
+    // Agent sees only tasks assigned to them
+    if (caller?.role === UserRole.AGENT && caller?.id) {
+      qb.andWhere('t.assigned_to = :uid', { uid: caller.id });
+    }
+
     qb.orderBy('t.due_date', 'ASC');
 
     return qb.getMany();
@@ -41,7 +57,7 @@ export class CrmTasksService {
 
   async findOne(business: Business, id: string) {
     const task = await this.tasksRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, business_id: business.id } as FindOptionsWhere<CrmTask>,
       relations: ['contact'],
     });
     if (!task) throw new NotFoundException('Task not found');
@@ -57,21 +73,32 @@ export class CrmTasksService {
     return this.tasksRepo.save(task);
   }
 
-  async update(business: Business, id: string, dto: UpdateTaskDto) {
+  async update(
+    business: Business,
+    id: string,
+    dto: UpdateTaskDto,
+    caller?: CallerContext,
+  ) {
     const task = await this.findOne(business, id);
-    const oldStatus = task.status;
 
+    if (
+      caller?.role === UserRole.AGENT &&
+      task.assigned_to !== caller.id
+    ) {
+      throw new ForbiddenException('Solo puedes editar tareas asignadas a ti');
+    }
+
+    const oldStatus = task.status;
     Object.assign(task, dto);
     const saved = await this.tasksRepo.save(task);
 
-    // If task is completed and has a contact, create an activity
     if (
       saved.status === TaskStatus.COMPLETED &&
       oldStatus !== TaskStatus.COMPLETED &&
       saved.contact_id
     ) {
       await this.contactsService.addActivity(business, saved.contact_id, {
-        type: ActivityType.NOTE, // Or a new TASK_COMPLETED type
+        type: ActivityType.NOTE,
         content: `Tarea completada: ${saved.title}`,
         metadata: { task_id: saved.id },
       });

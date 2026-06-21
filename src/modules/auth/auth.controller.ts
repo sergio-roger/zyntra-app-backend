@@ -20,6 +20,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthResponseDto, LogoutResponseDto } from './dto/auth-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Public } from '@common/decorators/public.decorator';
+import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 
 @ApiTags('auth')
@@ -27,6 +29,7 @@ import type { RequestWithUser } from '@common/interfaces/request-with-user.inter
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new business' })
   @ApiCreatedResponse({ type: AuthResponseDto })
@@ -41,8 +44,9 @@ export class AuthController {
     return user;
   }
 
+  @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Login as a business' })
+  @ApiOperation({ summary: 'Login as a business or CRM user' })
   @ApiOkResponse({ type: AuthResponseDto })
   async login(@Body() loginDto: LoginDto, @Request() req: RequestWithUser) {
     const { access_token, user } = await this.authService.login(loginDto);
@@ -52,14 +56,16 @@ export class AuthController {
     return user;
   }
 
+  @Public()
   @Post('logout')
-  @ApiOperation({ summary: 'Logout business' })
+  @ApiOperation({ summary: 'Logout' })
   @ApiOkResponse({ type: LogoutResponseDto })
   logout(@Request() req: RequestWithUser) {
     req.session = null;
     return { message: 'Logged out successfully' };
   }
 
+  @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset link' })
   @ApiOkResponse({ type: LogoutResponseDto })
@@ -70,6 +76,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using token from email' })
   @ApiOkResponse({ type: LogoutResponseDto })
@@ -84,7 +91,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh session token' })
   @ApiOkResponse({ type: AuthResponseDto })
   refresh(@Request() req: RequestWithUser) {
-    const { access_token, user } = this.authService.refresh(req.user);
+    const { access_token, user } = this.authService.refresh(req.user as any);
     if (req.session) {
       req.session.jwt = access_token;
     }
@@ -94,9 +101,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get current business profile' })
+  @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: AuthResponseDto })
   getProfile(@Request() req: RequestWithUser) {
     return req.user;
+  }
+
+  @Get('menus')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get menu tree filtered by role' })
+  async getMenus(@CurrentCrmUser() caller: { id: string | null; role: string }) {
+    return this.authService.getMenuTree(caller.role as any);
   }
 }

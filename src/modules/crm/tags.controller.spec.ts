@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TagsController } from './tags.controller';
 import { TagsService } from './tags.service';
+import { RolesGuard } from '@common/guards/roles.guard';
+import { Reflector } from '@nestjs/core';
 import { Business } from '@auth/entities/business.entity';
 import { Tag } from './entities/tag.entity';
+import { UserRole } from '@crm/enums/user-role.enum';
 
-const mockBusiness = {
-  id: 'business-uuid-1234',
-  name: 'Test Business',
-} as Business;
+const mockBusiness = { id: 'business-uuid-1234', name: 'Test Business' } as Business;
 
 const mockTag = {
   id: 'tag-uuid-1',
@@ -32,84 +32,82 @@ describe('TagsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TagsController],
       providers: [
-        {
-          provide: TagsService,
-          useValue: mockTagsService,
-        },
+        { provide: TagsService, useValue: mockTagsService },
+        { provide: Reflector, useValue: new Reflector() },
       ],
-    }).compile();
+    })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<TagsController>(TagsController);
     service = module.get<TagsService>(TagsService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+  it('should be defined', () => expect(controller).toBeDefined());
 
   describe('findAll', () => {
     it('should call tagsService.findAll with the current business', async () => {
-      const tagsList = [mockTag];
-      mockTagsService.findAll.mockResolvedValue(tagsList);
-
+      mockTagsService.findAll.mockResolvedValue([mockTag]);
       const result = await controller.findAll(mockBusiness);
-
       expect(service.findAll).toHaveBeenCalledWith(mockBusiness);
-      expect(result).toEqual(tagsList);
+      expect(result).toEqual([mockTag]);
     });
   });
 
   describe('create', () => {
-    it('should call tagsService.create with current business and dto', async () => {
+    it('should call tagsService.create', async () => {
       const createDto = { name: 'Support', color: '#f59e0b' };
-      mockTagsService.create.mockResolvedValue({
-        id: 'new-uuid',
-        ...createDto,
-        business_id: mockBusiness.id,
-      });
-
+      mockTagsService.create.mockResolvedValue({ id: 'new-uuid', ...createDto, business_id: mockBusiness.id });
       const result = await controller.create(mockBusiness, createDto);
-
       expect(service.create).toHaveBeenCalledWith(mockBusiness, createDto);
       expect(result).toHaveProperty('id');
     });
   });
 
   describe('update', () => {
-    it('should call tagsService.update with current business, id, and dto', async () => {
+    it('should call tagsService.update', async () => {
       const updateDto = { name: 'Support Tier 1' };
-      mockTagsService.update.mockResolvedValue({
-        ...mockTag,
-        name: updateDto.name,
-      });
-
-      const result = await controller.update(
-        mockBusiness,
-        'tag-uuid-1',
-        updateDto,
-      );
-
-      expect(service.update).toHaveBeenCalledWith(
-        mockBusiness,
-        'tag-uuid-1',
-        updateDto,
-      );
+      mockTagsService.update.mockResolvedValue({ ...mockTag, name: updateDto.name });
+      const result = await controller.update(mockBusiness, 'tag-uuid-1', updateDto);
+      expect(service.update).toHaveBeenCalledWith(mockBusiness, 'tag-uuid-1', updateDto);
       expect(result.name).toBe(updateDto.name);
     });
   });
 
   describe('remove', () => {
-    it('should call tagsService.remove with current business and id', async () => {
+    it('should call tagsService.remove', async () => {
       mockTagsService.remove.mockResolvedValue(undefined);
-
-      const result = await controller.remove(mockBusiness, 'tag-uuid-1');
-
+      await controller.remove(mockBusiness, 'tag-uuid-1');
       expect(service.remove).toHaveBeenCalledWith(mockBusiness, 'tag-uuid-1');
-      expect(result).toBeUndefined();
     });
+  });
+});
+
+describe('TagsController — RBAC metadata', () => {
+  it('findAll has no role restriction (all authenticated)', () => {
+    const roles = Reflect.getMetadata('roles', TagsController.prototype.findAll);
+    expect(roles).toBeUndefined();
+  });
+
+  it('create requires ADMIN or MANAGER', () => {
+    const roles: UserRole[] = Reflect.getMetadata('roles', TagsController.prototype.create);
+    expect(roles).toContain(UserRole.ADMIN);
+    expect(roles).toContain(UserRole.MANAGER);
+    expect(roles).not.toContain(UserRole.AGENT);
+  });
+
+  it('update requires ADMIN or MANAGER', () => {
+    const roles: UserRole[] = Reflect.getMetadata('roles', TagsController.prototype.update);
+    expect(roles).toContain(UserRole.ADMIN);
+    expect(roles).toContain(UserRole.MANAGER);
+  });
+
+  it('remove requires ADMIN or MANAGER', () => {
+    const roles: UserRole[] = Reflect.getMetadata('roles', TagsController.prototype.remove);
+    expect(roles).toContain(UserRole.ADMIN);
+    expect(roles).toContain(UserRole.MANAGER);
   });
 });

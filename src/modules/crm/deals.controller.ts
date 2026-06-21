@@ -19,7 +19,9 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
 import { Business } from '@auth/entities/business.entity';
+import { UserRole } from '@crm/enums/user-role.enum';
 import { DealsService } from '@crm/deals.service';
 import { CreateDealDto, UpdateDealDto, ListDealsDto } from '@crm/dto/deal.dto';
 
@@ -37,9 +39,7 @@ export class DealsController {
   }
 
   @Get('kanban')
-  @ApiOperation({
-    summary: 'List open deals grouped by stage for Kanban board',
-  })
+  @ApiOperation({ summary: 'List open deals grouped by stage for Kanban board' })
   kanban(@CurrentBusiness() business: Business) {
     return this.deals.kanban(business);
   }
@@ -71,6 +71,7 @@ export class DealsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a deal' })
   async remove(

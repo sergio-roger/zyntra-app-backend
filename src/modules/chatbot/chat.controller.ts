@@ -14,10 +14,12 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
-import { ChatRequestDto } from './dto/chat.dto';
-import { ChatResponseDto } from './dto/chat.dto';
+import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
 import { LeadCaptureDto } from './dto/lead-capture.dto';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { Public } from '@common/decorators/public.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import { UserRole } from '@crm/enums/user-role.enum';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 
 @ApiTags('Chat')
@@ -25,6 +27,7 @@ import type { RequestWithUser } from '@common/interfaces/request-with-user.inter
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  @Public()
   @Get('public-config')
   @ApiOperation({ summary: 'Get public chatbot configuration' })
   async getPublicConfig(@Query('business_id') businessId: string) {
@@ -55,6 +58,20 @@ export class ChatController {
     return this.chatService.getConversationDetail(businessId, id);
   }
 
+  @Get('embed-snippet')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get chatbot embed snippet' })
+  async getEmbedSnippet(@Req() req: RequestWithUser) {
+    const businessId = (req.user as { id?: string }).id;
+    if (!businessId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    return { snippet: `<script src="/embed.js?b=${businessId}"></script>` };
+  }
+
+  @Public()
   @Post('chat')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send chat message' })
@@ -66,6 +83,7 @@ export class ChatController {
     return this.chatService.processChat(request, ip);
   }
 
+  @Public()
   @Post('lead-capture')
   @ApiOperation({ summary: 'Capture lead from chatbot' })
   async leadCapture(@Body() dto: LeadCaptureDto) {

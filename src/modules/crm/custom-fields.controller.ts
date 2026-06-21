@@ -13,7 +13,9 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
 import { Business } from '@auth/entities/business.entity';
+import { UserRole } from '@crm/enums/user-role.enum';
 import { CustomFieldsService } from './custom-fields.service';
 import {
   CreateCustomFieldDto,
@@ -34,6 +36,7 @@ export class CustomFieldsController {
   }
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create a custom field' })
   create(
     @CurrentBusiness() business: Business,
@@ -43,6 +46,7 @@ export class CustomFieldsController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Update a custom field' })
   update(
     @CurrentBusiness() business: Business,
@@ -53,6 +57,7 @@ export class CustomFieldsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a custom field' })
   remove(

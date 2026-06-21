@@ -14,12 +14,24 @@ import { Business, PlanStatus } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { CrmUser } from '@crm/entities/user.entity';
+import { UserRole } from '@crm/enums/user-role.enum';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 // TODO: Replace with persisted PasswordResetToken entity + email delivery (SMTP/Resend).
 // In-memory store is fine for dev / single-instance only.
 type ResetEntry = { businessId: string; expiresAt: number };
 const resetTokens = new Map<string, ResetEntry>();
 const RESET_TTL_MS = 30 * 60 * 1000; // 30 min
+
+export interface MenuNode {
+  id: string;
+  key: string;
+  label: string;
+  path: string;
+  parent_key: string | null;
+  children: MenuNode[];
+}
 
 @Injectable()
 export class AuthService {
@@ -30,6 +42,8 @@ export class AuthService {
     private businessRepository: Repository<Business>,
     @InjectRepository(Plan)
     private planRepository: Repository<Plan>,
+    @InjectRepository(CrmUser)
+    private crmUserRepository: Repository<CrmUser>,
     private jwtService: JwtService,
   ) {}
 
@@ -44,7 +58,6 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    // Assign default plan (Impulse Pro)
     const defaultPlan = await this.planRepository.findOne({
       where: { name: 'Impulse Pro' },
     });
@@ -63,39 +76,76 @@ export class AuthService {
     });
 
     const savedBusiness = await this.businessRepository.save(business);
-
     const reloaded = await this.validateBusiness(savedBusiness.id);
-    return this.generateToken(reloaded!);
+    return this.generateBusinessToken(reloaded!);
   }
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
     const normalizedEmail = email.toLowerCase();
 
+    // 1. Try Business login first
     const business = await this.businessRepository.findOne({
       where: { email: normalizedEmail },
       relations: ['plan_object'],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password_hash: true,
+        plan_status: true,
+        plan_id: true,
+      },
+    });
+
+    if (business && (await bcrypt.compare(password, business.password_hash))) {
+      const reloaded = await this.validateBusiness(business.id);
+      return this.generateBusinessToken(reloaded!);
+    }
+
+    // 2. Try CrmUser login
+    const crmUser = await this.crmUserRepository.findOne({
+      where: { email: normalizedEmail, is_active: true },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        password_hash: true,
+        business_id: true,
+      },
     });
 
     if (
-      !business ||
-      !(await bcrypt.compare(password, business.password_hash))
+      crmUser &&
+      crmUser.password_hash &&
+      (await bcrypt.compare(password, crmUser.password_hash))
     ) {
-      throw new UnauthorizedException('Invalid credentials');
+      const businessEntity = await this.validateBusiness(crmUser.business_id);
+      if (!businessEntity) {
+        throw new UnauthorizedException('Credenciales incorrectas');
+      }
+      return this.generateCrmUserToken(businessEntity, crmUser);
     }
 
-    return this.generateToken(business);
+    throw new UnauthorizedException('Credenciales incorrectas');
   }
 
-  refresh(business: Business) {
-    return this.generateToken(business);
+  refresh(user: Business & { crm_user_id?: string | null; role?: UserRole }) {
+    if (user.crm_user_id) {
+      const crmUserPartial = {
+        id: user.crm_user_id,
+        role: user.role ?? UserRole.ADMIN,
+      } as CrmUser;
+      return this.generateCrmUserToken(user, crmUserPartial);
+    }
+    return this.generateBusinessToken(user);
   }
 
-  private generateToken(business: Business) {
-    const payload = {
+  private generateBusinessToken(business: Business) {
+    const payload: JwtPayload = {
       sub: business.id,
       email: business.email,
-      plan: business.plan_object?.name || 'none',
+      plan: (business as any).plan_object?.name || 'none',
       plan_status: business.plan_status,
       business_id: business.id,
     };
@@ -106,8 +156,35 @@ export class AuthService {
         id: business.id,
         name: business.name,
         email: business.email,
-        plan: business.plan_object,
+        plan: (business as any).plan_object,
         plan_status: business.plan_status,
+        role: UserRole.ADMIN,
+        crm_user_id: null,
+      },
+    };
+  }
+
+  private generateCrmUserToken(business: Business, crmUser: Pick<CrmUser, 'id' | 'role' | 'business_id'>) {
+    const payload: JwtPayload = {
+      sub: business.id,
+      email: business.email,
+      plan: (business as any).plan_object?.name || 'none',
+      plan_status: business.plan_status,
+      business_id: business.id,
+      crm_user_id: crmUser.id,
+      role: crmUser.role,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: business.id,
+        name: business.name,
+        email: business.email,
+        plan: (business as any).plan_object,
+        plan_status: business.plan_status,
+        role: crmUser.role,
+        crm_user_id: crmUser.id,
       },
     };
   }
@@ -132,7 +209,6 @@ export class AuthService {
       expiresAt: Date.now() + RESET_TTL_MS,
     });
 
-    // TODO: Replace with real email delivery (Resend / SMTP).
     const link = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
     this.logger.warn(
       `[DEV] Password reset link for ${business.email}: ${link}`,
@@ -157,5 +233,37 @@ export class AuthService {
     business.password_hash = await bcrypt.hash(newPassword, 10);
     await this.businessRepository.save(business);
     resetTokens.delete(token);
+  }
+
+  async getMenuTree(role: UserRole): Promise<MenuNode[]> {
+    try {
+      const conn = (this.businessRepository.manager.connection) as any;
+      if (!conn) return [];
+
+      const roleRow = await conn.query(
+        `SELECT id FROM security.roles WHERE name = $1 LIMIT 1`,
+        [role],
+      );
+      if (!roleRow || roleRow.length === 0) return [];
+
+      const roleId = roleRow[0].id;
+
+      const rows = await conn.query(
+        `SELECT m.id, m.key, m.label, m.path, m.parent_key
+         FROM security.permissions p
+         JOIN security.menus m ON m.id = p.menu_id
+         WHERE p.role_id = $1
+         ORDER BY m.parent_key NULLS FIRST, m.key`,
+        [roleId],
+      );
+
+      const roots = rows.filter((m: any) => m.parent_key === null);
+      return roots.map((root: any) => ({
+        ...root,
+        children: rows.filter((m: any) => m.parent_key === root.key),
+      }));
+    } catch {
+      return [];
+    }
   }
 }
