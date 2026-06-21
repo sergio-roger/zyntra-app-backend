@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { Business, PlanStatus } from './entities/business.entity';
@@ -140,6 +140,53 @@ describe('AuthService — unified login', () => {
       await expect(
         service.login({ email: 'nobody@test.com', password: 'whatever' }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('register()', () => {
+    const mockPlan = { id: 'plan-impulse-id', name: 'Impulse Pro' };
+    const savedBusiness = {
+      id: 'biz-new-uuid',
+      name: 'Nueva Empresa',
+      email: 'nueva@test.com',
+      plan_status: PlanStatus.TRIAL,
+    };
+
+    it('throws BadRequestException when Impulse Pro plan is not seeded', async () => {
+      businessRepo.findOne.mockResolvedValueOnce(null); // no conflict
+      planRepo.findOne.mockResolvedValueOnce(null);     // plan not found
+
+      await expect(
+        service.register({ name: 'Nueva', email: 'nueva@test.com', password: 'Pass123!' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws ConflictException when email is already registered', async () => {
+      businessRepo.findOne.mockResolvedValueOnce(mockBusiness); // email exists
+
+      await expect(
+        service.register({ name: 'Dup', email: 'biz@test.com', password: 'Pass123!' }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('creates business with plan_id from Impulse Pro when plan is seeded', async () => {
+      businessRepo.findOne
+        .mockResolvedValueOnce(null)        // no conflict
+        .mockResolvedValueOnce(savedBusiness); // validateBusiness reload
+      planRepo.findOne.mockResolvedValueOnce(mockPlan);
+      businessRepo.create.mockReturnValueOnce(savedBusiness);
+      businessRepo.save.mockResolvedValueOnce(savedBusiness);
+
+      const result = await service.register({
+        name: 'Nueva Empresa',
+        email: 'nueva@test.com',
+        password: 'Pass123!',
+      });
+
+      expect(businessRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ plan_id: mockPlan.id }),
+      );
+      expect(result.user.crm_user_id).toBeNull();
     });
   });
 

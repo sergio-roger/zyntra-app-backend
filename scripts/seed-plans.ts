@@ -45,12 +45,12 @@ async function bootstrap() {
       modules: {
         dashboard: ModuleAccessLevel.FULL,
         dashboard_home: ModuleAccessLevel.FULL,
-        crm: ModuleAccessLevel.READ_ONLY,
-        crm_contacts: ModuleAccessLevel.READ_ONLY,
+        crm: ModuleAccessLevel.LOCKED,
+        crm_contacts: ModuleAccessLevel.LOCKED,
         crm_leads: ModuleAccessLevel.LOCKED,
         crm_deals: ModuleAccessLevel.LOCKED,
-        crm_tags: ModuleAccessLevel.READ_ONLY,
-        crm_tasks: ModuleAccessLevel.READ_ONLY,
+        crm_tags: ModuleAccessLevel.LOCKED,
+        crm_tasks: ModuleAccessLevel.LOCKED,
         crm_fields: ModuleAccessLevel.LOCKED,
         crm_segments: ModuleAccessLevel.LOCKED,
         agents_ia: ModuleAccessLevel.LOCKED,
@@ -194,6 +194,8 @@ async function bootstrap() {
     const definedKeys = Object.keys(data.modules);
     for (const key of definedKeys) {
       const accessLevel = data.modules[key as keyof typeof data.modules];
+      if (!accessLevel) continue;
+
       let pm = await planModuleRepo.findOne({
         where: { plan_id: plan.id, menu_key: key },
       });

@@ -109,13 +109,14 @@ export class AuthController {
     return req.user;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('menus')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get menu tree filtered by role' })
+  @ApiOperation({ summary: 'Get menu tree filtered by role and plan' })
   async getMenus(
     @CurrentCrmUser() caller: { id: string | null; role: string },
     @CurrentBusiness() business: Business,
   ) {
-    return this.authService.getMenuTree(caller.role as any, business.id);
+    return this.authService.getMenuTree(caller.role as any, business.id, business.plan_id);
   }
 }

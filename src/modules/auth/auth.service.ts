@@ -33,6 +33,7 @@ export interface MenuNode {
   label: string;
   path: string;
   parent_key: string | null;
+  access_level?: string;
   children: MenuNode[];
 }
 
@@ -70,6 +71,11 @@ export class AuthService {
     const defaultPlan = await this.planRepository.findOne({
       where: { name: 'Impulse Pro' },
     });
+    if (!defaultPlan) {
+      throw new BadRequestException(
+        'System not configured: run seed-plans before registering businesses',
+      );
+    }
 
     const password_hash = await bcrypt.hash(password, 10);
     const trial_ends_at = new Date();
@@ -79,7 +85,7 @@ export class AuthService {
       name,
       email: normalizedEmail,
       password_hash,
-      plan_id: defaultPlan?.id,
+      plan_id: defaultPlan.id,
       plan_status: PlanStatus.TRIAL,
       trial_ends_at,
     });
@@ -247,7 +253,7 @@ export class AuthService {
     resetTokens.delete(token);
   }
 
-  async getMenuTree(role: UserRole, businessId: string): Promise<MenuNode[]> {
+  async getMenuTree(role: UserRole, businessId: string, planId?: string): Promise<MenuNode[]> {
     try {
       const conn = this.businessRepository.manager.connection as any;
       if (!conn) return [];
@@ -256,7 +262,12 @@ export class AuthService {
         `SELECT id FROM security.roles WHERE name = $1 LIMIT 1`,
         [role],
       );
-      if (!roleRow || roleRow.length === 0) return [];
+      if (!roleRow || roleRow.length === 0) {
+        this.logger.warn(
+          `getMenuTree: role "${role}" not found in security.roles — run "npm run seed:rbac" to seed roles and menus`,
+        );
+        return [];
+      }
 
       const roleId = roleRow[0].id;
 
@@ -271,10 +282,34 @@ export class AuthService {
         [roleId, businessId],
       );
 
+      // Build plan-module access map (key → access_level)
+      const moduleMap = new Map<string, string>();
+      if (planId) {
+        const planModules = await conn.query(
+          `SELECT menu_key, access_level FROM public.plan_modules WHERE plan_id = $1`,
+          [planId],
+        );
+        for (const pm of planModules) {
+          moduleMap.set(pm.menu_key, pm.access_level);
+        }
+      }
+
+      const resolveAccess = (key: string, parentKey: string | null): string => {
+        if (moduleMap.has(key)) return moduleMap.get(key)!;
+        if (parentKey && moduleMap.has(parentKey)) return moduleMap.get(parentKey)!;
+        return 'full';
+      };
+
       const roots = rows.filter((m: any) => m.parent_key === null);
       return roots.map((root: any) => ({
         ...root,
-        children: rows.filter((m: any) => m.parent_key === root.key),
+        access_level: resolveAccess(root.key, root.parent_key),
+        children: rows
+          .filter((m: any) => m.parent_key === root.key)
+          .map((child: any) => ({
+            ...child,
+            access_level: resolveAccess(child.key, child.parent_key),
+          })),
       }));
     } catch {
       return [];
@@ -296,7 +331,12 @@ export class AuthService {
       .where('p.role_id = :roleId', { roleId })
       .andWhere('p.business_id IS NULL')
       .getMany();
-    if (templates.length === 0) return;
+    if (templates.length === 0) {
+      this.logger.warn(
+        `ensureBusinessPermissions: no global permission templates found for role "${roleId}" — run "npm run seed:rbac"`,
+      );
+      return;
+    }
 
     const copies = templates.map((t) =>
       this.permissionRepository.create({

@@ -29,6 +29,7 @@ async function bootstrap() {
     'public.lifecycle_stages',
     'public.chatbot_configs',
     'public.plan_descriptions',
+    'public.plan_modules',
     'public.businesses',
     'public.plans',
   ];
