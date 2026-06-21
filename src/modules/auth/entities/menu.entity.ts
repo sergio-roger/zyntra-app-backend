@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity({ name: 'menus', schema: 'security' })
 export class Menu {
@@ -17,4 +24,10 @@ export class Menu {
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   parent_key: string | null;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
 }

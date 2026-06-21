@@ -5,6 +5,8 @@ import {
   JoinColumn,
   Index,
   Column,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { Menu } from './menu.entity';
@@ -28,4 +30,10 @@ export class Permission {
   @ManyToOne(() => Menu, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'menu_id' })
   menu: Menu;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
 }
