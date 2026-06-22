@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   ManyToMany,
   JoinColumn,
@@ -15,7 +16,10 @@ import { UserRole } from '@crm/enums/user-role.enum';
 import { Team } from './team.entity';
 
 @Entity({ name: 'users', schema: 'security' })
-@Index(['business_id', 'email'], { unique: true })
+@Index('UQ_security_users_business_email', ['business_id', 'email'], {
+  unique: true,
+  where: '"deleted_at" IS NULL',
+})
 export class CrmUser {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -61,4 +65,7 @@ export class CrmUser {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  @DeleteDateColumn({ nullable: true })
+  deleted_at: Date | null;
 }

@@ -19,13 +19,17 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
+import { UserRole } from '@crm/enums/user-role.enum';
 import { DealsService } from '@crm/deals.service';
 import { CreateDealDto, UpdateDealDto, ListDealsDto } from '@crm/dto/deal.dto';
 
 @ApiTags('crm-deals')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@RequiresModule('crm_deals')
 @Controller('crm/deals')
 export class DealsController {
   constructor(private readonly deals: DealsService) {}
@@ -71,6 +75,7 @@ export class DealsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a deal' })
   async remove(

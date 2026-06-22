@@ -1,32 +1,38 @@
+import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
+import { Public } from '@common/decorators/public.decorator';
+import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import { UserRole } from '@crm/enums/user-role.enum';
 import {
-  Controller,
-  Post,
   Body,
+  Controller,
   Get,
-  UseGuards,
+  Post,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
   ApiBearerAuth,
-  ApiOkResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthResponseDto, LogoutResponseDto } from './dto/auth-response.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { Business } from './entities/business.entity';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new business' })
   @ApiCreatedResponse({ type: AuthResponseDto })
@@ -41,8 +47,9 @@ export class AuthController {
     return user;
   }
 
+  @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Login as a business' })
+  @ApiOperation({ summary: 'Login as a business or CRM user' })
   @ApiOkResponse({ type: AuthResponseDto })
   async login(@Body() loginDto: LoginDto, @Request() req: RequestWithUser) {
     const { access_token, user } = await this.authService.login(loginDto);
@@ -52,14 +59,16 @@ export class AuthController {
     return user;
   }
 
+  @Public()
   @Post('logout')
-  @ApiOperation({ summary: 'Logout business' })
+  @ApiOperation({ summary: 'Logout' })
   @ApiOkResponse({ type: LogoutResponseDto })
   logout(@Request() req: RequestWithUser) {
     req.session = null;
     return { message: 'Logged out successfully' };
   }
 
+  @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset link' })
   @ApiOkResponse({ type: LogoutResponseDto })
@@ -70,6 +79,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using token from email' })
   @ApiOkResponse({ type: LogoutResponseDto })
@@ -94,9 +104,37 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get current business profile' })
+  @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: AuthResponseDto })
   getProfile(@Request() req: RequestWithUser) {
-    return req.user;
+    const user = req.user as Business & {
+      crm_user_id?: string | null;
+      role?: string;
+      plan?: any;
+    };
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      plan_status: user.plan_status,
+      crm_user_id: user.crm_user_id,
+      plan: user.plan_object || user.plan,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('menus')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get menu tree filtered by role and plan' })
+  async getMenus(
+    @CurrentCrmUser() caller: { id: string | null; role: string },
+    @CurrentBusiness() business: Business,
+  ) {
+    return this.authService.getMenuTree(
+      caller.role as UserRole,
+      business.id,
+      business.plan_id,
+    );
   }
 }

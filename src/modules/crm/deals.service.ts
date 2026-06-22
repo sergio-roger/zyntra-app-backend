@@ -145,7 +145,7 @@ export class DealsService {
 
   async remove(business: Business, id: string): Promise<void> {
     const deal = await this.findOne(business, id);
-    await this.dealsRepo.remove(deal);
+    await this.dealsRepo.softRemove(deal);
   }
 
   async kanban(business: Business): Promise<Record<DealStage, Deal[]>> {

@@ -1,6 +1,8 @@
 import { Business } from '@auth/entities/business.entity';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import { UserRole } from '@crm/enums/user-role.enum';
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -14,6 +16,7 @@ import { TasksService } from './tasks.service';
 @ApiTags('tasks')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Roles(UserRole.ADMIN, UserRole.MANAGER)
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasks: TasksService) {}
@@ -22,10 +25,6 @@ export class TasksController {
   @ApiOperation({ summary: 'Launch a new AI agent task' })
   @ApiCreatedResponse()
   create(@CurrentBusiness() business: Business, @Body() dto: CreateTaskDto) {
-    console.log(
-      'DEBUG: Recibida petición de tarea para negocio:',
-      business?.id,
-    );
     return this.tasks.create(business.id, dto);
   }
 

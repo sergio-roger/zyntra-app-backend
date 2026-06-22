@@ -1,0 +1,66 @@
+### Variables
+@baseUrl = http://localhost:3000/api
+
+# Note: Run auth.http login first to authenticate session cookie.
+
+# ==============================================================================
+# ─── LIFECYCLE STAGES (RBAC rules apply) ──────────────────────────────────────
+# ==============================================================================
+
+### List all lifecycle stages (All authenticated users)
+GET {{baseUrl}}/lifecycle/stages
+Content-Type: application/json
+
+### Update lifecycle stages configuration (Requires Admin or Manager)
+POST {{baseUrl}}/lifecycle/stages
+Content-Type: application/json
+
+{
+  "stages": [
+    {
+      "name": "New Lead",
+      "description": "Contacto recién ingresado al sistema.",
+      "icon": "🆕",
+      "position": 0,
+      "type": "active",
+      "is_default": true,
+      "is_won": false
+    },
+    {
+      "name": "Hot Lead",
+      "description": "Contacto con alto interés demostrado.",
+      "icon": "🔥",
+      "position": 1,
+      "type": "active",
+      "is_default": false,
+      "is_won": false
+    },
+    {
+      "name": "Payment",
+      "description": "En proceso de pago o facturación.",
+      "icon": "💵",
+      "position": 2,
+      "type": "active",
+      "is_default": false,
+      "is_won": false
+    },
+    {
+      "name": "Customer",
+      "description": "Venta cerrada con éxito.",
+      "icon": "🏆",
+      "position": 3,
+      "type": "active",
+      "is_default": false,
+      "is_won": true
+    },
+    {
+      "name": "Cold Lead",
+      "description": "Contacto sin interés o perdido.",
+      "icon": "❄️",
+      "position": 4,
+      "type": "lost",
+      "is_default": false,
+      "is_won": false
+    }
+  ]
+}

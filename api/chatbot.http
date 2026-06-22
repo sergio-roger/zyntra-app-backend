@@ -1,0 +1,90 @@
+### Variables
+@baseUrl = http://localhost:3000/api
+
+# Note: Run auth.http login first to authenticate session cookie.
+
+# ==============================================================================
+# ─── CHATBOT CONFIG (Requires Admin or Manager) ────────────────────────────────
+# ==============================================================================
+
+### Get chatbot config
+GET {{baseUrl}}/chatbot/config
+Content-Type: application/json
+
+### Update chatbot config (Requires Admin)
+PUT {{baseUrl}}/chatbot/config
+Content-Type: application/json
+
+{
+  "name": "Zyntra AI Bot",
+  "welcome_message": "¡Hola! ¿En qué puedo ayudarte hoy?",
+  "theme_color": "#4f46e5"
+}
+
+### Get chatbot embed snippet (Requires Admin or Manager)
+GET {{baseUrl}}/chat/embed-snippet
+Content-Type: application/json
+
+
+# ==============================================================================
+# ─── INBOX & CONVERSATIONS (All authenticated users) ──────────────────────────
+# ==============================================================================
+
+### List agent conversations
+GET {{baseUrl}}/chat/conversations
+Content-Type: application/json
+
+### Get agent conversation detail
+GET {{baseUrl}}/chat/conversations/replace-with-conversation-uuid
+Content-Type: application/json
+
+
+# ==============================================================================
+# ─── PUBLIC WIDGET ACTIONS (No auth required) ─────────────────────────────────
+# ==============================================================================
+
+### Get public config for widget
+GET {{baseUrl}}/chat/public-config?business_id=replace-with-business-uuid
+Content-Type: application/json
+
+### Send message from widget visitor
+POST {{baseUrl}}/chat/chat
+Content-Type: application/json
+
+{
+  "business_id": "replace-with-business-uuid",
+  "conversation_id": "optional-uuid",
+  "message": "Hola, me gustaría saber precios"
+}
+
+### Capture visitor lead info
+POST {{baseUrl}}/chat/lead-capture
+Content-Type: application/json
+
+{
+  "conversation_id": "replace-with-conversation-uuid",
+  "name": "John Visitor",
+  "email": "john.visitor@example.com",
+  "phone": "+123456789"
+}
+
+
+# ==============================================================================
+# ─── AI ASSISTANT / PREVIEW ───────────────────────────────────────────────────
+# ==============================================================================
+
+### AI Chat Assistant (All authenticated users)
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Escribe un email corto de bienvenida para un nuevo cliente"
+}
+
+### AI Preview Chatbot (Requires Admin or Manager)
+POST {{baseUrl}}/ai/preview
+Content-Type: application/json
+
+{
+  "message": "Hola"
+}

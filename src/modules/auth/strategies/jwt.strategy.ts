@@ -3,12 +3,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '@auth/auth.service';
+import { JwtPayload } from '@auth/interfaces/jwt-payload.interface';
+import { UserRole } from '@crm/enums/user-role.enum';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
+    configService: ConfigService,
     private authService: AuthService,
   ) {
     super({
@@ -24,11 +26,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string }) {
+  async validate(payload: JwtPayload) {
     const business = await this.authService.validateBusiness(payload.sub);
     if (!business) {
       throw new UnauthorizedException();
     }
-    return business;
+    return {
+      ...business,
+      crm_user_id: payload.crm_user_id ?? null,
+      role: payload.role ?? UserRole.ADMIN,
+    };
   }
 }

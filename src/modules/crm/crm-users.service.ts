@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -34,6 +36,25 @@ export class CrmUsersService {
   }
 
   async create(business: Business, dto: CreateCrmUserDto) {
+    const limit = business.plan_object?.user_limit;
+    if (limit !== undefined && limit !== null && limit !== 999999) {
+      const currentCount = await this.userRepo.count({
+        where: { business_id: business.id, is_active: true },
+      });
+      if (currentCount >= limit) {
+        throw new HttpException(
+          {
+            code: 'plan_limit_reached',
+            resource: 'crm_users',
+            limit,
+            current: currentCount,
+            message: `Tu plan "${business.plan_object?.name}" permite hasta ${limit} usuarios. Ya alcanzaste el límite.`,
+          },
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
+    }
+
     const existing = await this.userRepo.findOne({
       where: { email: dto.email, business_id: business.id },
     });
@@ -55,6 +76,6 @@ export class CrmUsersService {
 
   async remove(business: Business, id: string) {
     const user = await this.findOne(business, id);
-    await this.userRepo.remove(user);
+    await this.userRepo.softRemove(user);
   }
 }

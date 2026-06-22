@@ -11,18 +11,32 @@ Content-Type: application/json
   "password": "Password123"
 }
 
-### Login
-# @name login
+### Login as Business (Implicit ADMIN role)
+# @name loginBusiness
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@zyntra.com",
-  "password": "Password123"
+  "email": "impulsepro@demo.zyntra.com",
+  "password": "Zyntra2025!"
+}
+
+### Login as CRM User Agent
+# @name loginAgent
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "agent@impulsepro.demo",
+  "password": "Zyntra2025!"
 }
 
 ### Get Profile (requires login first to set cookie/session)
 GET {{baseUrl}}/auth/me
+Content-Type: application/json
+
+### Get Menu Tree filtered by Role (requires login first)
+GET {{baseUrl}}/auth/menus
 Content-Type: application/json
 
 ### Refresh Session (requires valid session cookie)
@@ -32,3 +46,23 @@ Content-Type: application/json
 ### Logout
 POST {{baseUrl}}/auth/logout
 Content-Type: application/json
+
+
+### =========================================================================
+### PRODUCTION TESTS (https://marketing.zyntra-ts.com/backend/api)
+### =========================================================================
+
+### Prod Login as Business (Implicit ADMIN role)
+# @name prodLoginBusiness
+POST {{prodBaseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "brandstart@demo.zyntra.com",
+  "password": "Zyntra2025!"
+}
+
+### Prod Get Menu Tree (requires prodLoginBusiness first to set cookie/session)
+GET {{prodBaseUrl}}/auth/menus
+Content-Type: application/json
+
