@@ -1,3 +1,4 @@
+import { SegmentCondition } from '../entities/segment.entity';
 import {
   IsNotEmpty,
   IsString,
@@ -27,5 +28,5 @@ export class CreateSegmentDto {
   })
   @IsArray()
   @IsNotEmpty()
-  conditions: any[];
+  conditions: SegmentCondition[];
 }

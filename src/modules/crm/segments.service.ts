@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { Segment } from './entities/segment.entity';
+import { Segment, SegmentCondition } from './entities/segment.entity';
 import { Contact } from './entities/contact.entity';
 import { Business } from '@auth/entities/business.entity';
 import { CreateSegmentDto } from './dto/create-segment.dto';
@@ -77,7 +77,7 @@ export class SegmentsService {
 
   buildQueryForConditions(
     businessId: string,
-    conditions: any[],
+    conditions: SegmentCondition[],
   ): SelectQueryBuilder<Contact> {
     const query = this.contactRepo
       .createQueryBuilder('contact')
@@ -113,7 +113,9 @@ export class SegmentsService {
       if (field.startsWith('custom_fields.')) {
         const customFieldKey = field.split('.')[1];
         const jsonbPath = `contact.custom_fields ->> :cf_key_${index}`;
-        const params: any = { [`cf_key_${index}`]: customFieldKey };
+        const params: Record<string, unknown> = {
+          [`cf_key_${index}`]: customFieldKey,
+        };
 
         if (operator === 'equals') {
           query.andWhere(`${jsonbPath} = :${paramKey}`, {
@@ -123,7 +125,7 @@ export class SegmentsService {
         } else if (operator === 'contains') {
           query.andWhere(`${jsonbPath} ILIKE :${paramKey}`, {
             ...params,
-            [paramKey]: `%${value}%`,
+            [paramKey]: `%${String(value)}%`,
           });
         } else if (operator === 'greater_than') {
           query.andWhere(`CAST(${jsonbPath} AS NUMERIC) > :${paramKey}`, {
@@ -146,7 +148,7 @@ export class SegmentsService {
         query.andWhere(`${dbField} != :${paramKey}`, { [paramKey]: value });
       } else if (operator === 'contains') {
         query.andWhere(`${dbField} ILIKE :${paramKey}`, {
-          [paramKey]: `%${value}%`,
+          [paramKey]: `%${String(value)}%`,
         });
       } else if (operator === 'greater_than') {
         query.andWhere(`${dbField} > :${paramKey}`, { [paramKey]: value });
@@ -183,7 +185,7 @@ export class SegmentsService {
 
   async previewContacts(
     business: Business,
-    conditions: any[],
+    conditions: SegmentCondition[],
     page = 1,
     limit = 20,
   ): Promise<{

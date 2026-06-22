@@ -57,8 +57,8 @@ describe('AuthService — unified login', () => {
     getCount: jest.fn(),
   };
 
-  const roleRepo = { 
-    findOne: jest.fn(), 
+  const roleRepo = {
+    findOne: jest.fn(),
     find: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -259,12 +259,15 @@ describe('AuthService — unified login', () => {
         ];
         mockQueryBuilder.getMany.mockResolvedValueOnce(mockRoles);
 
-        const result = await service.getAllRoles({ id: 'biz-id', email: 'test@biz.com' } as any);
+        const result = await service.getAllRoles({
+          id: 'biz-id',
+          email: 'test@biz.com',
+        } as Business);
         expect(result).toEqual(mockRoles);
         expect(roleRepo.createQueryBuilder).toHaveBeenCalledWith('role');
         expect(mockQueryBuilder.where).toHaveBeenCalledWith(
           'role.businessId = :businessId OR role.businessId IS NULL',
-          { businessId: 'biz-id' }
+          { businessId: 'biz-id' },
         );
       });
     });
@@ -272,37 +275,58 @@ describe('AuthService — unified login', () => {
     describe('createRole()', () => {
       it('creates and saves a role successfully', async () => {
         mockQueryBuilder.getOne.mockResolvedValueOnce(null); // No conflict
-        const newRole = { id: 'new-role-id', name: 'custom', label: 'Custom Role' };
+        const newRole = {
+          id: 'new-role-id',
+          name: 'custom',
+          label: 'Custom Role',
+        };
         roleRepo.create.mockReturnValueOnce(newRole);
         roleRepo.save.mockResolvedValueOnce(newRole);
 
         const result = await service.createRole(
           { name: 'custom', label: 'Custom Role', description: 'Desc' },
-          'biz-id'
+          'biz-id',
         );
         expect(result).toEqual(newRole);
-        expect(roleRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-          name: 'custom',
-          businessId: 'biz-id',
-        }));
+        expect(roleRepo.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'custom',
+            businessId: 'biz-id',
+          }),
+        );
       });
 
       it('throws ConflictException if role already exists', async () => {
         mockQueryBuilder.getOne.mockResolvedValueOnce({ id: 'existing' });
 
         await expect(
-          service.createRole({ name: 'custom', label: 'Custom Role' }, 'biz-id')
+          service.createRole(
+            { name: 'custom', label: 'Custom Role' },
+            'biz-id',
+          ),
         ).rejects.toThrow(ConflictException);
       });
     });
 
     describe('updateRole()', () => {
       it('updates a custom role successfully', async () => {
-        const existingRole = { id: 'custom-id', name: 'custom', label: 'Old Label', businessId: 'biz-id' };
+        const existingRole = {
+          id: 'custom-id',
+          name: 'custom',
+          label: 'Old Label',
+          businessId: 'biz-id',
+        };
         roleRepo.findOne.mockResolvedValueOnce(existingRole);
-        roleRepo.save.mockResolvedValueOnce({ ...existingRole, label: 'New Label' });
+        roleRepo.save.mockResolvedValueOnce({
+          ...existingRole,
+          label: 'New Label',
+        });
 
-        const result = await service.updateRole('custom', { label: 'New Label' }, 'biz-id');
+        const result = await service.updateRole(
+          'custom',
+          { label: 'New Label' },
+          'biz-id',
+        );
         expect(result.label).toBe('New Label');
         expect(roleRepo.findOne).toHaveBeenCalledWith({
           where: { name: 'custom', businessId: 'biz-id' },
@@ -313,14 +337,18 @@ describe('AuthService — unified login', () => {
         roleRepo.findOne.mockResolvedValueOnce(null);
 
         await expect(
-          service.updateRole('custom', { label: 'New Label' }, 'biz-id')
+          service.updateRole('custom', { label: 'New Label' }, 'biz-id'),
         ).rejects.toThrow(BadRequestException);
       });
     });
 
     describe('deleteRole()', () => {
       it('deletes role and related permissions', async () => {
-        const roleToDelete = { id: 'custom-id', name: 'custom', businessId: 'biz-id' };
+        const roleToDelete = {
+          id: 'custom-id',
+          name: 'custom',
+          businessId: 'biz-id',
+        };
         roleRepo.findOne.mockResolvedValueOnce(roleToDelete);
 
         await service.deleteRole('custom', 'biz-id');

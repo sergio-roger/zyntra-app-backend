@@ -21,6 +21,7 @@ import { UserRole } from '@crm/enums/user-role.enum';
 import { SegmentsService } from './segments.service';
 import { CreateSegmentDto } from './dto/create-segment.dto';
 import { UpdateSegmentDto } from './dto/update-segment.dto';
+import { SegmentCondition } from './entities/segment.entity';
 
 @ApiTags('crm-segments')
 @ApiBearerAuth()
@@ -96,7 +97,7 @@ export class SegmentsController {
   })
   previewContacts(
     @CurrentBusiness() business: Business,
-    @Body('conditions') conditions: any[],
+    @Body('conditions') conditions: SegmentCondition[],
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
