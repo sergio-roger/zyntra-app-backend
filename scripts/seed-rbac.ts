@@ -116,7 +116,7 @@ const MENUS_DATA = [
   },
   {
     key: 'settings',
-    label: 'Ajustes',
+    label: 'Configuración',
     path: '/settings',
     parent_key: null,
     description:
@@ -338,6 +338,20 @@ const MENUS_DATA = [
   },
   // Settings subitems
   {
+    key: 'settings_config',
+    label: 'Configuración',
+    path: '/settings/configuracion',
+    parent_key: 'settings',
+    description: 'Configuración general de la plataforma.',
+  },
+  {
+    key: 'settings_my_account',
+    label: 'Mi cuenta',
+    path: '/settings/my-account',
+    parent_key: 'settings',
+    description: 'Gestión de la cuenta de usuario, perfil y seguridad.',
+  },
+  {
     key: 'settings_users',
     label: 'Usuarios',
     path: '/settings/users',
@@ -391,6 +405,9 @@ const AGENT_MENUS = [
   'inbox_conversations',
   'funnels',
   'funnels_leads',
+  'settings',
+  'settings_config',
+  'settings_my_account',
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {

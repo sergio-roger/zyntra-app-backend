@@ -155,6 +155,20 @@ const CHILD_MENUS = [
     parent_key: 'inbox',
   },
   {
+    id: 'm-settings-config',
+    key: 'settings_config',
+    label: 'Configuración',
+    path: '/settings/configuracion',
+    parent_key: 'settings',
+  },
+  {
+    id: 'm-settings-my-account',
+    key: 'settings_my_account',
+    label: 'Mi cuenta',
+    path: '/settings/my-account',
+    parent_key: 'settings',
+  },
+  {
     id: 'm-settings-users',
     key: 'settings_users',
     label: 'Usuarios',
@@ -205,6 +219,8 @@ const PM_BRANDSTART = [
   { menu_key: 'analytics', access_level: 'locked' },
   { menu_key: 'billing', access_level: 'full' },
   { menu_key: 'settings', access_level: 'read_only' },
+  { menu_key: 'settings_config', access_level: 'read_only' },
+  { menu_key: 'settings_my_account', access_level: 'read_only' },
   { menu_key: 'settings_users', access_level: 'locked' },
   { menu_key: 'settings_teams', access_level: 'locked' },
   { menu_key: 'settings_lifecycle', access_level: 'read_only' },
@@ -227,6 +243,8 @@ const PM_IMPULSE_PRO = [
   { menu_key: 'analytics', access_level: 'full' },
   { menu_key: 'billing', access_level: 'full' },
   { menu_key: 'settings', access_level: 'full' },
+  { menu_key: 'settings_config', access_level: 'full' },
+  { menu_key: 'settings_my_account', access_level: 'full' },
 ];
 
 const PM_CORE_DIGITAL = [
@@ -239,6 +257,8 @@ const PM_CORE_DIGITAL = [
   { menu_key: 'analytics', access_level: 'full' },
   { menu_key: 'billing', access_level: 'full' },
   { menu_key: 'settings', access_level: 'full' },
+  { menu_key: 'settings_config', access_level: 'full' },
+  { menu_key: 'settings_my_account', access_level: 'full' },
 ];
 
 // ─── Helper: mock de conn.query por tipo de SQL ───────────────────────────────

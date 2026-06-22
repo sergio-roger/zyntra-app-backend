@@ -377,44 +377,125 @@ export class AuthService {
   }
 
   async getAllRoles(business?: Business): Promise<Role[]> {
-    const roles = await this.roleRepository.find({
-      order: { name: 'ASC' },
-    });
+    const query = this.roleRepository.createQueryBuilder('role');
+    if (business) {
+      query.where('role.businessId = :businessId OR role.businessId IS NULL', {
+        businessId: business.id,
+      });
+    } else {
+      query.where('role.businessId IS NULL');
+    }
+
+    let roles = await query.orderBy('role.name', 'ASC').getMany();
+
     if (business && business.email !== 'superadmin@zyntra.com') {
-      return roles.filter((role) => role.name !== 'superAdmin');
+      roles = roles.filter((role) => role.name !== 'superAdmin');
     }
     return roles;
   }
 
-  async createRole(data: {
-    name: string;
-    label: string;
-    description?: string;
-    badge?: string;
-    badgeColor?: string;
-    iconColor?: string;
-  }): Promise<Role> {
-    const existing = await this.roleRepository.findOne({
-      where: { name: data.name.toLowerCase() },
-    });
+  async createRole(
+    data: {
+      name: string;
+      label: string;
+      description?: string;
+      badge?: string;
+      badgeColor?: string;
+      iconColor?: string;
+    },
+    businessId?: string,
+  ): Promise<Role> {
+    const lowerName = data.name.toLowerCase();
+
+    // Check if a role with this name already exists either globally or for this business
+    const query = this.roleRepository
+      .createQueryBuilder('role')
+      .where('role.name = :name', { name: lowerName });
+
+    if (businessId) {
+      query.andWhere(
+        '(role.businessId = :businessId OR role.businessId IS NULL)',
+        { businessId },
+      );
+    } else {
+      query.andWhere('role.businessId IS NULL');
+    }
+
+    const existing = await query.getOne();
     if (existing) {
       throw new ConflictException(`Role with name ${data.name} already exists`);
     }
+
     const role = this.roleRepository.create({
-      name: data.name.toLowerCase(),
+      name: lowerName,
       label: data.label,
       description: data.description,
       badge: data.badge,
       badgeColor: data.badgeColor,
       iconColor: data.iconColor,
       isEditable: true,
+      businessId: businessId || null,
     });
     return this.roleRepository.save(role);
   }
 
-  async roleExists(name: string): Promise<boolean> {
-    const role = await this.roleRepository.findOne({ where: { name } });
-    return !!role;
+  async updateRole(
+    name: string,
+    data: {
+      label: string;
+      description?: string;
+      badge?: string;
+      badgeColor?: string;
+      iconColor?: string;
+    },
+    businessId: string,
+  ): Promise<Role> {
+    const role = await this.roleRepository.findOne({
+      where: { name: name.toLowerCase(), businessId },
+    });
+
+    if (!role) {
+      throw new BadRequestException('Role not found or not editable');
+    }
+
+    Object.assign(role, data);
+    return this.roleRepository.save(role);
+  }
+
+  async deleteRole(name: string, businessId: string): Promise<void> {
+    const role = await this.roleRepository.findOne({
+      where: { name: name.toLowerCase(), businessId },
+    });
+
+    if (!role) {
+      throw new BadRequestException('Role not found or not deletable');
+    }
+
+    // Also delete any permissions assigned to this role in this business
+    await this.permissionRepository.delete({
+      business_id: businessId,
+      role_id: role.id,
+    });
+
+    await this.roleRepository.remove(role);
+  }
+
+  async roleExists(name: string, businessId?: string): Promise<boolean> {
+    const query = this.roleRepository
+      .createQueryBuilder('role')
+      .where('role.name = :name', { name: name.toLowerCase() });
+
+    if (businessId) {
+      query.andWhere(
+        '(role.businessId = :businessId OR role.businessId IS NULL)',
+        { businessId },
+      );
+    } else {
+      query.andWhere('role.businessId IS NULL');
+    }
+
+    const count = await query.getCount();
+    return count > 0;
   }
 
   async getAllMenus(): Promise<Menu[]> {

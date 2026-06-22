@@ -26,6 +26,8 @@ const MODULE_MATRIX: Record<string, Record<string, ModuleAccessLevel>> = {
     analytics: ModuleAccessLevel.LOCKED,
     billing: ModuleAccessLevel.FULL,
     settings: ModuleAccessLevel.READ_ONLY,
+    settings_config: ModuleAccessLevel.READ_ONLY,
+    settings_my_account: ModuleAccessLevel.READ_ONLY,
     settings_users: ModuleAccessLevel.LOCKED,
     settings_teams: ModuleAccessLevel.LOCKED,
     settings_lifecycle: ModuleAccessLevel.READ_ONLY,
@@ -51,6 +53,8 @@ const MODULE_MATRIX: Record<string, Record<string, ModuleAccessLevel>> = {
     analytics: ModuleAccessLevel.FULL,
     billing: ModuleAccessLevel.FULL,
     settings: ModuleAccessLevel.FULL,
+    settings_config: ModuleAccessLevel.FULL,
+    settings_my_account: ModuleAccessLevel.FULL,
   },
   'Core Digital': {
     dashboard: ModuleAccessLevel.FULL,
@@ -62,6 +66,8 @@ const MODULE_MATRIX: Record<string, Record<string, ModuleAccessLevel>> = {
     analytics: ModuleAccessLevel.FULL,
     billing: ModuleAccessLevel.FULL,
     settings: ModuleAccessLevel.FULL,
+    settings_config: ModuleAccessLevel.FULL,
+    settings_my_account: ModuleAccessLevel.FULL,
   },
 };
 

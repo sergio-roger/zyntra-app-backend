@@ -48,9 +48,25 @@ describe('AuthService — unified login', () => {
 
   const crmUserRepo = { findOne: jest.fn() };
 
-  const roleRepo = { findOne: jest.fn(), find: jest.fn() };
+  const mockQueryBuilder = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+    getOne: jest.fn(),
+    getCount: jest.fn(),
+  };
+
+  const roleRepo = { 
+    findOne: jest.fn(), 
+    find: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
+  };
   const menuRepo = { find: jest.fn() };
-  const permissionRepo = { find: jest.fn() };
+  const permissionRepo = { find: jest.fn(), delete: jest.fn() };
 
   const jwtService = { sign: jest.fn().mockReturnValue('mock-token') };
 
@@ -234,18 +250,102 @@ describe('AuthService — unified login', () => {
     });
   });
 
-  describe('getAllRoles()', () => {
-    it('returns all roles ordered by name', async () => {
-      const mockRoles = [
-        { id: '1', name: 'admin', label: 'Administrador' },
-        { id: '2', name: 'agent', label: 'Agente' },
-      ];
-      roleRepo.find.mockResolvedValueOnce(mockRoles);
+  describe('Role Management', () => {
+    describe('getAllRoles()', () => {
+      it('returns filtered roles ordered by name', async () => {
+        const mockRoles = [
+          { id: '1', name: 'admin', label: 'Administrador' },
+          { id: '2', name: 'agent', label: 'Agente' },
+        ];
+        mockQueryBuilder.getMany.mockResolvedValueOnce(mockRoles);
 
-      const result = await service.getAllRoles();
-      expect(result).toEqual(mockRoles);
-      expect(roleRepo.find).toHaveBeenCalledWith({
-        order: { name: 'ASC' },
+        const result = await service.getAllRoles({ id: 'biz-id', email: 'test@biz.com' } as any);
+        expect(result).toEqual(mockRoles);
+        expect(roleRepo.createQueryBuilder).toHaveBeenCalledWith('role');
+        expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+          'role.businessId = :businessId OR role.businessId IS NULL',
+          { businessId: 'biz-id' }
+        );
+      });
+    });
+
+    describe('createRole()', () => {
+      it('creates and saves a role successfully', async () => {
+        mockQueryBuilder.getOne.mockResolvedValueOnce(null); // No conflict
+        const newRole = { id: 'new-role-id', name: 'custom', label: 'Custom Role' };
+        roleRepo.create.mockReturnValueOnce(newRole);
+        roleRepo.save.mockResolvedValueOnce(newRole);
+
+        const result = await service.createRole(
+          { name: 'custom', label: 'Custom Role', description: 'Desc' },
+          'biz-id'
+        );
+        expect(result).toEqual(newRole);
+        expect(roleRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+          name: 'custom',
+          businessId: 'biz-id',
+        }));
+      });
+
+      it('throws ConflictException if role already exists', async () => {
+        mockQueryBuilder.getOne.mockResolvedValueOnce({ id: 'existing' });
+
+        await expect(
+          service.createRole({ name: 'custom', label: 'Custom Role' }, 'biz-id')
+        ).rejects.toThrow(ConflictException);
+      });
+    });
+
+    describe('updateRole()', () => {
+      it('updates a custom role successfully', async () => {
+        const existingRole = { id: 'custom-id', name: 'custom', label: 'Old Label', businessId: 'biz-id' };
+        roleRepo.findOne.mockResolvedValueOnce(existingRole);
+        roleRepo.save.mockResolvedValueOnce({ ...existingRole, label: 'New Label' });
+
+        const result = await service.updateRole('custom', { label: 'New Label' }, 'biz-id');
+        expect(result.label).toBe('New Label');
+        expect(roleRepo.findOne).toHaveBeenCalledWith({
+          where: { name: 'custom', businessId: 'biz-id' },
+        });
+      });
+
+      it('throws BadRequestException if role not found', async () => {
+        roleRepo.findOne.mockResolvedValueOnce(null);
+
+        await expect(
+          service.updateRole('custom', { label: 'New Label' }, 'biz-id')
+        ).rejects.toThrow(BadRequestException);
+      });
+    });
+
+    describe('deleteRole()', () => {
+      it('deletes role and related permissions', async () => {
+        const roleToDelete = { id: 'custom-id', name: 'custom', businessId: 'biz-id' };
+        roleRepo.findOne.mockResolvedValueOnce(roleToDelete);
+
+        await service.deleteRole('custom', 'biz-id');
+
+        expect(permissionRepo.delete).toHaveBeenCalledWith({
+          business_id: 'biz-id',
+          role_id: 'custom-id',
+        });
+        expect(roleRepo.remove).toHaveBeenCalledWith(roleToDelete);
+      });
+    });
+
+    describe('roleExists()', () => {
+      it('returns true if role count > 0', async () => {
+        mockQueryBuilder.getCount.mockResolvedValueOnce(1);
+
+        const result = await service.roleExists('admin', 'biz-id');
+        expect(result).toBe(true);
+      });
+
+      it('returns false if role count is 0', async () => {
+        mockQueryBuilder.getCount.mockResolvedValueOnce(0);
+
+        const result = await service.roleExists('unknown', 'biz-id');
+        expect(result).toBe(false);
       });
     });
   });

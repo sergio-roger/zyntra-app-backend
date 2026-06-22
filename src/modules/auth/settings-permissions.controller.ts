@@ -7,6 +7,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -33,8 +34,36 @@ export class SettingsPermissionsController {
       badgeColor?: string;
       iconColor?: string;
     },
+    @CurrentBusiness() business: Business,
   ) {
-    return this.authService.createRole(body);
+    return this.authService.createRole(body, business.id);
+  }
+
+  @Put('roles/:name')
+  @ApiOperation({ summary: 'Update an existing user role' })
+  updateRole(
+    @Param('name') name: string,
+    @Body()
+    body: {
+      label: string;
+      description?: string;
+      badge?: string;
+      badgeColor?: string;
+      iconColor?: string;
+    },
+    @CurrentBusiness() business: Business,
+  ) {
+    return this.authService.updateRole(name, body, business.id);
+  }
+
+  @Delete('roles/:name')
+  @ApiOperation({ summary: 'Delete an existing user role' })
+  async deleteRole(
+    @Param('name') name: string,
+    @CurrentBusiness() business: Business,
+  ) {
+    await this.authService.deleteRole(name, business.id);
+    return { success: true };
   }
 
   @Get('roles')
@@ -55,7 +84,7 @@ export class SettingsPermissionsController {
     @Param('role') role: string,
     @CurrentBusiness() business: Business,
   ) {
-    const exists = await this.authService.roleExists(role);
+    const exists = await this.authService.roleExists(role, business.id);
     if (!exists) {
       throw new BadRequestException('Invalid role name');
     }
@@ -73,7 +102,7 @@ export class SettingsPermissionsController {
     @Body() body: { menu_ids: string[] },
     @CurrentBusiness() business: Business,
   ) {
-    const exists = await this.authService.roleExists(role);
+    const exists = await this.authService.roleExists(role, business.id);
     if (!exists) {
       throw new BadRequestException('Invalid role name');
     }
