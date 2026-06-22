@@ -40,6 +40,13 @@ jobs:
           username: ${{ secrets.HARBOR_USER }}
           password: ${{ secrets.HARBOR_PASS }}
 
+      - name: Login GCP Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.GCP_REGION }}-docker.pkg.dev
+          username: _json_key
+          password: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
       - name: Get short SHA
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITEA_OUTPUT
@@ -64,9 +71,19 @@ jobs:
           build-args: |
             NODE_ENV=production
 
-      - name: Trigger Dokploy Deployment
+      - name: Mirror latest → GCP Artifact Registry
         run: |
-          curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
+          SOURCE="${{ secrets.HARBOR_URL }}/zyntra/marketing-backend:latest"
+          TARGET="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_REPOSITORY }}/marketing-backend:latest"
+
+          docker pull $SOURCE
+          docker tag $SOURCE $TARGET
+          docker push $TARGET
+
+          echo "✅ Mirror prod → $TARGET"
+
+      - name: Trigger Dokploy Deployment
+        run: curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
 
   build-and-push-hub-dev:
     needs: test-and-lint
@@ -85,6 +102,13 @@ jobs:
           registry: ${{ secrets.HARBOR_URL }}
           username: ${{ secrets.HARBOR_USER }}
           password: ${{ secrets.HARBOR_PASS }}
+
+      - name: Login GCP Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.GCP_REGION }}-docker.pkg.dev
+          username: _json_key
+          password: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
       - name: Get short SHA
         id: vars
@@ -110,6 +134,16 @@ jobs:
           build-args: |
             NODE_ENV=production
 
-      - name: Trigger Dokploy Deployment
+      - name: Mirror dev-latest → GCP Artifact Registry
         run: |
-          curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
+          SOURCE="${{ secrets.HARBOR_URL }}/zyntra/marketing-backend:dev-latest"
+          TARGET="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_REPOSITORY }}/marketing-backend:dev-latest"
+
+          docker pull $SOURCE
+          docker tag $SOURCE $TARGET
+          docker push $TARGET
+
+          echo "✅ Mirror dev → $TARGET"
+
+      - name: Trigger Dokploy Deployment
+        run: curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
