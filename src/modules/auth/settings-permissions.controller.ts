@@ -1,18 +1,18 @@
+import { AuthService } from '@auth/auth.service';
+import { Business } from '@auth/entities/business.entity';
+import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import { UserRole } from '@crm/enums/user-role.enum';
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
-  Put,
-  Post,
   Param,
-  Body,
-  BadRequestException,
+  Post,
+  Put,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles } from '@common/decorators/roles.decorator';
-import { CurrentBusiness } from '@common/decorators/current-business.decorator';
-import { UserRole } from '@crm/enums/user-role.enum';
-import { Business } from './entities/business.entity';
-import { AuthService } from './auth.service';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('settings-permissions')
 @ApiBearerAuth()
