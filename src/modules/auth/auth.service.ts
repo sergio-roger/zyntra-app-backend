@@ -376,10 +376,45 @@ export class AuthService {
     await this.permissionRepository.save(copies);
   }
 
-  async getAllRoles(): Promise<Role[]> {
-    return this.roleRepository.find({
+  async getAllRoles(business?: Business): Promise<Role[]> {
+    const roles = await this.roleRepository.find({
       order: { name: 'ASC' },
     });
+    if (business && business.email !== 'superadmin@zyntra.com') {
+      return roles.filter((role) => role.name !== 'superAdmin');
+    }
+    return roles;
+  }
+
+  async createRole(data: {
+    name: string;
+    label: string;
+    description?: string;
+    badge?: string;
+    badgeColor?: string;
+    iconColor?: string;
+  }): Promise<Role> {
+    const existing = await this.roleRepository.findOne({
+      where: { name: data.name.toLowerCase() },
+    });
+    if (existing) {
+      throw new ConflictException(`Role with name ${data.name} already exists`);
+    }
+    const role = this.roleRepository.create({
+      name: data.name.toLowerCase(),
+      label: data.label,
+      description: data.description,
+      badge: data.badge,
+      badgeColor: data.badgeColor,
+      iconColor: data.iconColor,
+      isEditable: true,
+    });
+    return this.roleRepository.save(role);
+  }
+
+  async roleExists(name: string): Promise<boolean> {
+    const role = await this.roleRepository.findOne({ where: { name } });
+    return !!role;
   }
 
   async getAllMenus(): Promise<Menu[]> {
