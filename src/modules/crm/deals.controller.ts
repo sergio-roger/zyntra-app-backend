@@ -35,17 +35,18 @@ export class DealsController {
   constructor(private readonly deals: DealsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List deals (paginated, filterable)' })
+  @ApiOperation({ summary: 'List deals (paginated, filterable by pipeline/stage/status/team)' })
   list(@CurrentBusiness() business: Business, @Query() query: ListDealsDto) {
     return this.deals.list(business, query);
   }
 
-  @Get('kanban')
-  @ApiOperation({
-    summary: 'List open deals grouped by stage for Kanban board',
-  })
-  kanban(@CurrentBusiness() business: Business) {
-    return this.deals.kanban(business);
+  @Get('kanban/:pipelineId')
+  @ApiOperation({ summary: 'Kanban board — open deals grouped by stage for a pipeline' })
+  kanban(
+    @CurrentBusiness() business: Business,
+    @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
+  ) {
+    return this.deals.kanban(business, pipelineId);
   }
 
   @Post()
@@ -64,8 +65,17 @@ export class DealsController {
     return this.deals.findOne(business, id);
   }
 
+  @Get(':id/history')
+  @ApiOperation({ summary: 'Get deal stage history (velocity tracking)' })
+  stageHistory(
+    @CurrentBusiness() business: Business,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.deals.stageHistory(business, id);
+  }
+
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a deal' })
+  @ApiOperation({ summary: 'Update a deal (move stage triggers DealStageHistory + status)' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -77,7 +87,7 @@ export class DealsController {
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
-  @ApiOperation({ summary: 'Delete a deal' })
+  @ApiOperation({ summary: 'Soft-delete a deal' })
   async remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

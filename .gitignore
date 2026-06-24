@@ -29,3 +29,8 @@ Thumbs.db
 .env.development
 .env.local
 .env.*.local
+
+# Repomix output
+repomix-output.xml
+repomix-output*
+

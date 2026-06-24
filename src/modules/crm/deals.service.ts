@@ -1,15 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Brackets } from 'typeorm';
+import { Repository, Brackets, IsNull } from 'typeorm';
 import { Deal } from '@crm/entities/deal.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
+import { Pipeline } from '@crm/entities/pipeline.entity';
+import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
+import { DealStageHistory } from '@crm/entities/deal-stage-history.entity';
 import { Business } from '@auth/entities/business.entity';
 import { CreateDealDto, UpdateDealDto, ListDealsDto } from '@crm/dto/deal.dto';
 import { ActivityType } from '@crm/enums/activity-type.enum';
 import { ActivityCreatedBy } from '@crm/enums/activity-created-by.enum';
-import { DealStage } from '@crm/enums/deal-stage.enum';
 import { DealStatus } from '@crm/enums/deal-status.enum';
+import { PipelineStageType } from '@crm/enums/pipeline-stage-type.enum';
 
 @Injectable()
 export class DealsService {
@@ -20,7 +27,15 @@ export class DealsService {
     private readonly contactsRepo: Repository<Contact>,
     @InjectRepository(ContactActivity)
     private readonly activitiesRepo: Repository<ContactActivity>,
+    @InjectRepository(Pipeline)
+    private readonly pipelineRepo: Repository<Pipeline>,
+    @InjectRepository(PipelineStage)
+    private readonly stageRepo: Repository<PipelineStage>,
+    @InjectRepository(DealStageHistory)
+    private readonly historyRepo: Repository<DealStageHistory>,
   ) {}
+
+  // ─── List ──────────────────────────────────────────────────────────────────
 
   async list(business: Business, query: ListDealsDto) {
     const page = query.page ?? 1;
@@ -30,15 +45,21 @@ export class DealsService {
       .createQueryBuilder('d')
       .leftJoinAndSelect('d.contact', 'c')
       .leftJoinAndSelect('d.assigned_to', 'u')
+      .leftJoinAndSelect('d.stage', 's')
       .where('d.business_id = :bid', { bid: business.id });
 
-    if (query.stage) qb.andWhere('d.stage = :stage', { stage: query.stage });
+    if (query.pipeline_id)
+      qb.andWhere('d.pipeline_id = :pid', { pid: query.pipeline_id });
+    if (query.stage_id)
+      qb.andWhere('d.stage_id = :sid', { sid: query.stage_id });
     if (query.status)
       qb.andWhere('d.status = :status', { status: query.status });
     if (query.contact_id)
       qb.andWhere('d.contact_id = :cid', { cid: query.contact_id });
     if (query.assigned_to_id)
       qb.andWhere('d.assigned_to_id = :uid', { uid: query.assigned_to_id });
+    if (query.team_id)
+      qb.andWhere('d.team_id = :tid', { tid: query.team_id });
 
     if (query.search) {
       qb.andWhere(
@@ -65,35 +86,65 @@ export class DealsService {
     };
   }
 
+  // ─── Find One ──────────────────────────────────────────────────────────────
+
   async findOne(business: Business, id: string): Promise<Deal> {
     const deal = await this.dealsRepo.findOne({
       where: { id, business_id: business.id },
-      relations: ['contact', 'assigned_to', 'team'],
+      relations: ['contact', 'assigned_to', 'team', 'stage', 'pipeline'],
     });
     if (!deal) throw new NotFoundException('Deal not found');
     return deal;
   }
 
+  // ─── Create ────────────────────────────────────────────────────────────────
+
   async create(business: Business, dto: CreateDealDto): Promise<Deal> {
-    // Verify contact exists and belongs to business
     const contact = await this.contactsRepo.findOne({
       where: { id: dto.contact_id, business_id: business.id },
     });
     if (!contact) throw new NotFoundException('Contact not found');
 
+    const pipeline = await this.pipelineRepo.findOne({
+      where: { id: dto.pipeline_id, business_id: business.id },
+    });
+    if (!pipeline) throw new NotFoundException('Pipeline not found');
+
+    const stage = await this.stageRepo.findOne({
+      where: { id: dto.stage_id, pipeline_id: pipeline.id },
+    });
+    if (!stage)
+      throw new BadRequestException(
+        'La fase no pertenece al pipeline indicado',
+      );
+
     const deal = this.dealsRepo.create({
       ...dto,
       business_id: business.id,
+      status: stage.type === PipelineStageType.WON
+        ? DealStatus.WON
+        : stage.type === PipelineStageType.LOST
+        ? DealStatus.LOST
+        : DealStatus.OPEN,
+      closed_at:
+        stage.type !== PipelineStageType.ACTIVE ? new Date() : undefined,
     });
 
     const saved = await this.dealsRepo.save(deal);
 
-    // Log activity on contact
+    await this.historyRepo.save(
+      this.historyRepo.create({
+        deal_id: saved.id,
+        stage_id: stage.id,
+        entered_at: new Date(),
+      }),
+    );
+
     await this.activitiesRepo.save(
       this.activitiesRepo.create({
         contact_id: contact.id,
         type: ActivityType.SYSTEM,
-        content: `Nuevo negocio creado: "${saved.title}" por valor de ${saved.value}`,
+        content: `Nuevo negocio creado: "${saved.title}" por valor de ${saved.value} ${saved.currency}`,
         metadata: { deal_id: saved.id, value: saved.value },
         created_by: ActivityCreatedBy.SYSTEM,
       }),
@@ -102,73 +153,108 @@ export class DealsService {
     return saved;
   }
 
+  // ─── Update ────────────────────────────────────────────────────────────────
+
   async update(
     business: Business,
     id: string,
     dto: UpdateDealDto,
   ): Promise<Deal> {
     const deal = await this.findOne(business, id);
-    const previousStage = deal.stage;
-    const previousStatus = deal.status;
+    const previousStageId = deal.stage_id;
 
-    Object.assign(deal, dto);
-    const saved = await this.dealsRepo.save(deal);
+    if (dto.stage_id && dto.stage_id !== previousStageId) {
+      const targetPipelineId = dto.pipeline_id ?? deal.pipeline_id;
 
-    // Log activity if stage changed
-    if (dto.stage && dto.stage !== previousStage) {
+      const newStage = await this.stageRepo.findOne({
+        where: { id: dto.stage_id, pipeline_id: targetPipelineId },
+      });
+      if (!newStage)
+        throw new BadRequestException(
+          'La fase de destino no pertenece al pipeline del deal',
+        );
+
+      await this.historyRepo.update(
+        { deal_id: deal.id, left_at: IsNull() },
+        { left_at: new Date() },
+      );
+
+      await this.historyRepo.save(
+        this.historyRepo.create({
+          deal_id: deal.id,
+          stage_id: newStage.id,
+          entered_at: new Date(),
+        }),
+      );
+
+      if (newStage.type === PipelineStageType.WON) {
+        deal.status = DealStatus.WON;
+        deal.closed_at = new Date();
+      } else if (newStage.type === PipelineStageType.LOST) {
+        deal.status = DealStatus.LOST;
+        deal.closed_at = new Date();
+      } else {
+        deal.status = DealStatus.OPEN;
+        deal.closed_at = null;
+      }
+
       await this.activitiesRepo.save(
         this.activitiesRepo.create({
-          contact_id: saved.contact_id,
+          contact_id: deal.contact_id,
           type: ActivityType.STAGE_CHANGE,
-          content: `Negocio "${saved.title}": etapa cambiada de "${previousStage}" a "${dto.stage}"`,
-          metadata: { deal_id: saved.id, from: previousStage, to: dto.stage },
+          content: `Negocio "${deal.title}": etapa cambiada a "${newStage.name}"`,
+          metadata: { deal_id: deal.id, from: previousStageId, to: newStage.id },
           created_by: ActivityCreatedBy.USER,
         }),
       );
     }
 
-    // Log activity if status changed (Won/Lost)
-    if (dto.status && dto.status !== previousStatus) {
-      await this.activitiesRepo.save(
-        this.activitiesRepo.create({
-          contact_id: saved.contact_id,
-          type: ActivityType.SYSTEM,
-          content: `Negocio "${saved.title}" marcado como ${dto.status.toUpperCase()}`,
-          metadata: { deal_id: saved.id, status: dto.status },
-          created_by: ActivityCreatedBy.SYSTEM,
-        }),
-      );
-    }
-
-    return saved;
+    Object.assign(deal, dto);
+    return this.dealsRepo.save(deal);
   }
+
+  // ─── Remove ────────────────────────────────────────────────────────────────
 
   async remove(business: Business, id: string): Promise<void> {
     const deal = await this.findOne(business, id);
     await this.dealsRepo.softRemove(deal);
   }
 
-  async kanban(business: Business): Promise<Record<DealStage, Deal[]>> {
+  // ─── Kanban (por pipeline) ─────────────────────────────────────────────────
+
+  async kanban(business: Business, pipelineId: string) {
+    const pipeline = await this.pipelineRepo.findOne({
+      where: { id: pipelineId, business_id: business.id },
+      relations: ['stages'],
+      order: { stages: { position: 'ASC' } },
+    });
+    if (!pipeline) throw new NotFoundException('Pipeline not found');
+
     const deals = await this.dealsRepo.find({
-      where: { business_id: business.id, status: DealStatus.OPEN }, // Only open deals in kanban
-      relations: ['contact', 'assigned_to'],
+      where: { business_id: business.id, pipeline_id: pipelineId, status: DealStatus.OPEN },
+      relations: ['contact', 'assigned_to', 'stage'],
       order: { updated_at: 'DESC' },
     });
 
-    const result = Object.values(DealStage).reduce<Record<string, Deal[]>>(
-      (acc, stage) => {
-        acc[stage] = [];
-        return acc;
-      },
-      {},
-    );
+    const columns = pipeline.stages.map((stage) => ({
+      stage,
+      deals: deals.filter((d) => d.stage_id === stage.id),
+      total_value: deals
+        .filter((d) => d.stage_id === stage.id)
+        .reduce((sum, d) => sum + Number(d.value), 0),
+    }));
 
-    for (const deal of deals) {
-      if (result[deal.stage]) {
-        result[deal.stage].push(deal);
-      }
-    }
+    return { pipeline, columns };
+  }
 
-    return result;
+  // ─── Stage History ─────────────────────────────────────────────────────────
+
+  async stageHistory(business: Business, dealId: string): Promise<DealStageHistory[]> {
+    await this.findOne(business, dealId);
+    return this.historyRepo.find({
+      where: { deal_id: dealId },
+      relations: ['stage'],
+      order: { entered_at: 'ASC' },
+    });
   }
 }

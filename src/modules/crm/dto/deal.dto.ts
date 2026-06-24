@@ -5,13 +5,13 @@ import {
   IsEnum,
   IsUUID,
   IsDateString,
+  IsInt,
   Min,
   Max,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { emptyToUndefined } from '@/common/transformers/string.transformer';
-import { DealStage } from '@crm/enums/deal-stage.enum';
 import { DealStatus } from '@crm/enums/deal-status.enum';
 
 export class CreateDealDto {
@@ -19,10 +19,7 @@ export class CreateDealDto {
   @IsString()
   title: string;
 
-  @ApiProperty({
-    example: 'Detalle de la oportunidad de negocio',
-    required: false,
-  })
+  @ApiProperty({ example: 'Detalle de la oportunidad de negocio', required: false })
   @IsString()
   @IsOptional()
   description?: string;
@@ -32,15 +29,18 @@ export class CreateDealDto {
   @Min(0)
   value: number;
 
-  @ApiProperty({ enum: DealStage, default: DealStage.PROSPECTING })
-  @IsEnum(DealStage)
+  @ApiProperty({ example: 'USD', required: false, default: 'USD' })
+  @IsString()
   @IsOptional()
-  stage?: DealStage;
+  currency?: string;
 
-  @ApiProperty({ enum: DealStatus, default: DealStatus.OPEN })
-  @IsEnum(DealStatus)
-  @IsOptional()
-  status?: DealStatus;
+  @ApiProperty({ example: 'uuid-del-pipeline' })
+  @IsUUID()
+  pipeline_id: string;
+
+  @ApiProperty({ example: 'uuid-de-la-fase' })
+  @IsUUID()
+  stage_id: string;
 
   @ApiProperty({ example: 'uuid-del-contacto' })
   @IsUUID()
@@ -62,8 +62,8 @@ export class CreateDealDto {
   @IsOptional()
   expected_close_date?: string;
 
-  @ApiProperty({ example: 50, minimum: 0, maximum: 100, default: 0 })
-  @IsNumber()
+  @ApiProperty({ example: 50, minimum: 0, maximum: 100, required: false })
+  @IsInt()
   @Min(0)
   @Max(100)
   @IsOptional()
@@ -83,14 +83,13 @@ export class ConvertToDealDto {
   @IsOptional()
   value?: number;
 
-  @ApiProperty({
-    enum: DealStage,
-    default: DealStage.PROSPECTING,
-    required: false,
-  })
-  @IsEnum(DealStage)
-  @IsOptional()
-  stage?: DealStage;
+  @ApiProperty({ example: 'uuid-del-pipeline' })
+  @IsUUID()
+  pipeline_id: string;
+
+  @ApiProperty({ example: 'uuid-de-la-fase' })
+  @IsUUID()
+  stage_id: string;
 
   @ApiProperty({ example: '2024-12-31T23:59:59Z', required: false })
   @Transform(emptyToUndefined)
@@ -111,10 +110,15 @@ export class ListDealsDto {
   @IsString()
   search?: string;
 
-  @ApiProperty({ enum: DealStage, required: false })
+  @ApiProperty({ required: false })
   @IsOptional()
-  @IsEnum(DealStage)
-  stage?: DealStage;
+  @IsUUID()
+  pipeline_id?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsUUID()
+  stage_id?: string;
 
   @ApiProperty({ enum: DealStatus, required: false })
   @IsOptional()
@@ -130,6 +134,11 @@ export class ListDealsDto {
   @IsOptional()
   @IsUUID()
   assigned_to_id?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsUUID()
+  team_id?: string;
 
   @ApiProperty({ required: false, default: 1 })
   @IsOptional()

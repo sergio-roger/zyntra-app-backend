@@ -11,9 +11,15 @@ import { BillingCycle, Plan } from '../src/modules/auth/entities/plan.entity';
 import { Contact } from '../src/modules/crm/entities/contact.entity';
 import { Tag } from '../src/modules/crm/entities/tag.entity';
 import { CrmUser } from '../src/modules/crm/entities/user.entity';
+import { Deal } from '../src/modules/crm/entities/deal.entity';
+import { Pipeline } from '../src/modules/crm/entities/pipeline.entity';
+import { PipelineStage } from '../src/modules/crm/entities/pipeline-stage.entity';
+import { DealStageHistory } from '../src/modules/crm/entities/deal-stage-history.entity';
 import { ContactSource } from '../src/modules/crm/enums/contact-source.enum';
 import { ContactStage } from '../src/modules/crm/enums/contact-stage.enum';
 import { UserRole } from '../src/modules/crm/enums/user-role.enum';
+import { DealStatus } from '../src/modules/crm/enums/deal-status.enum';
+import { PipelineStageType } from '../src/modules/crm/enums/pipeline-stage-type.enum';
 import {
   LifecycleStage,
   LifecycleStageType,
@@ -454,6 +460,36 @@ const DEFAULT_TAGS = [
   },
 ];
 
+// ─── Default pipelines per business ──────────────────────────────────────────
+
+const DEFAULT_PIPELINES = [
+  {
+    name: 'Ventas Nuevas',
+    position: 0,
+    is_default: true,
+    stages: [
+      { name: 'Prospección',   color: '#94a3b8', position: 0, type: PipelineStageType.ACTIVE, probability_percent: 10 },
+      { name: 'Calificación',  color: '#60a5fa', position: 1, type: PipelineStageType.ACTIVE, probability_percent: 25 },
+      { name: 'Propuesta',     color: '#f59e0b', position: 2, type: PipelineStageType.ACTIVE, probability_percent: 50 },
+      { name: 'Negociación',   color: '#a78bfa', position: 3, type: PipelineStageType.ACTIVE, probability_percent: 75 },
+      { name: 'Cierre',        color: '#34d399', position: 4, type: PipelineStageType.ACTIVE, probability_percent: 90 },
+      { name: 'Ganado',        color: '#10b981', position: 5, type: PipelineStageType.WON,    probability_percent: 100 },
+      { name: 'Perdido',       color: '#f87171', position: 6, type: PipelineStageType.LOST,   probability_percent: 0 },
+    ],
+  },
+  {
+    name: 'Renovaciones',
+    position: 1,
+    is_default: false,
+    stages: [
+      { name: 'Identificación', color: '#94a3b8', position: 0, type: PipelineStageType.ACTIVE, probability_percent: 30 },
+      { name: 'Contacto',       color: '#60a5fa', position: 1, type: PipelineStageType.ACTIVE, probability_percent: 50 },
+      { name: 'Renovado',       color: '#10b981', position: 2, type: PipelineStageType.WON,    probability_percent: 100 },
+      { name: 'No renovado',    color: '#f87171', position: 3, type: PipelineStageType.LOST,   probability_percent: 0 },
+    ],
+  },
+];
+
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function bootstrap() {
@@ -467,6 +503,10 @@ async function bootstrap() {
   const stageRepo = ds.getRepository(LifecycleStage);
   const tagRepo = ds.getRepository(Tag);
   const contactRepo = ds.getRepository(Contact);
+  const pipelineRepo = ds.getRepository(Pipeline);
+  const pipelineStageRepo = ds.getRepository(PipelineStage);
+  const dealRepo = ds.getRepository(Deal);
+  const historyRepo = ds.getRepository(DealStageHistory);
 
   const passwordHash = await argon2.hash('Zyntra2025!', {
     secret: Buffer.from(
@@ -478,7 +518,7 @@ async function bootstrap() {
 
   // ── 1. Plans ──────────────────────────────────────────────────────────────
 
-  console.log('\n🌱 [1/4] Seeding plans...');
+  console.log('\n🌱 [1/5] Seeding plans...');
 
   const planMap: Record<string, Plan> = {};
 
@@ -521,7 +561,7 @@ async function bootstrap() {
 
   // ── 2. Businesses + admin users ───────────────────────────────────────────
 
-  console.log('\n🏢 [2/4] Seeding businesses and admin users...');
+  console.log('\n🏢 [2/5] Seeding businesses and admin users...');
 
   for (const entry of BUSINESSES_DATA) {
     const plan = planMap[entry.planName];
@@ -641,7 +681,7 @@ async function bootstrap() {
 
   // ── 3. Lifecycle stages + tags per business ───────────────────────────────
 
-  console.log('\n📋 [3/4] Seeding lifecycle stages and tags...');
+  console.log('\n📋 [3/5] Seeding lifecycle stages and tags...');
 
   for (const entry of BUSINESSES_DATA) {
     const business = await businessRepo.findOne({
@@ -686,7 +726,7 @@ async function bootstrap() {
 
   // ── 4. Contacts ───────────────────────────────────────────────────────────
 
-  console.log('\n👥 [4/4] Seeding contacts...');
+  console.log('\n👥 [4/5] Seeding contacts...');
 
   for (const entry of BUSINESSES_DATA) {
     const business = await businessRepo.findOne({
@@ -728,6 +768,123 @@ async function bootstrap() {
     console.log(
       `  ✅ ${created} contact(s) created for: ${business.name}${created < entry.contacts.length ? ' (some skipped — already existed)' : ''}`,
     );
+  }
+
+  // ── 5. Pipelines + Stages + Deals ─────────────────────────────────────────
+
+  console.log('\n🔀 [5/5] Seeding pipelines, stages and deals...');
+
+  const allBusinessEmails = BUSINESSES_DATA.map((e) => e.business.email);
+  allBusinessEmails.push('superadmin@zyntra.com');
+
+  for (const email of allBusinessEmails) {
+    const business = await businessRepo.findOne({ where: { email } });
+    if (!business) continue;
+
+    const existingPipelines = await pipelineRepo.find({
+      where: { business_id: business.id },
+    });
+
+    if (existingPipelines.length > 0) {
+      console.log(`  ℹ️  Pipelines already exist for: ${business.name}`);
+      continue;
+    }
+
+    // Create pipelines + stages
+    const pipelineMap: Record<string, { pipeline: Pipeline; stageMap: Record<string, PipelineStage> }> = {};
+
+    for (const pipelineData of DEFAULT_PIPELINES) {
+      const pipeline = await pipelineRepo.save(
+        pipelineRepo.create({
+          business_id: business.id,
+          name: pipelineData.name,
+          position: pipelineData.position,
+          is_default: pipelineData.is_default,
+        }),
+      );
+
+      const stageMap: Record<string, PipelineStage> = {};
+      for (const stageData of pipelineData.stages) {
+        const stage = await pipelineStageRepo.save(
+          pipelineStageRepo.create({
+            pipeline_id: pipeline.id,
+            name: stageData.name,
+            color: stageData.color,
+            position: stageData.position,
+            type: stageData.type,
+            probability_percent: stageData.probability_percent,
+          }),
+        );
+        stageMap[stageData.name] = stage;
+      }
+
+      pipelineMap[pipelineData.name] = { pipeline, stageMap };
+    }
+
+    console.log(`  ✅ Pipelines + stages created for: ${business.name}`);
+
+    // Seed sample deals tied to the default pipeline
+    const defaultPipelineData = pipelineMap['Ventas Nuevas'];
+    if (!defaultPipelineData) continue;
+
+    const { pipeline: defaultPipeline, stageMap } = defaultPipelineData;
+    const contacts = await contactRepo.find({
+      where: { business_id: business.id },
+    });
+
+    if (contacts.length === 0) continue;
+
+    const sampleDeals = [
+      { title: 'Implementación Plan Premium', contactIdx: 0, stageName: 'Propuesta',    value: 1500,  daysOffset: 30 },
+      { title: 'Campaña Social Media Q3',     contactIdx: 1, stageName: 'Calificación', value: 800,   daysOffset: 45 },
+      { title: 'Renovación Anual',            contactIdx: 2, stageName: 'Negociación',  value: 2400,  daysOffset: 15 },
+      { title: 'Consultoría SEO',             contactIdx: 3, stageName: 'Cierre',       value: 600,   daysOffset: 7 },
+      { title: 'Landing Page Corporativa',    contactIdx: 4 % contacts.length, stageName: 'Prospección', value: 1200, daysOffset: 60 },
+    ];
+
+    let dealsCreated = 0;
+    for (const dealData of sampleDeals) {
+      const contact = contacts[dealData.contactIdx];
+      const stage = stageMap[dealData.stageName];
+      if (!contact || !stage) continue;
+
+      const existingDeal = await dealRepo.findOne({
+        where: { business_id: business.id, title: dealData.title },
+      });
+      if (existingDeal) continue;
+
+      const closeDate = new Date();
+      closeDate.setDate(closeDate.getDate() + dealData.daysOffset);
+
+      const deal = await dealRepo.save(
+        dealRepo.create({
+          business_id: business.id,
+          title: dealData.title,
+          contact_id: contact.id,
+          pipeline_id: defaultPipeline.id,
+          stage_id: stage.id,
+          value: dealData.value,
+          currency: 'USD',
+          status: DealStatus.OPEN,
+          expected_close_date: closeDate,
+          probability: stage.probability_percent,
+        }),
+      );
+
+      await historyRepo.save(
+        historyRepo.create({
+          deal_id: deal.id,
+          stage_id: stage.id,
+          entered_at: new Date(),
+        }),
+      );
+
+      dealsCreated++;
+    }
+
+    if (dealsCreated > 0) {
+      console.log(`  ✅ ${dealsCreated} deal(s) created for: ${business.name}`);
+    }
   }
 
   console.log('\n✨ Seed finished successfully!\n');

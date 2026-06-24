@@ -17,7 +17,6 @@ import { ListContactsDto } from '@crm/dto/list-contacts.dto';
 import { CreateActivityDto } from '@crm/dto/create-activity.dto';
 import { ConvertToDealDto } from '@crm/dto/deal.dto';
 import { ContactStage } from '@crm/enums/contact-stage.enum';
-import { DealStage } from '@crm/enums/deal-stage.enum';
 import { ActivityType } from '@crm/enums/activity-type.enum';
 import { ActivityCreatedBy } from '@crm/enums/activity-created-by.enum';
 
@@ -253,7 +252,8 @@ export class ContactsService {
       contact_id: contact.id,
       title: dto.title,
       value: dto.value ?? 0,
-      stage: dto.stage ?? DealStage.PROSPECTING,
+      pipeline_id: dto.pipeline_id,
+      stage_id: dto.stage_id,
       expected_close_date: dto.expected_close_date
         ? new Date(dto.expected_close_date)
         : null,
