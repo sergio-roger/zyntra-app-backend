@@ -132,4 +132,15 @@ export class PipelinesController {
   ) {
     return this.pipelines.updateStage(business, stageId, dto);
   }
+
+  @Delete('stages/:stageId')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Delete a stage (blocks if it has active deals)' })
+  async deleteStage(
+    @CurrentBusiness() business: Business,
+    @Param('stageId', ParseUUIDPipe) stageId: string,
+  ) {
+    await this.pipelines.deleteStage(business, stageId);
+  }
 }

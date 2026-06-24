@@ -64,7 +64,22 @@ export class PipelinesService {
       ...dto,
       business_id: business.id,
     });
-    return this.pipelineRepo.save(pipeline);
+    const saved = await this.pipelineRepo.save(pipeline);
+
+    const defaultStages = [
+      { name: 'Prospección',  color: '#4f46e5', position: 0, type: PipelineStageType.ACTIVE, probability_percent: 10  },
+      { name: 'Contactado',   color: '#06b6d4', position: 1, type: PipelineStageType.ACTIVE, probability_percent: 20  },
+      { name: 'Propuesta',    color: '#f59e0b', position: 2, type: PipelineStageType.ACTIVE, probability_percent: 40  },
+      { name: 'Negociación',  color: '#8b5cf6', position: 3, type: PipelineStageType.ACTIVE, probability_percent: 60  },
+      { name: 'Ganado',       color: '#10b981', position: 4, type: PipelineStageType.WON,    probability_percent: 100 },
+      { name: 'Perdido',      color: '#ef4444', position: 5, type: PipelineStageType.LOST,   probability_percent: 0   },
+    ];
+
+    await this.stageRepo.save(
+      defaultStages.map((s) => this.stageRepo.create({ ...s, pipeline_id: saved.id })),
+    );
+
+    return this.findOne(business, saved.id);
   }
 
   async update(
@@ -143,6 +158,27 @@ export class PipelinesService {
 
     Object.assign(stage, dto);
     return this.stageRepo.save(stage);
+  }
+
+  async deleteStage(business: Business, stageId: string): Promise<void> {
+    const stage = await this.stageRepo.findOne({
+      where: { id: stageId },
+      relations: ['pipeline'],
+    });
+    if (!stage || stage.pipeline.business_id !== business.id) {
+      throw new NotFoundException('Stage not found');
+    }
+
+    const dealsCount = await this.dealRepo.count({
+      where: { stage_id: stageId },
+    });
+    if (dealsCount > 0) {
+      throw new ConflictException(
+        `No se puede eliminar la etapa "${stage.name}" porque tiene ${dealsCount} negocio(s) asignado(s).`,
+      );
+    }
+
+    await this.stageRepo.remove(stage);
   }
 
   async reorderStages(

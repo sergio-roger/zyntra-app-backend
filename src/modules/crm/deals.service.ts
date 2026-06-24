@@ -231,7 +231,7 @@ export class DealsService {
     if (!pipeline) throw new NotFoundException('Pipeline not found');
 
     const deals = await this.dealsRepo.find({
-      where: { business_id: business.id, pipeline_id: pipelineId, status: DealStatus.OPEN },
+      where: { business_id: business.id, pipeline_id: pipelineId },
       relations: ['contact', 'assigned_to', 'stage'],
       order: { updated_at: 'DESC' },
     });
