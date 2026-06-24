@@ -9,7 +9,7 @@ import { randomBytes } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 import { Business, PlanStatus } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
 import { RegisterDto } from './dto/register.dto';
@@ -57,6 +57,14 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
+  private getArgonOptions() {
+    return {
+      secret: Buffer.from(
+        process.env.ARGON2_PEPPER || 'default-pepper-key-for-fallback-planchat',
+      ),
+    };
+  }
+
   async register(registerDto: RegisterDto) {
     const { name, email, password } = registerDto;
     const normalizedEmail = email.toLowerCase();
@@ -77,7 +85,7 @@ export class AuthService {
       );
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
+    const password_hash = await argon2.hash(password, this.getArgonOptions());
     const trial_ends_at = new Date();
     trial_ends_at.setDate(trial_ends_at.getDate() + 14);
 
@@ -119,7 +127,13 @@ export class AuthService {
           'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
         );
       }
-      if (await bcrypt.compare(password, business.password_hash)) {
+      if (
+        await argon2.verify(
+          business.password_hash,
+          password,
+          this.getArgonOptions(),
+        )
+      ) {
         const reloaded = await this.validateBusiness(business.id);
         return this.generateBusinessToken(reloaded!);
       }
@@ -146,7 +160,11 @@ export class AuthService {
       }
       if (
         crmUser.password_hash &&
-        (await bcrypt.compare(password, crmUser.password_hash))
+        (await argon2.verify(
+          crmUser.password_hash,
+          password,
+          this.getArgonOptions(),
+        ))
       ) {
         if (!businessEntity) {
           throw new UnauthorizedException('Credenciales incorrectas');
@@ -261,7 +279,10 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    business.password_hash = await bcrypt.hash(newPassword, 10);
+    business.password_hash = await argon2.hash(
+      newPassword,
+      this.getArgonOptions(),
+    );
     await this.businessRepository.save(business);
     resetTokens.delete(token);
   }

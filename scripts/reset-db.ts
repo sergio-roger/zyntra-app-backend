@@ -19,6 +19,7 @@ async function bootstrap() {
     'crm.tasks',
     'crm.custom_fields',
     'crm.tags',
+    'crm.segments',
     '"security"."user_teams_team"',
     '"security"."users"',
     '"security"."teams"',

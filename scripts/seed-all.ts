@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import {
@@ -468,7 +468,12 @@ async function bootstrap() {
   const tagRepo = ds.getRepository(Tag);
   const contactRepo = ds.getRepository(Contact);
 
-  const passwordHash = await bcrypt.hash('Zyntra2025!', 10);
+  const passwordHash = await argon2.hash('Zyntra2025!', {
+    secret: Buffer.from(
+      process.env.ARGON2_PEPPER || 'default-pepper-key-for-fallback-planchat',
+    ),
+  });
+
   const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
   // ── 1. Plans ──────────────────────────────────────────────────────────────

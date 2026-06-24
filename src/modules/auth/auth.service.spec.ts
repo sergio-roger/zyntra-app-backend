@@ -6,7 +6,7 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
 import { Business, PlanStatus } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
@@ -16,13 +16,13 @@ import { Role } from './entities/role.entity';
 import { Menu } from './entities/menu.entity';
 import { Permission } from './entities/permission.entity';
 
-const HASHED = bcrypt.hashSync('Password123!', 10);
+let HASHED = '';
 
 const mockBusiness: Partial<Business> = {
   id: 'biz-uuid',
   name: 'Test Biz',
   email: 'biz@test.com',
-  password_hash: HASHED,
+  password_hash: '',
   plan_status: PlanStatus.ACTIVE,
 };
 
@@ -30,12 +30,21 @@ const mockCrmUser: Partial<CrmUser> = {
   id: 'user-uuid',
   email: 'agent@test.com',
   role: UserRole.AGENT,
-  password_hash: HASHED,
+  password_hash: '',
   business_id: 'biz-uuid',
   is_active: true,
 };
 
 describe('AuthService — unified login', () => {
+  beforeAll(async () => {
+    HASHED = await argon2.hash('Password123!', {
+      secret: Buffer.from(
+        process.env.ARGON2_PEPPER || 'default-pepper-key-for-fallback-planchat',
+      ),
+    });
+    mockBusiness.password_hash = HASHED;
+    mockCrmUser.password_hash = HASHED;
+  });
   let service: AuthService;
 
   const businessRepo = {

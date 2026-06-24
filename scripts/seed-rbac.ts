@@ -107,14 +107,6 @@ const MENUS_DATA = [
       'Reportes avanzados de analítica de embudos, conversaciones y agentes.',
   },
   {
-    key: 'billing',
-    label: 'Facturación',
-    path: '/billing',
-    parent_key: null,
-    description:
-      'Gestión de suscripciones, métodos de pago, facturas y planes del negocio.',
-  },
-  {
     key: 'settings',
     label: 'Configuración',
     path: '/settings',
@@ -343,6 +335,13 @@ const MENUS_DATA = [
     path: '/settings/configuracion',
     parent_key: 'settings',
     description: 'Configuración general de la plataforma.',
+  },
+  {
+    key: 'billing',
+    label: 'Planes',
+    path: '/settings/plans',
+    parent_key: 'settings',
+    description: 'Visualiza y gestiona tu plan de suscripción.',
   },
   {
     key: 'settings_my_account',
