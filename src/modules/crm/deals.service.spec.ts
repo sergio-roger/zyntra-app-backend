@@ -173,13 +173,21 @@ describe('DealsService', () => {
         type: PipelineStageType.WON,
         name: 'Ganado',
       });
+      const updatedDeal = makeDeal({
+        stage_id: 'stage-won',
+        status: DealStatus.WON,
+        closed_at: new Date(),
+      });
 
-      dealsRepo.findOne.mockResolvedValue(deal);
+      // update() calls findOne twice: once to load the current deal, once to
+      // return the result after dealsRepo.update(). The second call must return
+      // the already-persisted state (status WON) so the assertion holds.
+      dealsRepo.findOne.mockResolvedValueOnce(deal).mockResolvedValueOnce(updatedDeal);
       stageRepo.findOne.mockResolvedValue(wonStage);
       historyRepo.update.mockResolvedValue({ affected: 1 });
       historyRepo.save.mockResolvedValue({});
       activitiesRepo.save.mockResolvedValue({});
-      dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
+      dealsRepo.update.mockResolvedValue({ affected: 1 });
 
       const result = await service.update(mockBusiness, 'deal-uuid', {
         stage_id: 'stage-won',
@@ -196,13 +204,18 @@ describe('DealsService', () => {
         type: PipelineStageType.LOST,
         name: 'Perdido',
       });
+      const updatedDeal = makeDeal({
+        stage_id: 'stage-lost',
+        status: DealStatus.LOST,
+        closed_at: new Date(),
+      });
 
-      dealsRepo.findOne.mockResolvedValue(deal);
+      dealsRepo.findOne.mockResolvedValueOnce(deal).mockResolvedValueOnce(updatedDeal);
       stageRepo.findOne.mockResolvedValue(lostStage);
       historyRepo.update.mockResolvedValue({ affected: 1 });
       historyRepo.save.mockResolvedValue({});
       activitiesRepo.save.mockResolvedValue({});
-      dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
+      dealsRepo.update.mockResolvedValue({ affected: 1 });
 
       const result = await service.update(mockBusiness, 'deal-uuid', {
         stage_id: 'stage-lost',
