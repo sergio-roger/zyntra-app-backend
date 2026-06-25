@@ -41,7 +41,7 @@ describe('PipelinesService', () => {
   const pipelineRepo = {
     find: jest.fn(),
     findOne: jest.fn(),
-    create: jest.fn((x: any) => x),
+    create: jest.fn(<T>(x: T): T => x),
     save: jest.fn(),
     update: jest.fn(),
     softRemove: jest.fn(),
@@ -50,7 +50,7 @@ describe('PipelinesService', () => {
   const stageRepo = {
     find: jest.fn(),
     findOne: jest.fn(),
-    create: jest.fn((x: any) => x),
+    create: jest.fn(<T>(x: T): T => x),
     save: jest.fn(),
     remove: jest.fn(),
     update: jest.fn(),
@@ -103,10 +103,15 @@ describe('PipelinesService', () => {
       // findOne called at the end of create() to return fresh pipeline
       pipelineRepo.findOne.mockResolvedValue(pipelineWithStages);
 
-      await service.create(mockBusiness, { name: 'Pipeline Test', is_default: false });
+      await service.create(mockBusiness, {
+        name: 'Pipeline Test',
+        is_default: false,
+      });
 
       expect(stageRepo.save).toHaveBeenCalledTimes(1);
-      const savedStages: PipelineStage[] = stageRepo.save.mock.calls[0][0];
+      const savedStages = (
+        stageRepo.save.mock.calls as PipelineStage[][][]
+      )[0][0];
       expect(savedStages).toHaveLength(6);
     });
 
@@ -119,7 +124,7 @@ describe('PipelinesService', () => {
 
       await service.create(mockBusiness, { name: 'Pipeline Test' });
 
-      const stages: PipelineStage[] = stageRepo.save.mock.calls[0][0];
+      const stages = (stageRepo.save.mock.calls as PipelineStage[][][])[0][0];
       const typeCount = stages.reduce<Record<string, number>>((acc, s) => {
         acc[s.type] = (acc[s.type] ?? 0) + 1;
         return acc;
@@ -138,7 +143,10 @@ describe('PipelinesService', () => {
       stageRepo.save.mockResolvedValue([]);
       pipelineRepo.findOne.mockResolvedValue(makePipeline({ stages: [] }));
 
-      await service.create(mockBusiness, { name: 'New Default', is_default: true });
+      await service.create(mockBusiness, {
+        name: 'New Default',
+        is_default: true,
+      });
 
       expect(pipelineRepo.update).toHaveBeenCalledWith(
         { business_id: mockBusiness.id },
@@ -161,9 +169,9 @@ describe('PipelinesService', () => {
       };
       dealRepo.createQueryBuilder.mockReturnValue(mockQb);
 
-      await expect(service.softDelete(mockBusiness, 'pipe-uuid')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.softDelete(mockBusiness, 'pipe-uuid'),
+      ).rejects.toThrow(ConflictException);
       expect(pipelineRepo.softRemove).not.toHaveBeenCalled();
     });
 
@@ -177,7 +185,10 @@ describe('PipelinesService', () => {
         getCount: jest.fn().mockResolvedValue(0),
       };
       dealRepo.createQueryBuilder.mockReturnValue(mockQb);
-      pipelineRepo.softRemove.mockResolvedValue({ ...pipeline, deleted_at: new Date() });
+      pipelineRepo.softRemove.mockResolvedValue({
+        ...pipeline,
+        deleted_at: new Date(),
+      });
 
       await service.softDelete(mockBusiness, 'pipe-uuid');
 
@@ -199,36 +210,42 @@ describe('PipelinesService', () => {
     it('throws NotFoundException when stage does not exist', async () => {
       stageRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.deleteStage(mockBusiness, 'no-stage')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.deleteStage(mockBusiness, 'no-stage'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('throws NotFoundException when stage belongs to a different business', async () => {
       const stage = makeStage();
-      (stage as any).pipeline = { business_id: 'other-biz' };
+      (stage as unknown as { pipeline: { business_id: string } }).pipeline = {
+        business_id: 'other-biz',
+      };
       stageRepo.findOne.mockResolvedValue(stage);
 
-      await expect(service.deleteStage(mockBusiness, 'stage-uuid')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.deleteStage(mockBusiness, 'stage-uuid'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('throws ConflictException when stage has assigned deals', async () => {
       const stage = makeStage();
-      (stage as any).pipeline = { business_id: 'biz-uuid' };
+      (stage as unknown as { pipeline: { business_id: string } }).pipeline = {
+        business_id: 'biz-uuid',
+      };
       stageRepo.findOne.mockResolvedValue(stage);
       dealRepo.count.mockResolvedValue(2);
 
-      await expect(service.deleteStage(mockBusiness, 'stage-uuid')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.deleteStage(mockBusiness, 'stage-uuid'),
+      ).rejects.toThrow(ConflictException);
       expect(stageRepo.remove).not.toHaveBeenCalled();
     });
 
     it('calls remove when stage has no deals', async () => {
       const stage = makeStage();
-      (stage as any).pipeline = { business_id: 'biz-uuid' };
+      (stage as unknown as { pipeline: { business_id: string } }).pipeline = {
+        business_id: 'biz-uuid',
+      };
       stageRepo.findOne.mockResolvedValue(stage);
       dealRepo.count.mockResolvedValue(0);
       stageRepo.remove.mockResolvedValue(stage);

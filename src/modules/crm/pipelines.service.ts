@@ -67,16 +67,54 @@ export class PipelinesService {
     const saved = await this.pipelineRepo.save(pipeline);
 
     const defaultStages = [
-      { name: 'Prospección',  color: '#4f46e5', position: 0, type: PipelineStageType.ACTIVE, probability_percent: 10  },
-      { name: 'Contactado',   color: '#06b6d4', position: 1, type: PipelineStageType.ACTIVE, probability_percent: 20  },
-      { name: 'Propuesta',    color: '#f59e0b', position: 2, type: PipelineStageType.ACTIVE, probability_percent: 40  },
-      { name: 'Negociación',  color: '#8b5cf6', position: 3, type: PipelineStageType.ACTIVE, probability_percent: 60  },
-      { name: 'Ganado',       color: '#10b981', position: 4, type: PipelineStageType.WON,    probability_percent: 100 },
-      { name: 'Perdido',      color: '#ef4444', position: 5, type: PipelineStageType.LOST,   probability_percent: 0   },
+      {
+        name: 'Prospección',
+        color: '#4f46e5',
+        position: 0,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 10,
+      },
+      {
+        name: 'Contactado',
+        color: '#06b6d4',
+        position: 1,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 20,
+      },
+      {
+        name: 'Propuesta',
+        color: '#f59e0b',
+        position: 2,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 40,
+      },
+      {
+        name: 'Negociación',
+        color: '#8b5cf6',
+        position: 3,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 60,
+      },
+      {
+        name: 'Ganado',
+        color: '#10b981',
+        position: 4,
+        type: PipelineStageType.WON,
+        probability_percent: 100,
+      },
+      {
+        name: 'Perdido',
+        color: '#ef4444',
+        position: 5,
+        type: PipelineStageType.LOST,
+        probability_percent: 0,
+      },
     ];
 
     await this.stageRepo.save(
-      defaultStages.map((s) => this.stageRepo.create({ ...s, pipeline_id: saved.id })),
+      defaultStages.map((s) =>
+        this.stageRepo.create({ ...s, pipeline_id: saved.id }),
+      ),
     );
 
     return this.findOne(business, saved.id);
@@ -121,7 +159,10 @@ export class PipelinesService {
 
   // ─── Stages ────────────────────────────────────────────────────────────────
 
-  async listStages(business: Business, pipelineId: string): Promise<PipelineStage[]> {
+  async listStages(
+    business: Business,
+    pipelineId: string,
+  ): Promise<PipelineStage[]> {
     await this.findOne(business, pipelineId);
     return this.stageRepo.find({
       where: { pipeline_id: pipelineId },
@@ -201,7 +242,11 @@ export class PipelinesService {
 
     await this.dataSource.transaction(async (em) => {
       for (const item of dto.stages) {
-        await em.update(PipelineStage, { id: item.id }, { position: item.position });
+        await em.update(
+          PipelineStage,
+          { id: item.id },
+          { position: item.position },
+        );
       }
     });
 
@@ -213,7 +258,21 @@ export class PipelinesService {
   async forecast(business: Business, pipelineId: string) {
     await this.findOne(business, pipelineId);
 
-    const rows = await this.dealRepo
+    interface ForecastRow {
+      month: string;
+      total_value: string;
+      weighted_value: string;
+      deal_count: number;
+      currency: string;
+    }
+
+    interface ForecastTotals {
+      total_value: string | null;
+      weighted_value: string | null;
+      deal_count: number | null;
+    }
+
+    const rows: ForecastRow[] = await this.dealRepo
       .createQueryBuilder('d')
       .innerJoin('d.stage', 's')
       .select([
@@ -232,7 +291,7 @@ export class PipelinesService {
       .orderBy(`TO_CHAR(d.expected_close_date, 'YYYY-MM')`, 'ASC')
       .getRawMany();
 
-    const totalsRow = await this.dealRepo
+    const totalsRow: ForecastTotals | undefined = await this.dealRepo
       .createQueryBuilder('d')
       .innerJoin('d.stage', 's')
       .select([

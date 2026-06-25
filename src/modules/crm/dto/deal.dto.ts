@@ -19,7 +19,10 @@ export class CreateDealDto {
   @IsString()
   title: string;
 
-  @ApiProperty({ example: 'Detalle de la oportunidad de negocio', required: false })
+  @ApiProperty({
+    example: 'Detalle de la oportunidad de negocio',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   description?: string;

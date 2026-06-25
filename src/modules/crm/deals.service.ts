@@ -16,7 +16,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, Repository } from 'typeorm';
+import { Brackets, IsNull, QueryDeepPartialEntity, Repository } from 'typeorm';
 
 @Injectable()
 export class DealsService {
@@ -196,15 +196,15 @@ export class DealsService {
   // ─── Private helpers ──────────────────────────────────────────────────────
 
   /** Maps only the defined DTO fields into a type-safe entity partial. */
-  private buildPatch(dto: UpdateDealDto): Partial<Deal> {
-    const patch: Partial<Deal> = {};
+  private buildPatch(dto: UpdateDealDto): QueryDeepPartialEntity<Deal> {
+    const patch: Record<string, unknown> = {};
 
     for (const key of DealsService.SIMPLE_FIELDS) {
-      if (dto[key] !== undefined) (patch as any)[key] = dto[key];
+      if (dto[key] !== undefined) patch[key] = dto[key];
     }
 
     for (const key of DealsService.NULLABLE_FIELDS) {
-      if (dto[key] !== undefined) (patch as any)[key] = dto[key] ?? null;
+      if (dto[key] !== undefined) patch[key] = dto[key] ?? null;
     }
 
     if (dto.expected_close_date !== undefined) {
@@ -213,7 +213,7 @@ export class DealsService {
         : null;
     }
 
-    return patch;
+    return patch as QueryDeepPartialEntity<Deal>;
   }
 
   /** Derives deal status and closed_at from the target stage type. */
@@ -271,7 +271,7 @@ export class DealsService {
     deal: Deal,
     newStageId: string,
     pipelineId: string,
-    patch: Partial<Deal>,
+    patch: QueryDeepPartialEntity<Deal>,
   ): Promise<void> {
     const newStage = await this.stageRepo.findOne({
       where: { id: newStageId, pipeline_id: pipelineId },

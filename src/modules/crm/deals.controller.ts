@@ -35,13 +35,17 @@ export class DealsController {
   constructor(private readonly deals: DealsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List deals (paginated, filterable by pipeline/stage/status/team)' })
+  @ApiOperation({
+    summary: 'List deals (paginated, filterable by pipeline/stage/status/team)',
+  })
   list(@CurrentBusiness() business: Business, @Query() query: ListDealsDto) {
     return this.deals.list(business, query);
   }
 
   @Get('kanban/:pipelineId')
-  @ApiOperation({ summary: 'Kanban board — open deals grouped by stage for a pipeline' })
+  @ApiOperation({
+    summary: 'Kanban board — open deals grouped by stage for a pipeline',
+  })
   kanban(
     @CurrentBusiness() business: Business,
     @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
@@ -75,7 +79,9 @@ export class DealsController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a deal (move stage triggers DealStageHistory + status)' })
+  @ApiOperation({
+    summary: 'Update a deal (move stage triggers DealStageHistory + status)',
+  })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

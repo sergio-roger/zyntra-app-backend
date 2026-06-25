@@ -51,7 +51,10 @@ export class PipelinesController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create a pipeline' })
   @ApiCreatedResponse()
-  create(@CurrentBusiness() business: Business, @Body() dto: CreatePipelineDto) {
+  create(
+    @CurrentBusiness() business: Business,
+    @Body() dto: CreatePipelineDto,
+  ) {
     return this.pipelines.create(business, dto);
   }
 

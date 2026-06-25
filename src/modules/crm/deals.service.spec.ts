@@ -50,16 +50,24 @@ describe('DealsService', () => {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    update: jest.fn(),
     softRemove: jest.fn(),
     find: jest.fn(),
   };
   const contactsRepo = { findOne: jest.fn() };
-  const activitiesRepo = { save: jest.fn(), create: jest.fn((x: any) => x) };
+  const activitiesRepo = {
+    save: jest.fn(),
+    create: jest.fn(<T>(x: T): T => x),
+  };
   const pipelineRepo = { findOne: jest.fn(), find: jest.fn(), save: jest.fn() };
-  const stageRepo = { findOne: jest.fn(), create: jest.fn((x: any) => x), save: jest.fn() };
+  const stageRepo = {
+    findOne: jest.fn(),
+    create: jest.fn(<T>(x: T): T => x),
+    save: jest.fn(),
+  };
   const historyRepo = {
     save: jest.fn(),
-    create: jest.fn((x: any) => x),
+    create: jest.fn(<T>(x: T): T => x),
     update: jest.fn(),
     find: jest.fn(),
   };
@@ -70,10 +78,16 @@ describe('DealsService', () => {
         DealsService,
         { provide: getRepositoryToken(Deal), useValue: dealsRepo },
         { provide: getRepositoryToken(Contact), useValue: contactsRepo },
-        { provide: getRepositoryToken(ContactActivity), useValue: activitiesRepo },
+        {
+          provide: getRepositoryToken(ContactActivity),
+          useValue: activitiesRepo,
+        },
         { provide: getRepositoryToken(Pipeline), useValue: pipelineRepo },
         { provide: getRepositoryToken(PipelineStage), useValue: stageRepo },
-        { provide: getRepositoryToken(DealStageHistory), useValue: historyRepo },
+        {
+          provide: getRepositoryToken(DealStageHistory),
+          useValue: historyRepo,
+        },
       ],
     }).compile();
 
@@ -88,7 +102,10 @@ describe('DealsService', () => {
     it('calls softRemove on the repo', async () => {
       const deal = makeDeal();
       dealsRepo.findOne.mockResolvedValue(deal);
-      dealsRepo.softRemove.mockResolvedValue({ ...deal, deleted_at: new Date() });
+      dealsRepo.softRemove.mockResolvedValue({
+        ...deal,
+        deleted_at: new Date(),
+      });
 
       await service.remove(mockBusiness, 'deal-uuid');
 
@@ -99,9 +116,9 @@ describe('DealsService', () => {
     it('throws NotFoundException when deal does not exist', async () => {
       dealsRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.remove(mockBusiness, 'no-such-uuid')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.remove(mockBusiness, 'no-such-uuid'),
+      ).rejects.toThrow(NotFoundException);
       expect(dealsRepo.softRemove).not.toHaveBeenCalled();
     });
   });
@@ -129,7 +146,10 @@ describe('DealsService', () => {
   describe('update() — stage transitions', () => {
     it('keeps status OPEN and clears closed_at when moving to an ACTIVE stage', async () => {
       const deal = makeDeal({ stage_id: 'stage-old', status: DealStatus.OPEN });
-      const newStage = makeStage({ id: 'stage-new', type: PipelineStageType.ACTIVE });
+      const newStage = makeStage({
+        id: 'stage-new',
+        type: PipelineStageType.ACTIVE,
+      });
 
       dealsRepo.findOne.mockResolvedValue(deal);
       stageRepo.findOne.mockResolvedValue(newStage);
@@ -148,7 +168,11 @@ describe('DealsService', () => {
 
     it('sets status WON and closed_at when moving to a WON stage', async () => {
       const deal = makeDeal({ stage_id: 'stage-old', status: DealStatus.OPEN });
-      const wonStage = makeStage({ id: 'stage-won', type: PipelineStageType.WON, name: 'Ganado' });
+      const wonStage = makeStage({
+        id: 'stage-won',
+        type: PipelineStageType.WON,
+        name: 'Ganado',
+      });
 
       dealsRepo.findOne.mockResolvedValue(deal);
       stageRepo.findOne.mockResolvedValue(wonStage);
@@ -167,7 +191,11 @@ describe('DealsService', () => {
 
     it('sets status LOST and closed_at when moving to a LOST stage', async () => {
       const deal = makeDeal({ stage_id: 'stage-old', status: DealStatus.OPEN });
-      const lostStage = makeStage({ id: 'stage-lost', type: PipelineStageType.LOST, name: 'Perdido' });
+      const lostStage = makeStage({
+        id: 'stage-lost',
+        type: PipelineStageType.LOST,
+        name: 'Perdido',
+      });
 
       dealsRepo.findOne.mockResolvedValue(deal);
       stageRepo.findOne.mockResolvedValue(lostStage);
@@ -191,7 +219,9 @@ describe('DealsService', () => {
       stageRepo.findOne.mockResolvedValue(null); // stage not found in this pipeline
 
       await expect(
-        service.update(mockBusiness, 'deal-uuid', { stage_id: 'stage-other-pipeline' }),
+        service.update(mockBusiness, 'deal-uuid', {
+          stage_id: 'stage-other-pipeline',
+        }),
       ).rejects.toThrow(BadRequestException);
 
       expect(dealsRepo.save).not.toHaveBeenCalled();
@@ -203,7 +233,9 @@ describe('DealsService', () => {
       dealsRepo.findOne.mockResolvedValue(deal);
       dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
 
-      await service.update(mockBusiness, 'deal-uuid', { stage_id: 'same-stage' });
+      await service.update(mockBusiness, 'deal-uuid', {
+        stage_id: 'same-stage',
+      });
 
       expect(stageRepo.findOne).not.toHaveBeenCalled();
       expect(historyRepo.update).not.toHaveBeenCalled();
@@ -212,7 +244,10 @@ describe('DealsService', () => {
 
     it('creates a history record when moving stages', async () => {
       const deal = makeDeal({ stage_id: 'stage-old' });
-      const newStage = makeStage({ id: 'stage-new', type: PipelineStageType.ACTIVE });
+      const newStage = makeStage({
+        id: 'stage-new',
+        type: PipelineStageType.ACTIVE,
+      });
 
       dealsRepo.findOne.mockResolvedValue(deal);
       stageRepo.findOne.mockResolvedValue(newStage);
@@ -221,12 +256,14 @@ describe('DealsService', () => {
       activitiesRepo.save.mockResolvedValue({});
       dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
 
-      await service.update(mockBusiness, 'deal-uuid', { stage_id: 'stage-new' });
+      await service.update(mockBusiness, 'deal-uuid', {
+        stage_id: 'stage-new',
+      });
 
       // closes open history entry
       expect(historyRepo.update).toHaveBeenCalledWith(
-        { deal_id: deal.id, left_at: expect.anything() },
-        { left_at: expect.any(Date) },
+        { deal_id: deal.id, left_at: expect.anything() as unknown },
+        { left_at: expect.any(Date) as Date },
       );
       // opens new history entry
       expect(historyRepo.save).toHaveBeenCalledWith(
@@ -236,7 +273,11 @@ describe('DealsService', () => {
 
     it('creates a STAGE_CHANGE activity when moving stages', async () => {
       const deal = makeDeal({ stage_id: 'stage-old' });
-      const newStage = makeStage({ id: 'stage-new', name: 'Propuesta', type: PipelineStageType.ACTIVE });
+      const newStage = makeStage({
+        id: 'stage-new',
+        name: 'Propuesta',
+        type: PipelineStageType.ACTIVE,
+      });
 
       dealsRepo.findOne.mockResolvedValue(deal);
       stageRepo.findOne.mockResolvedValue(newStage);
@@ -245,7 +286,9 @@ describe('DealsService', () => {
       activitiesRepo.save.mockResolvedValue({});
       dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
 
-      await service.update(mockBusiness, 'deal-uuid', { stage_id: 'stage-new' });
+      await service.update(mockBusiness, 'deal-uuid', {
+        stage_id: 'stage-new',
+      });
 
       expect(activitiesRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ type: ActivityType.STAGE_CHANGE }),
@@ -282,9 +325,21 @@ describe('DealsService', () => {
   describe('kanban()', () => {
     it('includes all deals in the kanban columns regardless of status', async () => {
       const stage = makeStage({ id: 'stage-uuid' });
-      const pipeline = { id: 'pipe-uuid', business_id: 'biz-uuid', stages: [stage] };
-      const openDeal = makeDeal({ id: 'open-deal', stage_id: 'stage-uuid', status: DealStatus.OPEN });
-      const wonDeal  = makeDeal({ id: 'won-deal',  stage_id: 'stage-uuid', status: DealStatus.WON  });
+      const pipeline = {
+        id: 'pipe-uuid',
+        business_id: 'biz-uuid',
+        stages: [stage],
+      };
+      const openDeal = makeDeal({
+        id: 'open-deal',
+        stage_id: 'stage-uuid',
+        status: DealStatus.OPEN,
+      });
+      const wonDeal = makeDeal({
+        id: 'won-deal',
+        stage_id: 'stage-uuid',
+        status: DealStatus.WON,
+      });
 
       pipelineRepo.findOne.mockResolvedValue(pipeline);
       dealsRepo.find.mockResolvedValue([openDeal, wonDeal]);
@@ -295,7 +350,9 @@ describe('DealsService', () => {
       // The query must NOT filter by status
       expect(dealsRepo.find).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.not.objectContaining({ status: expect.anything() }),
+          where: expect.not.objectContaining({
+            status: expect.anything() as unknown,
+          }) as Record<string, unknown>,
         }),
       );
     });
