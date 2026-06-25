@@ -37,7 +37,7 @@ export class PipelinesService {
   async list(business: Business): Promise<Pipeline[]> {
     return this.pipelineRepo.find({
       where: { business_id: business.id },
-      relations: ['stages'],
+      relations: ['stages', 'team'],
       order: { position: 'ASC', stages: { position: 'ASC' } },
     });
   }
@@ -45,7 +45,7 @@ export class PipelinesService {
   async findOne(business: Business, id: string): Promise<Pipeline> {
     const pipeline = await this.pipelineRepo.findOne({
       where: { id, business_id: business.id },
-      relations: ['stages'],
+      relations: ['stages', 'team'],
       order: { stages: { position: 'ASC' } },
     });
     if (!pipeline) throw new NotFoundException('Pipeline not found');

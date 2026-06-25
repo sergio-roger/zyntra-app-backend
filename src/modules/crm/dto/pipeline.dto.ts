@@ -32,6 +32,11 @@ export class CreatePipelineDto {
   @IsBoolean()
   @IsOptional()
   is_default?: boolean;
+
+  @ApiProperty({ example: 'uuid-del-equipo', required: false })
+  @IsUUID()
+  @IsOptional()
+  team_id?: string | null;
 }
 
 export class UpdatePipelineDto extends PartialType(CreatePipelineDto) {}

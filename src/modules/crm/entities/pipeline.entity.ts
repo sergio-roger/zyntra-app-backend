@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
 import { PipelineStage } from './pipeline-stage.entity';
+import { Team } from './team.entity';
 
 @Entity({ name: 'pipelines', schema: 'crm' })
 @Index(['business_id'])
@@ -34,6 +35,13 @@ export class Pipeline {
 
   @Column({ default: false })
   is_default: boolean;
+
+  @Column('uuid', { nullable: true })
+  team_id: string | null;
+
+  @ManyToOne(() => Team, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'team_id' })
+  team: Team | null;
 
   @OneToMany(() => PipelineStage, (stage) => stage.pipeline, {
     cascade: ['insert'],
