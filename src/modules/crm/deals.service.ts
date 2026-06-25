@@ -1,22 +1,22 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Brackets, IsNull } from 'typeorm';
-import { Deal } from '@crm/entities/deal.entity';
-import { Contact } from '@crm/entities/contact.entity';
-import { ContactActivity } from '@crm/entities/contact-activity.entity';
-import { Pipeline } from '@crm/entities/pipeline.entity';
-import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
-import { DealStageHistory } from '@crm/entities/deal-stage-history.entity';
 import { Business } from '@auth/entities/business.entity';
-import { CreateDealDto, UpdateDealDto, ListDealsDto } from '@crm/dto/deal.dto';
-import { ActivityType } from '@crm/enums/activity-type.enum';
+import { CreateDealDto, ListDealsDto, UpdateDealDto } from '@crm/dto/deal.dto';
+import { ContactActivity } from '@crm/entities/contact-activity.entity';
+import { Contact } from '@crm/entities/contact.entity';
+import { DealStageHistory } from '@crm/entities/deal-stage-history.entity';
+import { Deal } from '@crm/entities/deal.entity';
+import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
+import { Pipeline } from '@crm/entities/pipeline.entity';
 import { ActivityCreatedBy } from '@crm/enums/activity-created-by.enum';
+import { ActivityType } from '@crm/enums/activity-type.enum';
 import { DealStatus } from '@crm/enums/deal-status.enum';
 import { PipelineStageType } from '@crm/enums/pipeline-stage-type.enum';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Brackets, IsNull, Repository } from 'typeorm';
 
 @Injectable()
 export class DealsService {
@@ -58,8 +58,7 @@ export class DealsService {
       qb.andWhere('d.contact_id = :cid', { cid: query.contact_id });
     if (query.assigned_to_id)
       qb.andWhere('d.assigned_to_id = :uid', { uid: query.assigned_to_id });
-    if (query.team_id)
-      qb.andWhere('d.team_id = :tid', { tid: query.team_id });
+    if (query.team_id) qb.andWhere('d.team_id = :tid', { tid: query.team_id });
 
     if (query.search) {
       qb.andWhere(
@@ -121,11 +120,12 @@ export class DealsService {
     const deal = this.dealsRepo.create({
       ...dto,
       business_id: business.id,
-      status: stage.type === PipelineStageType.WON
-        ? DealStatus.WON
-        : stage.type === PipelineStageType.LOST
-        ? DealStatus.LOST
-        : DealStatus.OPEN,
+      status:
+        stage.type === PipelineStageType.WON
+          ? DealStatus.WON
+          : stage.type === PipelineStageType.LOST
+            ? DealStatus.LOST
+            : DealStatus.OPEN,
       closed_at:
         stage.type !== PipelineStageType.ACTIVE ? new Date() : undefined,
     });
@@ -163,8 +163,43 @@ export class DealsService {
     const deal = await this.findOne(business, id);
     const previousStageId = deal.stage_id;
 
+    const patch: Partial<
+      Pick<
+        Deal,
+        | 'title'
+        | 'description'
+        | 'value'
+        | 'currency'
+        | 'pipeline_id'
+        | 'stage_id'
+        | 'contact_id'
+        | 'assigned_to_id'
+        | 'team_id'
+        | 'probability'
+        | 'expected_close_date'
+        | 'status'
+        | 'closed_at'
+      >
+    > = {};
+
+    if (dto.title !== undefined) patch.title = dto.title;
+    if (dto.description !== undefined)
+      patch.description = dto.description ?? null;
+    if (dto.value !== undefined) patch.value = dto.value;
+    if (dto.currency !== undefined) patch.currency = dto.currency;
+    if (dto.pipeline_id !== undefined) patch.pipeline_id = dto.pipeline_id;
+    if (dto.contact_id !== undefined) patch.contact_id = dto.contact_id;
+    if (dto.assigned_to_id !== undefined)
+      patch.assigned_to_id = dto.assigned_to_id ?? null;
+    if (dto.team_id !== undefined) patch.team_id = dto.team_id ?? null;
+    if (dto.probability !== undefined) patch.probability = dto.probability;
+    if (dto.expected_close_date !== undefined)
+      patch.expected_close_date = dto.expected_close_date
+        ? new Date(dto.expected_close_date)
+        : null;
+
     if (dto.stage_id && dto.stage_id !== previousStageId) {
-      const targetPipelineId = dto.pipeline_id ?? deal.pipeline_id;
+      const targetPipelineId = (dto.pipeline_id ?? deal.pipeline_id) as string;
 
       const newStage = await this.stageRepo.findOne({
         where: { id: dto.stage_id, pipeline_id: targetPipelineId },
@@ -173,6 +208,19 @@ export class DealsService {
         throw new BadRequestException(
           'La fase de destino no pertenece al pipeline del deal',
         );
+
+      patch.stage_id = newStage.id;
+
+      if (newStage.type === PipelineStageType.WON) {
+        patch.status = DealStatus.WON;
+        patch.closed_at = new Date();
+      } else if (newStage.type === PipelineStageType.LOST) {
+        patch.status = DealStatus.LOST;
+        patch.closed_at = new Date();
+      } else {
+        patch.status = DealStatus.OPEN;
+        patch.closed_at = null;
+      }
 
       await this.historyRepo.update(
         { deal_id: deal.id, left_at: IsNull() },
@@ -187,30 +235,29 @@ export class DealsService {
         }),
       );
 
-      if (newStage.type === PipelineStageType.WON) {
-        deal.status = DealStatus.WON;
-        deal.closed_at = new Date();
-      } else if (newStage.type === PipelineStageType.LOST) {
-        deal.status = DealStatus.LOST;
-        deal.closed_at = new Date();
-      } else {
-        deal.status = DealStatus.OPEN;
-        deal.closed_at = null;
-      }
-
       await this.activitiesRepo.save(
         this.activitiesRepo.create({
           contact_id: deal.contact_id,
           type: ActivityType.STAGE_CHANGE,
           content: `Negocio "${deal.title}": etapa cambiada a "${newStage.name}"`,
-          metadata: { deal_id: deal.id, from: previousStageId, to: newStage.id },
+          metadata: {
+            deal_id: deal.id,
+            from: previousStageId,
+            to: newStage.id,
+          },
           created_by: ActivityCreatedBy.USER,
         }),
       );
+    } else if (dto.stage_id !== undefined) {
+      patch.stage_id = dto.stage_id;
     }
 
-    Object.assign(deal, dto);
-    return this.dealsRepo.save(deal);
+    await this.dealsRepo.update(
+      { id: deal.id, business_id: business.id },
+      patch,
+    );
+
+    return this.findOne(business, id);
   }
 
   // ─── Remove ────────────────────────────────────────────────────────────────
@@ -249,7 +296,10 @@ export class DealsService {
 
   // ─── Stage History ─────────────────────────────────────────────────────────
 
-  async stageHistory(business: Business, dealId: string): Promise<DealStageHistory[]> {
+  async stageHistory(
+    business: Business,
+    dealId: string,
+  ): Promise<DealStageHistory[]> {
     await this.findOne(business, dealId);
     return this.historyRepo.find({
       where: { deal_id: dealId },
