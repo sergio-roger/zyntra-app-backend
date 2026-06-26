@@ -19,10 +19,12 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
+import { CrmUserContext } from '@common/decorators/current-crm-user.decorator';
 import { ContactsService } from '@crm/contacts.service';
 import { CreateContactDto } from '@crm/dto/create-contact.dto';
 import { UpdateContactDto } from '@crm/dto/update-contact.dto';
@@ -45,6 +47,12 @@ export class ContactsController {
     return this.contacts.list(business, query);
   }
 
+  @Get('members')
+  @ApiOperation({ summary: 'List active business users for owner assignment' })
+  listMembers(@CurrentBusiness() business: Business) {
+    return this.contacts.listMembers(business);
+  }
+
   @Get('pipeline')
   @ApiOperation({ summary: 'Contact count grouped by stage' })
   pipeline(@CurrentBusiness() business: Business) {
@@ -60,8 +68,12 @@ export class ContactsController {
   @Post('contacts')
   @ApiOperation({ summary: 'Create a new contact' })
   @ApiCreatedResponse()
-  create(@CurrentBusiness() business: Business, @Body() dto: CreateContactDto) {
-    return this.contacts.create(business, dto);
+  create(
+    @CurrentBusiness() business: Business,
+    @CurrentCrmUser() crmUser: CrmUserContext,
+    @Body() dto: CreateContactDto,
+  ) {
+    return this.contacts.create(business, dto, crmUser.id);
   }
 
   @Get('contacts/:id')

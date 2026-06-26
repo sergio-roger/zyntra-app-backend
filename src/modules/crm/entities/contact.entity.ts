@@ -17,6 +17,7 @@ import { Business } from '@auth/entities/business.entity';
 import { Tag } from './tag.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
 import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { CrmUser } from '@crm/entities/user.entity';
 import { ContactStage } from '@crm/enums/contact-stage.enum';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 
@@ -58,6 +59,13 @@ export class Contact {
   @ManyToOne(() => LifecycleStage)
   @JoinColumn({ name: 'lifecycle_stage_id' })
   lifecycle_stage: LifecycleStage;
+
+  @Column('uuid', { nullable: true })
+  owner_id: string | null;
+
+  @ManyToOne(() => CrmUser, { nullable: true, onDelete: 'SET NULL', eager: false })
+  @JoinColumn({ name: 'owner_id' })
+  owner: CrmUser | null;
 
   @Column({
     type: 'enum',

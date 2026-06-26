@@ -10,6 +10,7 @@ import { Contact } from '@crm/entities/contact.entity';
 import { Tag } from '@crm/entities/tag.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
 import { Deal } from '@crm/entities/deal.entity';
+import { CrmUser } from '@crm/entities/user.entity';
 import { Business } from '@auth/entities/business.entity';
 import { CreateContactDto } from '@crm/dto/create-contact.dto';
 import { UpdateContactDto } from '@crm/dto/update-contact.dto';
@@ -29,7 +30,19 @@ export class ContactsService {
     private readonly activitiesRepo: Repository<ContactActivity>,
     @InjectRepository(Deal)
     private readonly dealsRepo: Repository<Deal>,
+    @InjectRepository(CrmUser)
+    private readonly crmUsersRepo: Repository<CrmUser>,
   ) {}
+
+  async listMembers(
+    business: Business,
+  ): Promise<{ id: string; name: string }[]> {
+    return this.crmUsersRepo.find({
+      where: { business_id: business.id, is_active: true },
+      select: ['id', 'name'],
+      order: { name: 'ASC' },
+    });
+  }
 
   async list(business: Business, query: ListContactsDto) {
     const page = query.page ?? 1;
@@ -39,6 +52,7 @@ export class ContactsService {
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.tags', 't')
       .leftJoinAndSelect('c.lifecycle_stage', 'ls')
+      .leftJoinAndSelect('c.owner', 'o')
       .where('c.business_id = :bid', { bid: business.id });
 
     if (query.stage) qb.andWhere('c.stage = :stage', { stage: query.stage });
@@ -121,19 +135,24 @@ export class ContactsService {
   async findOne(business: Business, id: string): Promise<Contact> {
     const contact = await this.contactsRepo.findOne({
       where: { id, business_id: business.id },
-      relations: ['tags', 'lifecycle_stage'],
+      relations: ['tags', 'lifecycle_stage', 'owner'],
     });
     if (!contact) throw new NotFoundException('Contact not found');
     return contact;
   }
 
-  async create(business: Business, dto: CreateContactDto): Promise<Contact> {
+  async create(
+    business: Business,
+    dto: CreateContactDto,
+    currentUserId?: string | null,
+  ): Promise<Contact> {
     await this.assertWithinPlanLimit(business);
 
-    const { tags, stage, ...contactData } = dto;
+    const { tags, stage, owner_id, ...contactData } = dto;
     const contact = this.contactsRepo.create({
       ...contactData,
       business_id: business.id,
+      owner_id: owner_id ?? currentUserId ?? null,
       tags: tags ? tags.map((id) => ({ id }) as Tag) : [],
       last_activity_at: new Date(),
       stage: stage ?? null,

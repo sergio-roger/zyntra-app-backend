@@ -69,4 +69,10 @@ export class CreateContactDto {
   @IsOptional()
   @IsObject()
   custom_fields?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'UUID of the CRM user who owns this contact' })
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsUUID()
+  owner_id?: string;
 }
