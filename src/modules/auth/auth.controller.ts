@@ -7,6 +7,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Post,
   Request,
   UseGuards,
@@ -30,6 +31,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private authService: AuthService) {}
 
   @Public()
@@ -52,11 +55,27 @@ export class AuthController {
   @ApiOperation({ summary: 'Login as a business or CRM user' })
   @ApiOkResponse({ type: AuthResponseDto })
   async login(@Body() loginDto: LoginDto, @Request() req: RequestWithUser) {
-    const { access_token, user } = await this.authService.login(loginDto);
-    if (req.session) {
-      req.session.jwt = access_token;
+    const ip = req.ip ?? req.socket?.remoteAddress ?? 'unknown';
+    const ua = req.headers['user-agent'] ?? 'unknown';
+    this.logger.log(
+      `LOGIN attempt | email=${loginDto.email} ip=${ip} ua=${ua}`,
+    );
+
+    try {
+      const { access_token, user } = await this.authService.login(loginDto);
+      if (req.session) {
+        req.session.jwt = access_token;
+      }
+      this.logger.log(
+        `LOGIN success | email=${loginDto.email} id=${user.id} role=${user.role}`,
+      );
+      return user;
+    } catch (err) {
+      this.logger.warn(
+        `LOGIN failed  | email=${loginDto.email} ip=${ip} reason=${(err as Error).message}`,
+      );
+      throw err;
     }
-    return user;
   }
 
   @Public()

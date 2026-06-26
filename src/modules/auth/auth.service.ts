@@ -107,6 +107,8 @@ export class AuthService {
     const { email, password } = loginDto;
     const normalizedEmail = email.toLowerCase();
 
+    this.logger.log(`[login] attempt email=${normalizedEmail}`);
+
     // 1. Try Business login first
     const business = await this.businessRepository.findOne({
       where: { email: normalizedEmail },
@@ -122,11 +124,17 @@ export class AuthService {
     });
 
     if (business) {
+      this.logger.log(`[login] business account found id=${business.id}`);
+
       if (business.plan_id === null) {
+        this.logger.warn(
+          `[login] blocked global admin attempt email=${normalizedEmail} id=${business.id}`,
+        );
         throw new UnauthorizedException(
           'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
         );
       }
+
       if (
         await argon2.verify(
           business.password_hash,
@@ -134,9 +142,20 @@ export class AuthService {
           this.getArgonOptions(),
         )
       ) {
+        this.logger.log(
+          `[login] business password valid — issuing token id=${business.id}`,
+        );
         const reloaded = await this.validateBusiness(business.id);
         return this.generateBusinessToken(reloaded!);
       }
+
+      this.logger.warn(
+        `[login] business password mismatch email=${normalizedEmail} id=${business.id}`,
+      );
+    } else {
+      this.logger.log(
+        `[login] no business account for email=${normalizedEmail}, trying CRM user`,
+      );
     }
 
     // 2. Try CrmUser login
@@ -152,12 +171,20 @@ export class AuthService {
     });
 
     if (crmUser) {
+      this.logger.log(
+        `[login] CRM user found id=${crmUser.id} role=${crmUser.role} business_id=${crmUser.business_id}`,
+      );
+
       const businessEntity = await this.validateBusiness(crmUser.business_id);
       if (businessEntity && businessEntity.plan_id === null) {
+        this.logger.warn(
+          `[login] blocked global admin CRM user email=${normalizedEmail} id=${crmUser.id}`,
+        );
         throw new UnauthorizedException(
           'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
         );
       }
+
       if (
         crmUser.password_hash &&
         (await argon2.verify(
@@ -167,12 +194,29 @@ export class AuthService {
         ))
       ) {
         if (!businessEntity) {
+          this.logger.warn(
+            `[login] CRM user has no valid business email=${normalizedEmail} id=${crmUser.id}`,
+          );
           throw new UnauthorizedException('Credenciales incorrectas');
         }
+        this.logger.log(
+          `[login] CRM user password valid — issuing token id=${crmUser.id} role=${crmUser.role}`,
+        );
         return this.generateCrmUserToken(businessEntity, crmUser);
       }
+
+      this.logger.warn(
+        `[login] CRM user password mismatch email=${normalizedEmail} id=${crmUser.id}`,
+      );
+    } else {
+      this.logger.warn(
+        `[login] no active CRM user found for email=${normalizedEmail}`,
+      );
     }
 
+    this.logger.warn(
+      `[login] all strategies exhausted, rejecting email=${normalizedEmail}`,
+    );
     throw new UnauthorizedException('Credenciales incorrectas');
   }
 
