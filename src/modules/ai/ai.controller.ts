@@ -1,5 +1,5 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { AiService } from './ai.service';
 import { ChatRequest } from './dto/chat.dto';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
@@ -15,6 +15,7 @@ export class AiController {
 
   @Post('chat')
   @ApiOperation({ summary: 'Chat with AI' })
+  @ApiOkResponse({ description: 'AI response message' })
   async chat(@Body() request: ChatRequest) {
     const response = await this.aiService.chat(request);
     return response.choices[0]?.message;
@@ -23,6 +24,7 @@ export class AiController {
   @Post('preview')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Preview chatbot response' })
+  @ApiOkResponse({ description: 'Preview response from the AI' })
   async preview(
     @Body()
     body: {

@@ -10,7 +10,14 @@ import {
   HttpCode,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -31,6 +38,7 @@ export class TagsController {
 
   @Get()
   @ApiOperation({ summary: 'List all tags for the business' })
+  @ApiOkResponse({ description: 'List of tags' })
   findAll(@CurrentBusiness() business: Business) {
     return this.tagsService.findAll(business);
   }
@@ -38,6 +46,7 @@ export class TagsController {
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create a new tag' })
+  @ApiCreatedResponse({ description: 'Tag created' })
   create(@CurrentBusiness() business: Business, @Body() dto: CreateTagDto) {
     return this.tagsService.create(business, dto);
   }
@@ -45,6 +54,7 @@ export class TagsController {
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Update a tag' })
+  @ApiOkResponse({ description: 'Tag updated' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -57,6 +67,7 @@ export class TagsController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a tag' })
+  @ApiNoContentResponse({ description: 'Tag deleted' })
   remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

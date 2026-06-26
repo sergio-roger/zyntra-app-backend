@@ -9,7 +9,14 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -28,6 +35,7 @@ export class CrmUsersController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'List all business users' })
+  @ApiOkResponse({ description: 'List of users' })
   list(@CurrentBusiness() business: Business) {
     return this.usersService.list(business);
   }
@@ -35,6 +43,7 @@ export class CrmUsersController {
   @Post()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new user' })
+  @ApiCreatedResponse({ description: 'User created' })
   create(@CurrentBusiness() business: Business, @Body() dto: CreateCrmUserDto) {
     return this.usersService.create(business, dto);
   }
@@ -42,6 +51,7 @@ export class CrmUsersController {
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update a user' })
+  @ApiOkResponse({ description: 'User updated' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -53,6 +63,7 @@ export class CrmUsersController {
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete a user' })
+  @ApiNoContentResponse({ description: 'User deleted' })
   remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

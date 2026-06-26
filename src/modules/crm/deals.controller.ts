@@ -16,6 +16,8 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOkResponse,
+  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
@@ -38,6 +40,7 @@ export class DealsController {
   @ApiOperation({
     summary: 'List deals (paginated, filterable by pipeline/stage/status/team)',
   })
+  @ApiOkResponse({ description: 'Paginated list of deals' })
   list(@CurrentBusiness() business: Business, @Query() query: ListDealsDto) {
     return this.deals.list(business, query);
   }
@@ -46,6 +49,7 @@ export class DealsController {
   @ApiOperation({
     summary: 'Kanban board — open deals grouped by stage for a pipeline',
   })
+  @ApiOkResponse({ description: 'Deals grouped by stage' })
   kanban(
     @CurrentBusiness() business: Business,
     @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
@@ -62,6 +66,7 @@ export class DealsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get deal details' })
+  @ApiOkResponse({ description: 'Deal detail' })
   findOne(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -71,6 +76,7 @@ export class DealsController {
 
   @Get(':id/history')
   @ApiOperation({ summary: 'Get deal stage history (velocity tracking)' })
+  @ApiOkResponse({ description: 'Stage history entries' })
   stageHistory(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -82,6 +88,7 @@ export class DealsController {
   @ApiOperation({
     summary: 'Update a deal (move stage triggers DealStageHistory + status)',
   })
+  @ApiOkResponse({ description: 'Updated deal' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -94,6 +101,7 @@ export class DealsController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
   @ApiOperation({ summary: 'Soft-delete a deal' })
+  @ApiNoContentResponse({ description: 'Deal deleted' })
   async remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

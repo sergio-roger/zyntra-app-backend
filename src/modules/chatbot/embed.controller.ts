@@ -1,5 +1,5 @@
 import { Controller, Get, UseGuards, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 
@@ -10,6 +10,7 @@ export class EmbedController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get embed snippet for widget' })
+  @ApiOkResponse({ description: 'Embed snippet and widget URL' })
   getEmbedSnippet(@Req() req: RequestWithUser) {
     const businessId = (req.user as { business_id?: string }).business_id;
     if (!businessId) {

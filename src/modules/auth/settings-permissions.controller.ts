@@ -13,7 +13,14 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('settings-permissions')
 @ApiBearerAuth()
@@ -24,6 +31,7 @@ export class SettingsPermissionsController {
 
   @Post('roles')
   @ApiOperation({ summary: 'Create a new user role' })
+  @ApiCreatedResponse({ description: 'Role created' })
   createRole(
     @Body()
     body: {
@@ -41,6 +49,7 @@ export class SettingsPermissionsController {
 
   @Put('roles/:name')
   @ApiOperation({ summary: 'Update an existing user role' })
+  @ApiOkResponse({ description: 'Role updated' })
   updateRole(
     @Param('name') name: string,
     @Body()
@@ -58,6 +67,7 @@ export class SettingsPermissionsController {
 
   @Delete('roles/:name')
   @ApiOperation({ summary: 'Delete an existing user role' })
+  @ApiNoContentResponse({ description: 'Role deleted' })
   async deleteRole(
     @Param('name') name: string,
     @CurrentBusiness() business: Business,
@@ -68,18 +78,21 @@ export class SettingsPermissionsController {
 
   @Get('roles')
   @ApiOperation({ summary: 'Get all user roles' })
+  @ApiOkResponse({ description: 'List of roles' })
   getAllRoles(@CurrentBusiness() business: Business) {
     return this.authService.getAllRoles(business);
   }
 
   @Get('menus')
   @ApiOperation({ summary: 'Get all system menus' })
+  @ApiOkResponse({ description: 'List of menus' })
   getAllMenus() {
     return this.authService.getAllMenus();
   }
 
   @Get('permissions/:role')
   @ApiOperation({ summary: 'Get permissions by role name' })
+  @ApiOkResponse({ description: 'Permissions for the role' })
   async getPermissionsByRole(
     @Param('role') role: string,
     @CurrentBusiness() business: Business,
@@ -97,6 +110,7 @@ export class SettingsPermissionsController {
 
   @Put('permissions/:role')
   @ApiOperation({ summary: 'Update permissions by role name' })
+  @ApiOkResponse({ description: 'Permissions updated' })
   async updatePermissionsByRole(
     @Param('role') role: string,
     @Body() body: { menu_ids: string[] },

@@ -10,7 +10,14 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
@@ -33,6 +40,7 @@ export class CrmTasksController {
 
   @Get()
   @ApiOperation({ summary: 'List tasks (agent sees only their own)' })
+  @ApiOkResponse({ description: 'List of tasks' })
   list(
     @CurrentBusiness() business: Business,
     @CurrentCrmUser() caller: { id: string | null; role: UserRole },
@@ -44,12 +52,14 @@ export class CrmTasksController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new task' })
+  @ApiCreatedResponse({ description: 'Task created' })
   create(@CurrentBusiness() business: Business, @Body() dto: CreateTaskDto) {
     return this.tasksService.create(business, dto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a task (agent limited to own tasks)' })
+  @ApiOkResponse({ description: 'Task updated' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -62,6 +72,7 @@ export class CrmTasksController {
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Delete a task' })
+  @ApiNoContentResponse({ description: 'Task deleted' })
   remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

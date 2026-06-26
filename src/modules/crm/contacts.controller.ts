@@ -16,6 +16,8 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOkResponse,
+  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
@@ -43,24 +45,28 @@ export class ContactsController {
 
   @Get('contacts')
   @ApiOperation({ summary: 'List contacts (paginated, filterable)' })
+  @ApiOkResponse({ description: 'Paginated list of contacts' })
   list(@CurrentBusiness() business: Business, @Query() query: ListContactsDto) {
     return this.contacts.list(business, query);
   }
 
   @Get('members')
   @ApiOperation({ summary: 'List active business users for owner assignment' })
+  @ApiOkResponse({ description: 'List of active users' })
   listMembers(@CurrentBusiness() business: Business) {
     return this.contacts.listMembers(business);
   }
 
   @Get('pipeline')
   @ApiOperation({ summary: 'Contact count grouped by stage' })
+  @ApiOkResponse({ description: 'Count per stage' })
   pipeline(@CurrentBusiness() business: Business) {
     return this.contacts.pipeline(business);
   }
 
   @Get('kanban')
   @ApiOperation({ summary: 'List contacts grouped by stage for Kanban board' })
+  @ApiOkResponse({ description: 'Contacts grouped by stage' })
   kanban(@CurrentBusiness() business: Business) {
     return this.contacts.kanban(business);
   }
@@ -78,6 +84,7 @@ export class ContactsController {
 
   @Get('contacts/:id')
   @ApiOperation({ summary: 'Get contact details' })
+  @ApiOkResponse({ description: 'Contact detail' })
   findOne(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -87,6 +94,7 @@ export class ContactsController {
 
   @Patch('contacts/:id')
   @ApiOperation({ summary: 'Update a contact' })
+  @ApiOkResponse({ description: 'Contact updated' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -99,6 +107,7 @@ export class ContactsController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
   @ApiOperation({ summary: 'Soft-delete a contact' })
+  @ApiNoContentResponse({ description: 'Contact deleted' })
   async remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -108,6 +117,7 @@ export class ContactsController {
 
   @Get('contacts/:id/activities')
   @ApiOperation({ summary: 'List activities for a contact' })
+  @ApiOkResponse({ description: 'Paginated activity list' })
   listActivities(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -138,6 +148,7 @@ export class ContactsController {
   @Patch('contacts/:id/archive')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Archive a lead' })
+  @ApiOkResponse({ description: 'Contact archived' })
   archive(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

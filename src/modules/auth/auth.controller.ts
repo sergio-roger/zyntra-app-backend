@@ -146,6 +146,7 @@ export class AuthController {
   @Get('menus')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get menu tree filtered by role and plan' })
+  @ApiOkResponse({ description: 'Menu tree for the authenticated user' })
   async getMenus(
     @CurrentCrmUser() caller: { id: string | null; role: string },
     @CurrentBusiness() business: Business,

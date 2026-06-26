@@ -7,6 +7,7 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -30,12 +31,14 @@ export class TasksController {
 
   @Get()
   @ApiOperation({ summary: 'List all tasks for the current business' })
+  @ApiOkResponse({ description: 'List of AI agent tasks' })
   findAll(@CurrentBusiness() business: Business) {
     return this.tasks.findAll(business.id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get details and output of a specific task' })
+  @ApiOkResponse({ description: 'Task detail and output' })
   findOne(@CurrentBusiness() business: Business, @Param('id') id: string) {
     return this.tasks.findOne(id, business.id);
   }

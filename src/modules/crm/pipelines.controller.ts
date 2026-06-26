@@ -15,6 +15,8 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOkResponse,
+  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
@@ -43,6 +45,7 @@ export class PipelinesController {
 
   @Get()
   @ApiOperation({ summary: 'List all pipelines (with stages)' })
+  @ApiOkResponse({ description: 'List of pipelines with their stages' })
   list(@CurrentBusiness() business: Business) {
     return this.pipelines.list(business);
   }
@@ -61,6 +64,7 @@ export class PipelinesController {
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Update pipeline name / order / default flag' })
+  @ApiOkResponse({ description: 'Pipeline updated' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -75,6 +79,7 @@ export class PipelinesController {
   @ApiOperation({
     summary: 'Soft-delete a pipeline (blocks if it has active deals)',
   })
+  @ApiNoContentResponse({ description: 'Pipeline deleted' })
   async remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -84,6 +89,7 @@ export class PipelinesController {
 
   @Get(':id/forecast')
   @ApiOperation({ summary: 'Get weighted pipeline forecast grouped by month' })
+  @ApiOkResponse({ description: 'Monthly forecast data' })
   forecast(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -95,6 +101,7 @@ export class PipelinesController {
 
   @Get(':pipelineId/stages')
   @ApiOperation({ summary: 'List stages of a pipeline' })
+  @ApiOkResponse({ description: 'List of stages' })
   listStages(
     @CurrentBusiness() business: Business,
     @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
@@ -117,6 +124,7 @@ export class PipelinesController {
   @Patch(':pipelineId/stages/reorder')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Bulk reorder stages in a single transaction' })
+  @ApiOkResponse({ description: 'Stages reordered' })
   reorderStages(
     @CurrentBusiness() business: Business,
     @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
@@ -128,6 +136,7 @@ export class PipelinesController {
   @Patch('stages/:stageId')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Update a stage (name, color, probability, type)' })
+  @ApiOkResponse({ description: 'Stage updated' })
   updateStage(
     @CurrentBusiness() business: Business,
     @Param('stageId', ParseUUIDPipe) stageId: string,
@@ -140,6 +149,7 @@ export class PipelinesController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a stage (blocks if it has active deals)' })
+  @ApiNoContentResponse({ description: 'Stage deleted' })
   async deleteStage(
     @CurrentBusiness() business: Business,
     @Param('stageId', ParseUUIDPipe) stageId: string,
