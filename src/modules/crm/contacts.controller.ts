@@ -24,7 +24,7 @@ import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { CrmUserContext } from '@common/decorators/current-crm-user.decorator';
+import type { CrmUserContext } from '@common/decorators/current-crm-user.decorator';
 import { ContactsService } from '@crm/contacts.service';
 import { CreateContactDto } from '@crm/dto/create-contact.dto';
 import { UpdateContactDto } from '@crm/dto/update-contact.dto';

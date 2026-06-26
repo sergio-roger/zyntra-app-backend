@@ -12,6 +12,7 @@ async function bootstrap() {
 
   // Use CASCADE to handle all FK dependencies in one shot
   const drops = [
+    'crm.deal_stage_history',
     'crm.activities',
     'crm.contact_tags',
     'crm.contacts',
@@ -20,6 +21,8 @@ async function bootstrap() {
     'crm.custom_fields',
     'crm.tags',
     'crm.segments',
+    'crm.pipeline_stages',
+    'crm.pipelines',
     '"security"."user_teams_team"',
     '"security"."users"',
     '"security"."teams"',
