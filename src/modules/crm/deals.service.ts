@@ -119,7 +119,7 @@ export class DealsService {
 
   async create(business: Business, dto: CreateDealDto): Promise<Deal> {
     const contact = await this.contactsRepo.findOne({
-      where: { id: dto.contact_id, business_id: business.id },
+      where: { id: dto.contact_id, businessId: business.id },
     });
     if (!contact) throw new NotFoundException('Contact not found');
 

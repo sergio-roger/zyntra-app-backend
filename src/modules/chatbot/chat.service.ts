@@ -192,7 +192,7 @@ export class ChatService {
     phone?: string;
     conversation_id?: string;
   }) {
-    const { business_id, name, email, phone } = dto;
+    const { business_id: businessId, name, email, phone } = dto;
 
     if (!email && !phone) {
       throw new HttpException(
@@ -202,13 +202,13 @@ export class ChatService {
     }
 
     const existing = email
-      ? await this.contactsRepo.findOne({ where: { business_id, email } })
-      : await this.contactsRepo.findOne({ where: { business_id, phone } });
+      ? await this.contactsRepo.findOne({ where: { businessId, email } })
+      : await this.contactsRepo.findOne({ where: { businessId, phone } });
 
     if (existing) {
       existing.name = name;
       if (phone) existing.phone = phone;
-      existing.last_activity_at = new Date();
+      existing.lastActivityAt = new Date();
       await this.contactsRepo.save(existing);
       return {
         success: true,
@@ -218,13 +218,13 @@ export class ChatService {
     }
 
     const contact = this.contactsRepo.create({
-      business_id,
+      businessId,
       name,
       email: email || null,
       phone: phone || null,
       source: ContactSource.CHATBOT,
       stage: ContactStage.LEAD,
-      last_activity_at: new Date(),
+      lastActivityAt: new Date(),
     });
 
     await this.contactsRepo.save(contact);

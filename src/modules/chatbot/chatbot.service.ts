@@ -1,11 +1,9 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  ChatbotConfig,
-  ChatbotTone,
-  ChatbotLocale,
-} from './entities/chatbot-config.entity';
+import { ChatbotConfig } from './entities/chatbot-config.entity';
+import { ChatbotLocale } from '@chatbot/enums/chatbot-locale.enum';
+import { ChatbotTone } from '@chatbot/enums/chatbot-tone.enum';
 import { Business } from '@auth/entities/business.entity';
 
 @Injectable()

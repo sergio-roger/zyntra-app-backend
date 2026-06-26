@@ -60,5 +60,5 @@ export class ListContactsDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
-  is_archived?: boolean;
+  isArchived?: boolean;
 }

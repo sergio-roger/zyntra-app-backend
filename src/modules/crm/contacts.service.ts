@@ -51,22 +51,22 @@ export class ContactsService {
     const qb = this.contactsRepo
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.tags', 't')
-      .leftJoinAndSelect('c.lifecycle_stage', 'ls')
+      .leftJoinAndSelect('c.lifecycleStage', 'ls')
       .leftJoinAndSelect('c.owner', 'o')
-      .where('c.business_id = :bid', { bid: business.id });
+      .where('c.businessId = :bid', { bid: business.id });
 
     if (query.stage) qb.andWhere('c.stage = :stage', { stage: query.stage });
     if (query.source)
       qb.andWhere('c.source = :source', { source: query.source });
     if (query.tag) qb.andWhere('t.id = :tagId', { tagId: query.tag });
     if (query.ownerId === 'unassigned') {
-      qb.andWhere('c.owner_id IS NULL');
+      qb.andWhere('c.ownerId IS NULL');
     } else if (query.ownerId) {
-      qb.andWhere('c.owner_id = :ownerId', { ownerId: query.ownerId });
+      qb.andWhere('c.ownerId = :ownerId', { ownerId: query.ownerId });
     }
-    if (query.is_archived !== undefined) {
-      qb.andWhere('c.is_archived = :isArchived', {
-        isArchived: query.is_archived,
+    if (query.isArchived !== undefined) {
+      qb.andWhere('c.isArchived = :isArchived', {
+        isArchived: query.isArchived,
       });
     }
     if (query.search) {
@@ -79,7 +79,7 @@ export class ContactsService {
       );
     }
 
-    qb.orderBy('c.updated_at', 'DESC')
+    qb.orderBy('c.updatedAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -99,7 +99,7 @@ export class ContactsService {
         .createQueryBuilder('c')
         .select('c.stage', 'stage')
         .addSelect('COUNT(*)', 'count')
-        .where('c.business_id = :bid', { bid: business.id })
+        .where('c.businessId = :bid', { bid: business.id })
         .groupBy('c.stage')
         .getRawMany();
 
@@ -116,9 +116,9 @@ export class ContactsService {
 
   async kanban(business: Business): Promise<Record<ContactStage, Contact[]>> {
     const contacts = await this.contactsRepo.find({
-      where: { business_id: business.id },
-      relations: ['tags', 'lifecycle_stage'],
-      order: { updated_at: 'DESC' },
+      where: { businessId: business.id },
+      relations: ['tags', 'lifecycleStage'],
+      order: { updatedAt: 'DESC' },
     });
 
     const result = Object.values(ContactStage).reduce<
@@ -139,8 +139,8 @@ export class ContactsService {
 
   async findOne(business: Business, id: string): Promise<Contact> {
     const contact = await this.contactsRepo.findOne({
-      where: { id, business_id: business.id },
-      relations: ['tags', 'lifecycle_stage', 'owner'],
+      where: { id, businessId: business.id },
+      relations: ['tags', 'lifecycleStage', 'owner'],
     });
     if (!contact) throw new NotFoundException('Contact not found');
     return contact;
@@ -153,13 +153,13 @@ export class ContactsService {
   ): Promise<Contact> {
     await this.assertWithinPlanLimit(business);
 
-    const { tags, stage, owner_id, ...contactData } = dto;
+    const { tags, stage, ownerId, ...contactData } = dto;
     const contact = this.contactsRepo.create({
       ...contactData,
-      business_id: business.id,
-      owner_id: owner_id ?? currentUserId ?? null,
+      businessId: business.id,
+      ownerId: ownerId ?? currentUserId ?? null,
       tags: tags ? tags.map((id) => ({ id }) as Tag) : [],
-      last_activity_at: new Date(),
+      lastActivityAt: new Date(),
       stage: stage ?? null,
     });
     return this.contactsRepo.save(contact);
@@ -180,7 +180,7 @@ export class ContactsService {
     }
 
     Object.assign(contact, dto);
-    contact.last_activity_at = new Date();
+    contact.lastActivityAt = new Date();
     const saved = await this.contactsRepo.save(contact);
 
     if (dto.stage && dto.stage !== previousStage) {
@@ -242,7 +242,7 @@ export class ContactsService {
       }),
     );
 
-    contact.last_activity_at = new Date();
+    contact.lastActivityAt = new Date();
     await this.contactsRepo.save(contact);
 
     return activity;
@@ -250,8 +250,8 @@ export class ContactsService {
 
   async archive(business: Business, id: string): Promise<Contact> {
     const contact = await this.findOne(business, id);
-    contact.is_archived = true;
-    contact.last_activity_at = new Date();
+    contact.isArchived = true;
+    contact.lastActivityAt = new Date();
     await this.activitiesRepo.save(
       this.activitiesRepo.create({
         contact_id: contact.id,
@@ -286,7 +286,7 @@ export class ContactsService {
     const savedDeal = await this.dealsRepo.save(deal);
 
     contact.stage = ContactStage.PROSPECT;
-    contact.last_activity_at = new Date();
+    contact.lastActivityAt = new Date();
     await this.contactsRepo.save(contact);
 
     await this.activitiesRepo.save(
@@ -311,9 +311,9 @@ export class ContactsService {
     const entities = contacts.map((dto) =>
       this.contactsRepo.create({
         ...dto,
-        business_id: business.id,
+        businessId: business.id,
         tags: dto.tags ? dto.tags.map((id) => ({ id }) as Tag) : [],
-        last_activity_at: new Date(),
+        lastActivityAt: new Date(),
       }),
     );
 
@@ -335,7 +335,7 @@ export class ContactsService {
     if (limit === undefined || limit === null || limit === 999999) return;
 
     const currentCount = await this.contactsRepo.count({
-      where: { business_id: business.id },
+      where: { businessId: business.id },
     });
 
     if (currentCount + newCount > limit) {

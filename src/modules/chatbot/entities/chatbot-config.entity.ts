@@ -1,26 +1,15 @@
+import { Business } from '@auth/entities/business.entity';
+import { ChatbotLocale } from '@chatbot/enums/chatbot-locale.enum';
+import { ChatbotTone } from '@chatbot/enums/chatbot-tone.enum';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  OneToOne,
+  Entity,
   JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Business } from '@auth/entities/business.entity';
-
-export enum ChatbotTone {
-  FORMAL = 'formal',
-  FRIENDLY = 'friendly',
-  PROFESSIONAL = 'professional',
-  CASUAL = 'casual',
-}
-
-export enum ChatbotLocale {
-  ES = 'es',
-  EN = 'en',
-  PT = 'pt',
-}
 
 @Entity({ name: 'chatbot_configs', schema: 'public' })
 export class ChatbotConfig {

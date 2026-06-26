@@ -790,7 +790,7 @@ async function bootstrap() {
     for (let i = 0; i < entry.contacts.length; i++) {
       const contactData = entry.contacts[i];
       const existing = await contactRepo.findOne({
-        where: { business_id: business.id, email: contactData.email },
+        where: { businessId: business.id, email: contactData.email },
       });
 
       if (!existing) {
@@ -799,16 +799,16 @@ async function bootstrap() {
         const owner = i % 2 === 0 ? adminUser : agentUser;
         await contactRepo.save(
           contactRepo.create({
-            business_id: business.id,
+            businessId: business.id,
             name: contactData.name,
             email: contactData.email,
             phone: contactData.phone,
             stage: contactData.stage,
-            lifecycle_stage_id: lifecycleStage?.id ?? null,
+            lifecycleStageId: lifecycleStage?.id ?? null,
             source: contactData.source,
-            company_name: contactData.company_name,
-            deal_value: contactData.deal_value,
-            owner_id: owner?.id ?? null,
+            companyName: contactData.company_name,
+            dealValue: contactData.deal_value,
+            ownerId: owner?.id ?? null,
           }),
         );
         created++;
@@ -879,7 +879,7 @@ async function bootstrap() {
 
     const { pipeline: defaultPipeline, stageMap } = defaultPipelineData;
     const contacts = await contactRepo.find({
-      where: { business_id: business.id },
+      where: { businessId: business.id },
     });
 
     if (contacts.length === 0) continue;

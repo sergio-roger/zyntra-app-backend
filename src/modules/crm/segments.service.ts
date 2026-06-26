@@ -81,9 +81,9 @@ export class SegmentsService {
   ): SelectQueryBuilder<Contact> {
     const query = this.contactRepo
       .createQueryBuilder('contact')
-      .where('contact.business_id = :businessId', { businessId })
-      .andWhere('contact.deleted_at IS NULL')
-      .andWhere('contact.is_archived = false');
+      .where('contact.businessId = :businessId', { businessId })
+      .andWhere('contact.deletedAt IS NULL')
+      .andWhere('contact.isArchived = false');
 
     if (!conditions || conditions.length === 0) {
       return query;
@@ -112,7 +112,7 @@ export class SegmentsService {
 
       if (field.startsWith('custom_fields.')) {
         const customFieldKey = field.split('.')[1];
-        const jsonbPath = `contact.custom_fields ->> :cf_key_${index}`;
+        const jsonbPath = `contact.customFields ->> :cf_key_${index}`;
         const params: Record<string, unknown> = {
           [`cf_key_${index}`]: customFieldKey,
         };
@@ -197,7 +197,7 @@ export class SegmentsService {
     const query = this.buildQueryForConditions(business.id, conditions);
 
     // Order and Pagination
-    query.orderBy('contact.created_at', 'DESC');
+    query.orderBy('contact.createdAt', 'DESC');
     query.skip((page - 1) * limit);
     query.take(limit);
 

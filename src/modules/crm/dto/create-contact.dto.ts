@@ -45,7 +45,7 @@ export class CreateContactDto {
   @Transform(emptyToUndefined)
   @IsOptional()
   @IsUUID()
-  lifecycle_stage_id?: string;
+  lifecycleStageId?: string;
 
   @ApiPropertyOptional({ enum: ContactSource, default: ContactSource.MANUAL })
   @Transform(emptyToUndefined)
@@ -68,7 +68,7 @@ export class CreateContactDto {
   @ApiPropertyOptional({ type: 'object', additionalProperties: true })
   @IsOptional()
   @IsObject()
-  custom_fields?: Record<string, any>;
+  customFields?: Record<string, any>;
 
   @ApiPropertyOptional({
     description: 'UUID of the CRM user who owns this contact',
@@ -76,5 +76,5 @@ export class CreateContactDto {
   @Transform(emptyToUndefined)
   @IsOptional()
   @IsUUID()
-  owner_id?: string;
+  ownerId?: string | null;
 }

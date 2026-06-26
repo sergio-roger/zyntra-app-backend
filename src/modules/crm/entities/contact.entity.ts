@@ -1,37 +1,37 @@
+import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { Business } from '@auth/entities/business.entity';
+import { ContactActivity } from '@crm/entities/contact-activity.entity';
+import { CrmUser } from '@crm/entities/user.entity';
+import { ContactSource } from '@crm/enums/contact-source.enum';
+import { ContactStage } from '@crm/enums/contact-stage.enum';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-  Unique,
-  ManyToOne,
-  JoinColumn,
-  OneToMany,
-  ManyToMany,
-  JoinTable,
   DeleteDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Unique,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Business } from '@auth/entities/business.entity';
 import { Tag } from './tag.entity';
-import { ContactActivity } from '@crm/entities/contact-activity.entity';
-import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
-import { CrmUser } from '@crm/entities/user.entity';
-import { ContactStage } from '@crm/enums/contact-stage.enum';
-import { ContactSource } from '@crm/enums/contact-source.enum';
 
 @Entity({ name: 'contacts', schema: 'crm' })
-@Index(['business_id', 'stage'])
-@Index(['business_id', 'source'])
-@Unique('UQ_business_email', ['business_id', 'email'])
-@Unique('UQ_business_phone', ['business_id', 'phone'])
+@Index(['businessId', 'stage'])
+@Index(['businessId', 'source'])
+@Unique('UQ_business_email', ['businessId', 'email'])
+@Unique('UQ_business_phone', ['businessId', 'phone'])
 export class Contact {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column('uuid', { name: 'business_id' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -53,15 +53,15 @@ export class Contact {
   })
   stage: ContactStage | null;
 
-  @Column('uuid', { nullable: true })
-  lifecycle_stage_id: string | null;
+  @Column('uuid', { name: 'lifecycle_stage_id', nullable: true })
+  lifecycleStageId: string | null;
 
   @ManyToOne(() => LifecycleStage)
   @JoinColumn({ name: 'lifecycle_stage_id' })
-  lifecycle_stage: LifecycleStage;
+  lifecycleStage: LifecycleStage;
 
-  @Column('uuid', { nullable: true })
-  owner_id: string | null;
+  @Column('uuid', { name: 'owner_id', nullable: true })
+  ownerId: string | null;
 
   @ManyToOne(() => CrmUser, {
     nullable: true,
@@ -90,33 +90,38 @@ export class Contact {
   @Column('text', { nullable: true })
   notes: string | null;
 
-  @Column('varchar', { nullable: true })
-  company_name: string | null;
+  @Column('varchar', { name: 'company_name', nullable: true })
+  companyName: string | null;
 
-  @Column('decimal', { precision: 12, scale: 2, default: 0 })
-  deal_value: number;
+  @Column('decimal', {
+    name: 'deal_value',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  dealValue: number;
 
-  @Column('jsonb', { nullable: true })
-  custom_fields: Record<string, any> | null;
+  @Column('jsonb', { name: 'custom_fields', nullable: true })
+  customFields: Record<string, any> | null;
 
-  @Column('boolean', { default: false })
-  is_archived: boolean;
+  @Column('boolean', { name: 'is_archived', default: false })
+  isArchived: boolean;
 
   @Column('numeric', { precision: 5, scale: 2, nullable: true })
   score: number | null;
 
-  @Column('timestamp', { nullable: true })
-  last_activity_at: Date | null;
+  @Column('timestamp', { name: 'last_activity_at', nullable: true })
+  lastActivityAt: Date | null;
 
   @OneToMany(() => ContactActivity, (a) => a.contact)
   activities: ContactActivity[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }
