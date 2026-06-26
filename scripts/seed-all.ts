@@ -16,8 +16,15 @@ import { Pipeline } from '../src/modules/crm/entities/pipeline.entity';
 import { PipelineStage } from '../src/modules/crm/entities/pipeline-stage.entity';
 import { DealStageHistory } from '../src/modules/crm/entities/deal-stage-history.entity';
 import { ContactSource } from '../src/modules/crm/enums/contact-source.enum';
-import { ContactStage } from '../src/modules/crm/enums/contact-stage.enum';
 import { UserRole } from '../src/modules/crm/enums/user-role.enum';
+
+enum ContactStage {
+  LEAD = 'lead',
+  PROSPECT = 'prospect',
+  QUALIFIED = 'qualified',
+  CUSTOMER = 'customer',
+  LOST = 'lost',
+}
 import { DealStatus } from '../src/modules/crm/enums/deal-status.enum';
 import { PipelineStageType } from '../src/modules/crm/enums/pipeline-stage-type.enum';
 import {
@@ -871,7 +878,6 @@ async function bootstrap() {
             name: contactData.name,
             email: contactData.email,
             phone: contactData.phone,
-            stage: contactData.stage,
             lifecycleStageId: lifecycleStage?.id ?? null,
             source: contactData.source,
             companyName: contactData.company_name,

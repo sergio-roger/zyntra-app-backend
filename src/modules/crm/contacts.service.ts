@@ -17,7 +17,6 @@ import { UpdateContactDto } from '@crm/dto/update-contact.dto';
 import { ListContactsDto } from '@crm/dto/list-contacts.dto';
 import { CreateActivityDto } from '@crm/dto/create-activity.dto';
 import { ConvertToDealDto } from '@crm/dto/deal.dto';
-import { ContactStage } from '@crm/enums/contact-stage.enum';
 import { ActivityType } from '@crm/enums/activity-type.enum';
 import { ActivityCreatedBy } from '@crm/enums/activity-created-by.enum';
 
@@ -55,7 +54,11 @@ export class ContactsService {
       .leftJoinAndSelect('c.owner', 'o')
       .where('c.businessId = :bid', { bid: business.id });
 
-    if (query.stage) qb.andWhere('c.stage = :stage', { stage: query.stage });
+    if (query.lifecycleStageId) {
+      qb.andWhere('c.lifecycleStageId = :lifecycleStageId', {
+        lifecycleStageId: query.lifecycleStageId,
+      });
+    }
     if (query.source)
       qb.andWhere('c.source = :source', { source: query.source });
     if (query.tag) qb.andWhere('t.id = :tagId', { tagId: query.tag });
@@ -93,50 +96,6 @@ export class ContactsService {
     };
   }
 
-  async pipeline(business: Business): Promise<Record<ContactStage, number>> {
-    const rows: Array<{ stage: ContactStage; count: string }> =
-      await this.contactsRepo
-        .createQueryBuilder('c')
-        .select('c.stage', 'stage')
-        .addSelect('COUNT(*)', 'count')
-        .where('c.businessId = :bid', { bid: business.id })
-        .groupBy('c.stage')
-        .getRawMany();
-
-    const result = Object.values(ContactStage).reduce<Record<string, number>>(
-      (acc, stage) => {
-        acc[stage] = 0;
-        return acc;
-      },
-      {},
-    );
-    for (const row of rows) result[row.stage] = Number(row.count);
-    return result;
-  }
-
-  async kanban(business: Business): Promise<Record<ContactStage, Contact[]>> {
-    const contacts = await this.contactsRepo.find({
-      where: { businessId: business.id },
-      relations: ['tags', 'lifecycleStage'],
-      order: { updatedAt: 'DESC' },
-    });
-
-    const result = Object.values(ContactStage).reduce<
-      Record<string, Contact[]>
-    >((acc, stage) => {
-      acc[stage] = [];
-      return acc;
-    }, {});
-
-    for (const contact of contacts) {
-      if (contact.stage && result[contact.stage]) {
-        result[contact.stage].push(contact);
-      }
-    }
-
-    return result;
-  }
-
   async findOne(business: Business, id: string): Promise<Contact> {
     const contact = await this.contactsRepo.findOne({
       where: { id, businessId: business.id },
@@ -153,14 +112,13 @@ export class ContactsService {
   ): Promise<Contact> {
     await this.assertWithinPlanLimit(business);
 
-    const { tags, stage, ownerId, ...contactData } = dto;
+    const { tags, ownerId, ...contactData } = dto;
     const contact = this.contactsRepo.create({
       ...contactData,
       businessId: business.id,
       ownerId: ownerId ?? currentUserId ?? null,
       tags: tags ? tags.map((id) => ({ id }) as Tag) : [],
       lastActivityAt: new Date(),
-      stage: stage ?? null,
     });
     return this.contactsRepo.save(contact);
   }
@@ -171,7 +129,7 @@ export class ContactsService {
     dto: UpdateContactDto,
   ): Promise<Contact> {
     const contact = await this.findOne(business, id);
-    const previousStage = contact.stage;
+    const previousLifecycleStageId = contact.lifecycleStageId;
 
     // Handle tags if present
     if (dto.tags) {
@@ -183,13 +141,13 @@ export class ContactsService {
     contact.lastActivityAt = new Date();
     const saved = await this.contactsRepo.save(contact);
 
-    if (dto.stage && dto.stage !== previousStage) {
+    if (dto.lifecycleStageId && dto.lifecycleStageId !== previousLifecycleStageId) {
       await this.activitiesRepo.save(
         this.activitiesRepo.create({
           contact_id: saved.id,
           type: ActivityType.STAGE_CHANGE,
-          content: `Stage changed from "${previousStage}" to "${dto.stage}"`,
-          metadata: { from: previousStage, to: dto.stage },
+          content: `Lifecycle stage updated`,
+          metadata: { from: previousLifecycleStageId, to: dto.lifecycleStageId },
           created_by: ActivityCreatedBy.USER,
         }),
       );
@@ -285,7 +243,6 @@ export class ContactsService {
     });
     const savedDeal = await this.dealsRepo.save(deal);
 
-    contact.stage = ContactStage.PROSPECT;
     contact.lastActivityAt = new Date();
     await this.contactsRepo.save(contact);
 

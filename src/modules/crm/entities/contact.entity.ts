@@ -3,7 +3,6 @@ import { Business } from '@auth/entities/business.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
 import { CrmUser } from '@crm/entities/user.entity';
 import { ContactSource } from '@crm/enums/contact-source.enum';
-import { ContactStage } from '@crm/enums/contact-stage.enum';
 import {
   Column,
   CreateDateColumn,
@@ -22,7 +21,6 @@ import {
 import { Tag } from './tag.entity';
 
 @Entity({ name: 'contacts', schema: 'crm' })
-@Index(['businessId', 'stage'])
 @Index(['businessId', 'source'])
 @Unique('UQ_business_email', ['businessId', 'email'])
 @Unique('UQ_business_phone', ['businessId', 'phone'])
@@ -45,13 +43,6 @@ export class Contact {
 
   @Column('varchar', { nullable: true })
   phone: string | null;
-
-  @Column({
-    type: 'enum',
-    enum: ContactStage,
-    nullable: true,
-  })
-  stage: ContactStage | null;
 
   @Column('uuid', { name: 'lifecycle_stage_id', nullable: true })
   lifecycleStageId: string | null;

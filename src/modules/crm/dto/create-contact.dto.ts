@@ -12,7 +12,6 @@ import {
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { emptyToUndefined } from '@/common/transformers/string.transformer';
-import { ContactStage } from '@crm/enums/contact-stage.enum';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 
 export class CreateContactDto {
@@ -34,12 +33,6 @@ export class CreateContactDto {
   @IsString()
   @MaxLength(40)
   phone?: string;
-
-  @ApiPropertyOptional({ enum: ContactStage, default: ContactStage.LEAD })
-  @Transform(emptyToUndefined)
-  @IsOptional()
-  @IsEnum(ContactStage)
-  stage?: ContactStage;
 
   @ApiPropertyOptional()
   @Transform(emptyToUndefined)

@@ -24,6 +24,7 @@ async function bootstrap() {
     'crm.pipeline_stages',
     'crm.pipelines',
     '"security"."user_teams_team"',
+    '"security"."team_members"',
     '"security"."users"',
     '"security"."teams"',
     '"security"."permissions"',

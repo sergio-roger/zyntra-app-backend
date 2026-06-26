@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { ChatbotConfig } from './entities/chatbot-config.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { Business } from '../auth/entities/business.entity';
+import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
 import {
   Conversation,
   ConversationSchema,
@@ -21,7 +22,12 @@ import { AiModule } from '../ai/ai.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ChatbotConfig, Contact, Business]),
+    TypeOrmModule.forFeature([
+      ChatbotConfig,
+      Contact,
+      Business,
+      LifecycleStage,
+    ]),
     MongooseModule.forFeature([
       { name: Conversation.name, schema: ConversationSchema },
       { name: Message.name, schema: MessageSchema },

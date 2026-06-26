@@ -16,8 +16,8 @@ import {
 import { Message, MessageDocument } from './schemas/message.schema';
 import { ChatbotConfig } from './entities/chatbot-config.entity';
 import { Contact } from '@crm/entities/contact.entity';
-import { ContactStage } from '@crm/enums/contact-stage.enum';
 import { ContactSource } from '@crm/enums/contact-source.enum';
+import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
 import { AiService } from '@/modules/ai/ai.service';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
 
@@ -32,6 +32,8 @@ export class ChatService {
     private configRepo: Repository<ChatbotConfig>,
     @InjectRepository(Contact)
     private contactsRepo: Repository<Contact>,
+    @InjectRepository(LifecycleStage)
+    private stageRepo: Repository<LifecycleStage>,
     @Inject(AiService)
     private aiService: AiService,
   ) {}
@@ -217,13 +219,17 @@ export class ChatService {
       };
     }
 
+    const defaultStage = await this.stageRepo.findOne({
+      where: { business_id: businessId, is_default: true },
+    });
+
     const contact = this.contactsRepo.create({
       businessId,
       name,
       email: email || null,
       phone: phone || null,
       source: ContactSource.CHATBOT,
-      stage: ContactStage.LEAD,
+      lifecycleStageId: defaultStage?.id ?? null,
       lastActivityAt: new Date(),
     });
 

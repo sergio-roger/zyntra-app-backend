@@ -57,20 +57,6 @@ export class ContactsController {
     return this.contacts.listMembers(business);
   }
 
-  @Get('pipeline')
-  @ApiOperation({ summary: 'Contact count grouped by stage' })
-  @ApiOkResponse({ description: 'Count per stage' })
-  pipeline(@CurrentBusiness() business: Business) {
-    return this.contacts.pipeline(business);
-  }
-
-  @Get('kanban')
-  @ApiOperation({ summary: 'List contacts grouped by stage for Kanban board' })
-  @ApiOkResponse({ description: 'Contacts grouped by stage' })
-  kanban(@CurrentBusiness() business: Business) {
-    return this.contacts.kanban(business);
-  }
-
   @Post('contacts')
   @ApiOperation({ summary: 'Create a new contact' })
   @ApiCreatedResponse()
