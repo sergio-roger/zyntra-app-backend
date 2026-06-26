@@ -54,6 +54,10 @@ export class ContactsService {
       .leftJoinAndSelect('c.owner', 'o')
       .where('c.businessId = :bid', { bid: business.id });
 
+    if (query.lifecycleStageId)
+      qb.andWhere('c.lifecycleStageId = :lifecycleStageId', {
+        lifecycleStageId: query.lifecycleStageId,
+      });
     if (query.source)
       qb.andWhere('c.source = :source', { source: query.source });
     if (query.tag) qb.andWhere('t.id = :tagId', { tagId: query.tag });
