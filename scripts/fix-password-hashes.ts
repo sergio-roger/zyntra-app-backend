@@ -27,10 +27,10 @@ async function run() {
   );
   console.log(`  Found ${bizResult.rows.length} business(es) to fix`);
   for (const row of bizResult.rows) {
-    await c.query(`UPDATE public.businesses SET password_hash = $1 WHERE id = $2`, [
-      newHash,
-      row.id,
-    ]);
+    await c.query(
+      `UPDATE public.businesses SET password_hash = $1 WHERE id = $2`,
+      [newHash, row.id],
+    );
     console.log(`  ✅ Fixed: ${row.email} (was ${row.hash_len} chars)`);
   }
 
@@ -42,10 +42,10 @@ async function run() {
   );
   console.log(`  Found ${usersResult.rows.length} user(s) to fix`);
   for (const row of usersResult.rows) {
-    await c.query(`UPDATE security.users SET password_hash = $1 WHERE id = $2`, [
-      newHash,
-      row.id,
-    ]);
+    await c.query(
+      `UPDATE security.users SET password_hash = $1 WHERE id = $2`,
+      [newHash, row.id],
+    );
     console.log(`  ✅ Fixed: ${row.email} (was ${row.hash_len} chars)`);
   }
 

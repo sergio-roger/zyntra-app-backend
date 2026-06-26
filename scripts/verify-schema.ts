@@ -16,8 +16,10 @@ async function verify() {
     FROM public.plans ORDER BY price
   `);
   console.log('📦 public.plans:');
-  plans.rows.forEach(p =>
-    console.log(`  • ${p.name} ($${p.price} ${p.billing_cycle}) - contacts: ${p.contact_limit}`)
+  plans.rows.forEach((p) =>
+    console.log(
+      `  • ${p.name} ($${p.price} ${p.billing_cycle}) - contacts: ${p.contact_limit}`,
+    ),
   );
 
   // 2. Businesses in public schema with plan relation
@@ -28,8 +30,10 @@ async function verify() {
     ORDER BY b.name
   `);
   console.log('\n🏢 public.businesses (with plan relation):');
-  businesses.rows.forEach(b =>
-    console.log(`  • ${b.name} [${b.email}] → plan: ${b.plan_name} (${b.plan_status})`)
+  businesses.rows.forEach((b) =>
+    console.log(
+      `  • ${b.name} [${b.email}] → plan: ${b.plan_name} (${b.plan_status})`,
+    ),
   );
 
   // 3. Users in security schema with plan relation
@@ -40,8 +44,10 @@ async function verify() {
     ORDER BY u.name
   `);
   console.log('\n👤 security.users (with plan relation):');
-  users.rows.forEach(u =>
-    console.log(`  • ${u.name} [${u.email}] role: ${u.role} → plan: ${u.plan_name ?? 'none'}`)
+  users.rows.forEach((u) =>
+    console.log(
+      `  • ${u.name} [${u.email}] role: ${u.role} → plan: ${u.plan_name ?? 'none'}`,
+    ),
   );
 
   // 4. Plan descriptions
@@ -52,8 +58,8 @@ async function verify() {
     GROUP BY p.name ORDER BY p.name
   `);
   console.log('\n📝 public.plan_descriptions (count per plan):');
-  descs.rows.forEach(d =>
-    console.log(`  • ${d.plan_name}: ${d.desc_count} descriptions`)
+  descs.rows.forEach((d) =>
+    console.log(`  • ${d.plan_name}: ${d.desc_count} descriptions`),
   );
 
   // 5. Lifecycle stages
@@ -64,8 +70,8 @@ async function verify() {
     GROUP BY b.name ORDER BY b.name
   `);
   console.log('\n🔄 public.lifecycle_stages (count per business):');
-  stages.rows.forEach(s =>
-    console.log(`  • ${s.business}: ${s.stage_count} stages`)
+  stages.rows.forEach((s) =>
+    console.log(`  • ${s.business}: ${s.stage_count} stages`),
   );
 
   // 6. Contacts
@@ -76,8 +82,8 @@ async function verify() {
     GROUP BY b.name ORDER BY b.name
   `);
   console.log('\n👥 crm.contacts (count per business):');
-  contacts.rows.forEach(c =>
-    console.log(`  • ${c.business}: ${c.contact_count} contacts`)
+  contacts.rows.forEach((c) =>
+    console.log(`  • ${c.business}: ${c.contact_count} contacts`),
   );
 
   await client.end();

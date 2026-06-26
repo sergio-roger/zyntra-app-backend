@@ -29,13 +29,17 @@ async function run() {
   );
   console.log(' owner_id exists:', ccols.rows.length > 0);
 
-  console.log('\n=== Sample businesses (email, plan_id, plan_status, hash_len) ===');
+  console.log(
+    '\n=== Sample businesses (email, plan_id, plan_status, hash_len) ===',
+  );
   const biz = await c.query(
     `SELECT email, plan_id, plan_status, length(password_hash) as hash_len FROM public.businesses LIMIT 6`,
   );
   biz.rows.forEach((r) => console.log(' ', JSON.stringify(r)));
 
-  console.log('\n=== Sample security.users (email, role, is_active, hash_len) ===');
+  console.log(
+    '\n=== Sample security.users (email, role, is_active, hash_len) ===',
+  );
   const users = await c.query(
     `SELECT email, role, is_active, length(password_hash) as hash_len FROM security.users LIMIT 10`,
   );

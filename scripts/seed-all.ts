@@ -483,13 +483,55 @@ const DEFAULT_PIPELINES = [
     position: 0,
     is_default: true,
     stages: [
-      { name: 'Prospección',   color: '#94a3b8', position: 0, type: PipelineStageType.ACTIVE, probability_percent: 10 },
-      { name: 'Calificación',  color: '#60a5fa', position: 1, type: PipelineStageType.ACTIVE, probability_percent: 25 },
-      { name: 'Propuesta',     color: '#f59e0b', position: 2, type: PipelineStageType.ACTIVE, probability_percent: 50 },
-      { name: 'Negociación',   color: '#a78bfa', position: 3, type: PipelineStageType.ACTIVE, probability_percent: 75 },
-      { name: 'Cierre',        color: '#34d399', position: 4, type: PipelineStageType.ACTIVE, probability_percent: 90 },
-      { name: 'Ganado',        color: '#10b981', position: 5, type: PipelineStageType.WON,    probability_percent: 100 },
-      { name: 'Perdido',       color: '#f87171', position: 6, type: PipelineStageType.LOST,   probability_percent: 0 },
+      {
+        name: 'Prospección',
+        color: '#94a3b8',
+        position: 0,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 10,
+      },
+      {
+        name: 'Calificación',
+        color: '#60a5fa',
+        position: 1,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 25,
+      },
+      {
+        name: 'Propuesta',
+        color: '#f59e0b',
+        position: 2,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 50,
+      },
+      {
+        name: 'Negociación',
+        color: '#a78bfa',
+        position: 3,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 75,
+      },
+      {
+        name: 'Cierre',
+        color: '#34d399',
+        position: 4,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 90,
+      },
+      {
+        name: 'Ganado',
+        color: '#10b981',
+        position: 5,
+        type: PipelineStageType.WON,
+        probability_percent: 100,
+      },
+      {
+        name: 'Perdido',
+        color: '#f87171',
+        position: 6,
+        type: PipelineStageType.LOST,
+        probability_percent: 0,
+      },
     ],
   },
   {
@@ -497,10 +539,34 @@ const DEFAULT_PIPELINES = [
     position: 1,
     is_default: false,
     stages: [
-      { name: 'Identificación', color: '#94a3b8', position: 0, type: PipelineStageType.ACTIVE, probability_percent: 30 },
-      { name: 'Contacto',       color: '#60a5fa', position: 1, type: PipelineStageType.ACTIVE, probability_percent: 50 },
-      { name: 'Renovado',       color: '#10b981', position: 2, type: PipelineStageType.WON,    probability_percent: 100 },
-      { name: 'No renovado',    color: '#f87171', position: 3, type: PipelineStageType.LOST,   probability_percent: 0 },
+      {
+        name: 'Identificación',
+        color: '#94a3b8',
+        position: 0,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 30,
+      },
+      {
+        name: 'Contacto',
+        color: '#60a5fa',
+        position: 1,
+        type: PipelineStageType.ACTIVE,
+        probability_percent: 50,
+      },
+      {
+        name: 'Renovado',
+        color: '#10b981',
+        position: 2,
+        type: PipelineStageType.WON,
+        probability_percent: 100,
+      },
+      {
+        name: 'No renovado',
+        color: '#f87171',
+        position: 3,
+        type: PipelineStageType.LOST,
+        probability_percent: 0,
+      },
     ],
   },
 ];
@@ -668,7 +734,9 @@ async function bootstrap() {
     );
     console.log(`  ✅ Superadmin Business created: ${superBusiness.name}`);
   } else {
-    console.log(`  ℹ️  Superadmin Business already exists: ${superBusiness.name}`);
+    console.log(
+      `  ℹ️  Superadmin Business already exists: ${superBusiness.name}`,
+    );
   }
 
   if (!superBusiness) {
@@ -841,7 +909,10 @@ async function bootstrap() {
     }
 
     // Create pipelines + stages
-    const pipelineMap: Record<string, { pipeline: Pipeline; stageMap: Record<string, PipelineStage> }> = {};
+    const pipelineMap: Record<
+      string,
+      { pipeline: Pipeline; stageMap: Record<string, PipelineStage> }
+    > = {};
 
     for (const pipelineData of DEFAULT_PIPELINES) {
       const pipeline = await pipelineRepo.save(
@@ -885,11 +956,41 @@ async function bootstrap() {
     if (contacts.length === 0) continue;
 
     const sampleDeals = [
-      { title: 'Implementación Plan Premium', contactIdx: 0, stageName: 'Propuesta',    value: 1500,  daysOffset: 30 },
-      { title: 'Campaña Social Media Q3',     contactIdx: 1, stageName: 'Calificación', value: 800,   daysOffset: 45 },
-      { title: 'Renovación Anual',            contactIdx: 2, stageName: 'Negociación',  value: 2400,  daysOffset: 15 },
-      { title: 'Consultoría SEO',             contactIdx: 3, stageName: 'Cierre',       value: 600,   daysOffset: 7 },
-      { title: 'Landing Page Corporativa',    contactIdx: 4 % contacts.length, stageName: 'Prospección', value: 1200, daysOffset: 60 },
+      {
+        title: 'Implementación Plan Premium',
+        contactIdx: 0,
+        stageName: 'Propuesta',
+        value: 1500,
+        daysOffset: 30,
+      },
+      {
+        title: 'Campaña Social Media Q3',
+        contactIdx: 1,
+        stageName: 'Calificación',
+        value: 800,
+        daysOffset: 45,
+      },
+      {
+        title: 'Renovación Anual',
+        contactIdx: 2,
+        stageName: 'Negociación',
+        value: 2400,
+        daysOffset: 15,
+      },
+      {
+        title: 'Consultoría SEO',
+        contactIdx: 3,
+        stageName: 'Cierre',
+        value: 600,
+        daysOffset: 7,
+      },
+      {
+        title: 'Landing Page Corporativa',
+        contactIdx: 4 % contacts.length,
+        stageName: 'Prospección',
+        value: 1200,
+        daysOffset: 60,
+      },
     ];
 
     let dealsCreated = 0;

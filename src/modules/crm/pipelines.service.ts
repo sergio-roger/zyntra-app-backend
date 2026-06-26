@@ -58,9 +58,13 @@ export class PipelinesService {
 
   async create(business: Business, dto: CreatePipelineDto): Promise<Pipeline> {
     if (business.plan_id) {
-      const plan = await this.planRepo.findOne({ where: { id: business.plan_id } });
+      const plan = await this.planRepo.findOne({
+        where: { id: business.plan_id },
+      });
       if (plan && plan.pipeline_limit > 0) {
-        const current = await this.pipelineRepo.count({ where: { business_id: business.id } });
+        const current = await this.pipelineRepo.count({
+          where: { business_id: business.id },
+        });
         if (current >= plan.pipeline_limit) {
           throw new ForbiddenException(
             `Tu plan "${plan.name}" permite hasta ${plan.pipeline_limit} pipeline(s). Actualiza tu plan para crear más.`,

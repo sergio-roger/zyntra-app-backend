@@ -11,7 +11,8 @@ const ROLES_DATA = [
   {
     name: 'admin',
     label: 'Administrador',
-    description: 'Control total de la plataforma. Acceso ilimitado a todas las configuraciones, canales y reportes.',
+    description:
+      'Control total de la plataforma. Acceso ilimitado a todas las configuraciones, canales y reportes.',
     isEditable: false,
     badge: 'Acceso Total',
     badgeColor: 'bg-rose-500/10 text-rose-400',
@@ -20,7 +21,8 @@ const ROLES_DATA = [
   {
     name: 'superAdmin',
     label: 'Super Administrador',
-    description: 'Administrador global de la plataforma con control y acceso total e ilimitado.',
+    description:
+      'Administrador global de la plataforma con control y acceso total e ilimitado.',
     isEditable: false,
     badge: 'Global Admin',
     badgeColor: 'bg-purple-500/10 text-purple-400',
@@ -29,7 +31,8 @@ const ROLES_DATA = [
   {
     name: 'manager',
     label: 'Gerente',
-    description: 'Supervisión y gestión operativa del equipo, clientes, canales y agentes de inteligencia artificial.',
+    description:
+      'Supervisión y gestión operativa del equipo, clientes, canales y agentes de inteligencia artificial.',
     isEditable: true,
     badge: 'Configurable',
     badgeColor: 'bg-indigo-500/10 text-indigo-400',
@@ -38,7 +41,8 @@ const ROLES_DATA = [
   {
     name: 'agent',
     label: 'Agente',
-    description: 'Operación diaria del chat, atención a clientes y seguimiento básico de prospectos e inbox.',
+    description:
+      'Operación diaria del chat, atención a clientes y seguimiento básico de prospectos e inbox.',
     isEditable: true,
     badge: 'Configurable',
     badgeColor: 'bg-emerald-500/10 text-emerald-400',

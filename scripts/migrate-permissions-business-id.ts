@@ -94,7 +94,9 @@ async function run() {
           ON security.permissions (role_id, menu_id)
           WHERE business_id IS NULL
       `);
-      console.log('  ✅ Created partial index IDX_permissions_global_role_menu');
+      console.log(
+        '  ✅ Created partial index IDX_permissions_global_role_menu',
+      );
     } else {
       console.log('  ⏭️  Partial unique index already exists, skipping');
     }
