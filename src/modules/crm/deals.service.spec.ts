@@ -182,7 +182,9 @@ describe('DealsService', () => {
       // update() calls findOne twice: once to load the current deal, once to
       // return the result after dealsRepo.update(). The second call must return
       // the already-persisted state (status WON) so the assertion holds.
-      dealsRepo.findOne.mockResolvedValueOnce(deal).mockResolvedValueOnce(updatedDeal);
+      dealsRepo.findOne
+        .mockResolvedValueOnce(deal)
+        .mockResolvedValueOnce(updatedDeal);
       stageRepo.findOne.mockResolvedValue(wonStage);
       historyRepo.update.mockResolvedValue({ affected: 1 });
       historyRepo.save.mockResolvedValue({});
@@ -210,7 +212,9 @@ describe('DealsService', () => {
         closed_at: new Date(),
       });
 
-      dealsRepo.findOne.mockResolvedValueOnce(deal).mockResolvedValueOnce(updatedDeal);
+      dealsRepo.findOne
+        .mockResolvedValueOnce(deal)
+        .mockResolvedValueOnce(updatedDeal);
       stageRepo.findOne.mockResolvedValue(lostStage);
       historyRepo.update.mockResolvedValue({ affected: 1 });
       historyRepo.save.mockResolvedValue({});

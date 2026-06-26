@@ -63,7 +63,11 @@ export class Contact {
   @Column('uuid', { nullable: true })
   owner_id: string | null;
 
-  @ManyToOne(() => CrmUser, { nullable: true, onDelete: 'SET NULL', eager: false })
+  @ManyToOne(() => CrmUser, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
   @JoinColumn({ name: 'owner_id' })
   owner: CrmUser | null;
 
