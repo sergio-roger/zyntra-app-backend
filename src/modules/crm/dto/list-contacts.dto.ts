@@ -5,7 +5,6 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  IsUUID,
   Max,
   Min,
 } from 'class-validator';
@@ -13,11 +12,6 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 
 export class ListContactsDto {
-  @ApiPropertyOptional({ description: 'UUID of the lifecycle stage' })
-  @IsOptional()
-  @IsUUID()
-  lifecycleStageId?: string;
-
   @ApiPropertyOptional({ enum: ContactSource })
   @IsOptional()
   @IsEnum(ContactSource)
