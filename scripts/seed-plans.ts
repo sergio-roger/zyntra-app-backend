@@ -33,6 +33,7 @@ async function bootstrap() {
       chatbot_limit: 0,
       funnel_limit: 0,
       channel_limit: 1,
+      pipeline_limit: 0,
       descriptions: [
         'Diagnóstico del modelo de negocio',
         'Creación y configuración de redes sociales (Facebook, Instagram, TikTok)',
@@ -78,6 +79,7 @@ async function bootstrap() {
       chatbot_limit: 1,
       funnel_limit: 0,
       channel_limit: 3,
+      pipeline_limit: 1,
       descriptions: [
         'Calendario Editorial',
         'Creación de Contenido',
@@ -86,6 +88,7 @@ async function bootstrap() {
         '9 Anuncios de Conversión',
         'Análisis mensual de campañas',
         'Chat bot 24/7 automatizado con IA',
+        '1 pipeline de ventas',
       ],
       modules: {
         dashboard: ModuleAccessLevel.FULL,
@@ -113,6 +116,7 @@ async function bootstrap() {
       chatbot_limit: 5,
       funnel_limit: 999999,
       channel_limit: 999999,
+      pipeline_limit: 5,
       descriptions: [
         'Plan BrandStart incluido',
         'Plan Impulse Pro incluido',
@@ -121,6 +125,7 @@ async function bootstrap() {
         'Seo (posicionamiento en buscadores)',
         'CRM (gestión de clientes)',
         'Agente de IA especializado',
+        'Hasta 5 pipelines de ventas',
       ],
       modules: {
         dashboard: ModuleAccessLevel.FULL,
@@ -152,6 +157,7 @@ async function bootstrap() {
         chatbot_limit: data.chatbot_limit,
         funnel_limit: data.funnel_limit,
         channel_limit: data.channel_limit,
+        pipeline_limit: data.pipeline_limit,
       });
       await planRepo.save(plan);
       console.log(`✅ Plan created: ${data.name}`);
@@ -178,6 +184,7 @@ async function bootstrap() {
       plan.chatbot_limit = data.chatbot_limit;
       plan.funnel_limit = data.funnel_limit;
       plan.channel_limit = data.channel_limit;
+      plan.pipeline_limit = data.pipeline_limit;
       await planRepo.save(plan);
       console.log(`ℹ️ Plan ${data.name} updated, syncing modules...`);
     }

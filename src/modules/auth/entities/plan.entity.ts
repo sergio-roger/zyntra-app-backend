@@ -58,6 +58,9 @@ export class Plan {
   @Column({ default: 1 })
   channel_limit: number;
 
+  @Column({ default: 0 })
+  pipeline_limit: number;
+
   @Column({ nullable: true })
   stripe_price_id: string;
 

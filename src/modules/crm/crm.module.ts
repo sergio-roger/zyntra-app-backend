@@ -13,6 +13,7 @@ import { Segment } from './entities/segment.entity';
 import { Pipeline } from './entities/pipeline.entity';
 import { PipelineStage } from './entities/pipeline-stage.entity';
 import { DealStageHistory } from './entities/deal-stage-history.entity';
+import { Plan } from '@auth/entities/plan.entity';
 import { ContactsService } from './contacts.service';
 import { TagsService } from './tags.service';
 import { CustomFieldsService } from './custom-fields.service';
@@ -47,6 +48,7 @@ import { PipelinesController } from './pipelines.controller';
       Pipeline,
       PipelineStage,
       DealStageHistory,
+      Plan,
     ]),
     AuthModule,
   ],

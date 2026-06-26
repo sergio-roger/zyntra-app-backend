@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -10,6 +11,7 @@ import { Pipeline } from '@crm/entities/pipeline.entity';
 import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
 import { Deal } from '@crm/entities/deal.entity';
 import { Business } from '@auth/entities/business.entity';
+import { Plan } from '@auth/entities/plan.entity';
 import { PipelineStageType } from '@crm/enums/pipeline-stage-type.enum';
 import { DealStatus } from '@crm/enums/deal-status.enum';
 import {
@@ -29,6 +31,8 @@ export class PipelinesService {
     private readonly stageRepo: Repository<PipelineStage>,
     @InjectRepository(Deal)
     private readonly dealRepo: Repository<Deal>,
+    @InjectRepository(Plan)
+    private readonly planRepo: Repository<Plan>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -53,6 +57,18 @@ export class PipelinesService {
   }
 
   async create(business: Business, dto: CreatePipelineDto): Promise<Pipeline> {
+    if (business.plan_id) {
+      const plan = await this.planRepo.findOne({ where: { id: business.plan_id } });
+      if (plan && plan.pipeline_limit > 0) {
+        const current = await this.pipelineRepo.count({ where: { business_id: business.id } });
+        if (current >= plan.pipeline_limit) {
+          throw new ForbiddenException(
+            `Tu plan "${plan.name}" permite hasta ${plan.pipeline_limit} pipeline(s). Actualiza tu plan para crear más.`,
+          );
+        }
+      }
+    }
+
     if (dto.is_default) {
       await this.pipelineRepo.update(
         { business_id: business.id },
