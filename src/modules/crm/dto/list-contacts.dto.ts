@@ -33,6 +33,11 @@ export class ListContactsDto {
   @IsString()
   tag?: string;
 
+  @ApiPropertyOptional({ description: 'UUID of the owner, or "unassigned" for contacts without an owner' })
+  @IsOptional()
+  @IsString()
+  ownerId?: string;
+
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()
   @Type(() => Number)

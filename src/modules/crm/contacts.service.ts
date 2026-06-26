@@ -59,6 +59,11 @@ export class ContactsService {
     if (query.source)
       qb.andWhere('c.source = :source', { source: query.source });
     if (query.tag) qb.andWhere('t.id = :tagId', { tagId: query.tag });
+    if (query.ownerId === 'unassigned') {
+      qb.andWhere('c.owner_id IS NULL');
+    } else if (query.ownerId) {
+      qb.andWhere('c.owner_id = :ownerId', { ownerId: query.ownerId });
+    }
     if (query.is_archived !== undefined) {
       qb.andWhere('c.is_archived = :isArchived', {
         isArchived: query.is_archived,

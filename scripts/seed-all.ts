@@ -110,6 +110,11 @@ const BUSINESSES_DATA = [
       email: 'admin@brandstart.demo',
       role: UserRole.ADMIN,
     },
+    agentUser: {
+      name: 'Agente BrandStart',
+      email: 'agente@brandstart.demo',
+      role: UserRole.AGENT,
+    },
     contacts: [
       {
         name: 'María García',
@@ -204,6 +209,11 @@ const BUSINESSES_DATA = [
       email: 'admin@impulsepro.demo',
       role: UserRole.ADMIN,
     },
+    agentUser: {
+      name: 'Agente Impulse Pro',
+      email: 'agente@impulsepro.demo',
+      role: UserRole.AGENT,
+    },
     contacts: [
       {
         name: 'Isabella Morales',
@@ -297,6 +307,11 @@ const BUSINESSES_DATA = [
       name: 'Admin Core Digital',
       email: 'admin@coredigital.demo',
       role: UserRole.ADMIN,
+    },
+    agentUser: {
+      name: 'Agente Core Digital',
+      email: 'agente@coredigital.demo',
+      role: UserRole.AGENT,
     },
     contacts: [
       {
@@ -563,6 +578,8 @@ async function bootstrap() {
 
   console.log('\n🏢 [2/5] Seeding businesses and admin users...');
 
+  const agentUserMap: Record<string, CrmUser> = {};
+
   for (const entry of BUSINESSES_DATA) {
     const plan = planMap[entry.planName];
 
@@ -588,11 +605,11 @@ async function bootstrap() {
     }
 
     // Admin user
-    const existingUser = await userRepo.findOne({
+    const existingAdmin = await userRepo.findOne({
       where: { business_id: business.id, email: entry.adminUser.email },
     });
 
-    if (!existingUser) {
+    if (!existingAdmin) {
       await userRepo.save(
         userRepo.create({
           business_id: business.id,
@@ -608,6 +625,30 @@ async function bootstrap() {
     } else {
       console.log(`  ℹ️  Admin user already exists: ${entry.adminUser.email}`);
     }
+
+    // Agent user
+    let agentUser = await userRepo.findOne({
+      where: { business_id: business.id, email: entry.agentUser.email },
+    });
+
+    if (!agentUser) {
+      agentUser = await userRepo.save(
+        userRepo.create({
+          business_id: business.id,
+          plan_id: plan.id,
+          name: entry.agentUser.name,
+          email: entry.agentUser.email,
+          password_hash: passwordHash,
+          role: entry.agentUser.role,
+          is_active: true,
+        }),
+      );
+      console.log(`  ✅ Agent user created: ${entry.agentUser.email}`);
+    } else {
+      console.log(`  ℹ️  Agent user already exists: ${entry.agentUser.email}`);
+    }
+
+    agentUserMap[entry.business.email] = agentUser;
   }
 
   // ── 2.1. Superadmin Business + Super Admin User ───────────────────────────────
@@ -739,15 +780,23 @@ async function bootstrap() {
     });
     const stageByName = Object.fromEntries(stages.map((s) => [s.name, s]));
 
+    const adminUser = await userRepo.findOne({
+      where: { business_id: business.id, email: entry.adminUser.email },
+    });
+    const agentUser = agentUserMap[entry.business.email] ?? null;
+
     let created = 0;
 
-    for (const contactData of entry.contacts) {
+    for (let i = 0; i < entry.contacts.length; i++) {
+      const contactData = entry.contacts[i];
       const existing = await contactRepo.findOne({
         where: { business_id: business.id, email: contactData.email },
       });
 
       if (!existing) {
         const lifecycleStage = stageByName[contactData.lifecycleName];
+        // Distribute ownership: even index → admin, odd index → agent
+        const owner = i % 2 === 0 ? adminUser : agentUser;
         await contactRepo.save(
           contactRepo.create({
             business_id: business.id,
@@ -759,6 +808,7 @@ async function bootstrap() {
             source: contactData.source,
             company_name: contactData.company_name,
             deal_value: contactData.deal_value,
+            owner_id: owner?.id ?? null,
           }),
         );
         created++;
@@ -894,6 +944,7 @@ async function bootstrap() {
   for (const entry of BUSINESSES_DATA) {
     console.log(`     • ${entry.business.email} (Company)`);
     console.log(`     • ${entry.adminUser.email} (CRM Admin)`);
+    console.log(`     • ${entry.agentUser.email} (CRM Agente)`);
   }
   console.log(`     • superadmin@zyntra.com (Company - Global Admin)`);
   console.log(`     • superuser@zyntra.com (Super Admin CRM)`);
