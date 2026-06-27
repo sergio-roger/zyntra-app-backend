@@ -9,7 +9,10 @@ import { CrmUser } from '@crm/entities/user.entity';
 import { Business } from '@auth/entities/business.entity';
 import { ListContactsDto } from '@crm/dto/list-contacts.dto';
 
-const mockBusiness = { id: 'biz-uuid', plan_object: { contact_limit: 999999 } } as Business;
+const mockBusiness = {
+  id: 'biz-uuid',
+  plan_object: { contact_limit: 999999 },
+} as Business;
 
 const makeContact = (overrides: Partial<Contact> = {}): Contact =>
   ({
@@ -60,7 +63,10 @@ describe('ContactsService', () => {
       providers: [
         ContactsService,
         { provide: getRepositoryToken(Contact), useValue: contactsRepo },
-        { provide: getRepositoryToken(ContactActivity), useValue: activitiesRepo },
+        {
+          provide: getRepositoryToken(ContactActivity),
+          useValue: activitiesRepo,
+        },
         { provide: getRepositoryToken(Deal), useValue: dealsRepo },
         { provide: getRepositoryToken(CrmUser), useValue: crmUsersRepo },
       ],
@@ -86,14 +92,24 @@ describe('ContactsService', () => {
 
       const result = await service.list(mockBusiness, {} as ListContactsDto);
 
-      expect(result).toEqual({ items: contacts, total: 1, page: 1, limit: 20, totalPages: 1 });
-      expect(qb.where).toHaveBeenCalledWith('c.businessId = :bid', { bid: 'biz-uuid' });
+      expect(result).toEqual({
+        items: contacts,
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
+      expect(qb.where).toHaveBeenCalledWith('c.businessId = :bid', {
+        bid: 'biz-uuid',
+      });
     });
 
     it('filters by lifecycleStageId', async () => {
       qb.getManyAndCount.mockResolvedValue([[], 0]);
 
-      await service.list(mockBusiness, { lifecycleStageId: 'stage-uuid' } as ListContactsDto);
+      await service.list(mockBusiness, {
+        lifecycleStageId: 'stage-uuid',
+      } as ListContactsDto);
 
       expect(qb.andWhere).toHaveBeenCalledWith(
         'c.lifecycleStageId = :lifecycleStageId',
@@ -104,23 +120,33 @@ describe('ContactsService', () => {
     it('filters by source', async () => {
       qb.getManyAndCount.mockResolvedValue([[], 0]);
 
-      await service.list(mockBusiness, { source: 'chatbot' } as ListContactsDto);
+      await service.list(mockBusiness, {
+        source: 'chatbot',
+      } as ListContactsDto);
 
-      expect(qb.andWhere).toHaveBeenCalledWith('c.source = :source', { source: 'chatbot' });
+      expect(qb.andWhere).toHaveBeenCalledWith('c.source = :source', {
+        source: 'chatbot',
+      });
     });
 
     it('filters by ownerId (specific user)', async () => {
       qb.getManyAndCount.mockResolvedValue([[], 0]);
 
-      await service.list(mockBusiness, { ownerId: 'user-uuid' } as ListContactsDto);
+      await service.list(mockBusiness, {
+        ownerId: 'user-uuid',
+      } as ListContactsDto);
 
-      expect(qb.andWhere).toHaveBeenCalledWith('c.ownerId = :ownerId', { ownerId: 'user-uuid' });
+      expect(qb.andWhere).toHaveBeenCalledWith('c.ownerId = :ownerId', {
+        ownerId: 'user-uuid',
+      });
     });
 
     it('filters unassigned contacts when ownerId is "unassigned"', async () => {
       qb.getManyAndCount.mockResolvedValue([[], 0]);
 
-      await service.list(mockBusiness, { ownerId: 'unassigned' } as ListContactsDto);
+      await service.list(mockBusiness, {
+        ownerId: 'unassigned',
+      } as ListContactsDto);
 
       expect(qb.andWhere).toHaveBeenCalledWith('c.ownerId IS NULL');
     });
@@ -130,7 +156,9 @@ describe('ContactsService', () => {
 
       await service.list(mockBusiness, { search: 'john' } as ListContactsDto);
 
-      const andWhereCalls: string[] = qb.andWhere.mock.calls.map((c: any[]) => c[0]);
+      const andWhereCalls: string[] = qb.andWhere.mock.calls.map(
+        (c: any[]) => c[0],
+      );
       expect(andWhereCalls.some((c) => typeof c === 'object')).toBe(true);
     });
 
@@ -139,13 +167,18 @@ describe('ContactsService', () => {
 
       await service.list(mockBusiness, { isArchived: true } as ListContactsDto);
 
-      expect(qb.andWhere).toHaveBeenCalledWith('c.isArchived = :isArchived', { isArchived: true });
+      expect(qb.andWhere).toHaveBeenCalledWith('c.isArchived = :isArchived', {
+        isArchived: true,
+      });
     });
 
     it('respects custom page and limit', async () => {
       qb.getManyAndCount.mockResolvedValue([[], 0]);
 
-      await service.list(mockBusiness, { page: 3, limit: 10 } as ListContactsDto);
+      await service.list(mockBusiness, {
+        page: 3,
+        limit: 10,
+      } as ListContactsDto);
 
       expect(qb.skip).toHaveBeenCalledWith(20);
       expect(qb.take).toHaveBeenCalledWith(10);
@@ -179,7 +212,9 @@ describe('ContactsService', () => {
     it('throws NotFoundException when contact does not exist', async () => {
       contactsRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockBusiness, 'missing-uuid')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.findOne(mockBusiness, 'missing-uuid'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -187,7 +222,10 @@ describe('ContactsService', () => {
 
   describe('listMembers()', () => {
     it('returns active members for the business ordered by name', async () => {
-      const members = [{ id: 'u1', name: 'Ana' }, { id: 'u2', name: 'Beto' }];
+      const members = [
+        { id: 'u1', name: 'Ana' },
+        { id: 'u2', name: 'Beto' },
+      ];
       crmUsersRepo.find.mockResolvedValue(members);
 
       const result = await service.listMembers(mockBusiness);

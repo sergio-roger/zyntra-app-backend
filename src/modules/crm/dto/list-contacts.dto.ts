@@ -63,27 +63,42 @@ export class ListContactsDto {
   @IsBoolean()
   isArchived?: boolean;
 
-  @ApiPropertyOptional({ description: 'ISO 8601 datetime — filter contacts created on or after this date' })
+  @ApiPropertyOptional({
+    description:
+      'ISO 8601 datetime — filter contacts created on or after this date',
+  })
   @IsOptional()
   @IsDateString()
   createdAtFrom?: string;
 
-  @ApiPropertyOptional({ description: 'ISO 8601 datetime — filter contacts created on or before this date' })
+  @ApiPropertyOptional({
+    description:
+      'ISO 8601 datetime — filter contacts created on or before this date',
+  })
   @IsOptional()
   @IsDateString()
   createdAtTo?: string;
 
-  @ApiPropertyOptional({ description: 'ISO 8601 datetime — filter contacts with last activity on or after this date' })
+  @ApiPropertyOptional({
+    description:
+      'ISO 8601 datetime — filter contacts with last activity on or after this date',
+  })
   @IsOptional()
   @IsDateString()
   lastActivityAtFrom?: string;
 
-  @ApiPropertyOptional({ description: 'ISO 8601 datetime — filter contacts with last activity on or before this date' })
+  @ApiPropertyOptional({
+    description:
+      'ISO 8601 datetime — filter contacts with last activity on or before this date',
+  })
   @IsOptional()
   @IsDateString()
   lastActivityAtTo?: string;
 
-  @ApiPropertyOptional({ description: 'JSON array of custom field conditions: [{field, operator, value}]' })
+  @ApiPropertyOptional({
+    description:
+      'JSON array of custom field conditions: [{field, operator, value}]',
+  })
   @IsOptional()
   @IsString()
   customFieldFilters?: string;

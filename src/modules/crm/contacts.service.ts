@@ -102,8 +102,7 @@ export class ContactsService {
       });
     if (filters.source)
       qb.andWhere('c.source = :source', { source: filters.source });
-    if (filters.tag)
-      qb.andWhere('t.id = :tagId', { tagId: filters.tag });
+    if (filters.tag) qb.andWhere('t.id = :tagId', { tagId: filters.tag });
     if (filters.ownerId === 'unassigned') {
       qb.andWhere('c.ownerId IS NULL');
     } else if (filters.ownerId) {
@@ -396,7 +395,7 @@ export class ContactsService {
       const val = (contact.customFields as Record<string, unknown> | null)?.[
         field
       ];
-      return val === null || val === undefined ? '' : String(val);
+      return val === null || val === undefined ? '' : String(val as any);
     }
     switch (key) {
       case 'tags':
@@ -417,7 +416,7 @@ export class ContactsService {
         return this.formatDate(contact.updatedAt);
       default:
         return String(
-          (contact as unknown as Record<string, unknown>)[key] ?? '',
+          ((contact as unknown as Record<string, unknown>)[key] ?? '') as any,
         );
     }
   }
@@ -470,11 +469,11 @@ export class ContactsService {
       });
     if (dto.customFieldFilters) {
       try {
-        const conditions: Array<{
+        const conditions = JSON.parse(dto.customFieldFilters) as Array<{
           field: string;
           operator: string;
           value: unknown;
-        }> = JSON.parse(dto.customFieldFilters);
+        }>;
         conditions.forEach((cond, idx) => {
           const rawName = cond.field.replace('custom_fields.', '');
           const col = rawName.replace(/[^a-z0-9_]/gi, '');
@@ -493,7 +492,7 @@ export class ContactsService {
               break;
             case 'contains':
               qb.andWhere(`c.custom_fields->>'${col}' ILIKE :${key}`, {
-                [key]: `%${cond.value}%`,
+                [key]: `%${cond.value as string}%`,
               });
               break;
             case 'greater_than':
