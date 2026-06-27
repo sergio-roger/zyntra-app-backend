@@ -393,7 +393,7 @@ export const DEFAULT_TAGS = [
   },
 ];
 
-// �"?�"?�"? Default pipelines per business �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+// ——— Default pipelines per business ——————————————————————————————————————————
 
 export const DEFAULT_PIPELINES = [
   {
@@ -491,7 +491,7 @@ export const DEFAULT_PIPELINES = [
 
 // �"?�"?�"? Sector Tipos �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
-export const DEFAULT_SECTOR_TIPOS = [
+export const DEFAULT_INDUSTRIES = [
   {
     name: 'Tecnología',
     description: 'Software, hardware y servicios digitales',
@@ -517,42 +517,47 @@ export const DEFAULT_EMPRESAS = [
   {
     name: 'TechSolutions S.A.',
     identificacion: '0912345670001',
+    tax_type: 'RUC',
     website: 'https://techsolutions.ec',
-    num_empleados: 45,
+    employee_range: '11-50',
     descripcion: 'Empresa líder en desarrollo de software a medida',
-    sectorName: 'Tecnología',
+    industryName: 'Tecnología',
   },
   {
     name: 'Distribuidora Andina',
     identificacion: '0923456780001',
+    tax_type: 'RUC',
     website: 'https://andina.com.ec',
-    num_empleados: 120,
+    employee_range: '51-200',
     descripcion:
       'Distribución de productos de consumo masivo en la región andina',
-    sectorName: 'Comercio',
+    industryName: 'Comercio',
   },
   {
     name: 'Constructora Cóndor',
     identificacion: '0934567890001',
+    tax_type: 'RUC',
     website: null,
-    num_empleados: 200,
+    employee_range: '201-500',
     descripcion: 'Proyectos de construcción residencial y comercial',
-    sectorName: 'Construcción',
+    industryName: 'Construcción',
   },
   {
     name: 'García Designs',
     identificacion: null,
+    tax_type: null,
     website: 'https://garciadesigns.com',
-    num_empleados: 8,
+    employee_range: '1-10',
     descripcion: 'Diseño gráfico y branding',
-    sectorName: 'Servicios Profesionales',
+    industryName: 'Servicios Profesionales',
   },
   {
     name: 'López & Co',
     identificacion: null,
+    tax_type: null,
     website: null,
-    num_empleados: 15,
+    employee_range: '11-50',
     descripcion: 'Consultoría empresarial',
-    sectorName: 'Servicios Profesionales',
+    industryName: 'Servicios Profesionales',
   },
 ];

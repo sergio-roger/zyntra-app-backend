@@ -24,17 +24,17 @@ import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { SectorTypesService } from './sector-types.service';
-import { CreateSectorTypeDto } from './dto/create-sector-type.dto';
-import { UpdateSectorTypeDto } from './dto/update-sector-type.dto';
+import { IndustriesService } from './industries.service';
+import { CreateIndustryDto } from './dto/create-industry.dto';
+import { UpdateIndustryDto } from './dto/update-industry.dto';
 
-@ApiTags('crm-sector-types')
+@ApiTags('crm-industries')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @RequiresModule('crm_companies') // update permissions module reference
-@Controller('crm/sector-types')
-export class SectorTypesController {
-  constructor(private readonly service: SectorTypesService) {}
+@Controller('crm/industries')
+export class IndustriesController {
+  constructor(private readonly service: IndustriesService) {}
 
   @Get()
   @ApiOperation({ summary: 'List sector types' })
@@ -49,7 +49,7 @@ export class SectorTypesController {
   @ApiCreatedResponse({ description: 'Sector type created' })
   create(
     @CurrentBusiness() business: Business,
-    @Body() dto: CreateSectorTypeDto,
+    @Body() dto: CreateIndustryDto,
   ) {
     return this.service.create(business, dto);
   }
@@ -61,7 +61,7 @@ export class SectorTypesController {
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateSectorTypeDto,
+    @Body() dto: UpdateIndustryDto,
   ) {
     return this.service.update(business, id, dto);
   }

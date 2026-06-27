@@ -7,7 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export class CreateSectorTypeDto {
+export class CreateIndustryDto {
   @ApiProperty({ example: 'Tecnología' })
   @IsString()
   @IsNotEmpty()

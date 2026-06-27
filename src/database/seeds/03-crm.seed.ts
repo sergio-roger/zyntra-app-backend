@@ -11,7 +11,7 @@ import { DealStageHistory } from '../../modules/crm/entities/deal-stage-history.
 import { Deal } from '../../modules/crm/entities/deal.entity';
 import { PipelineStage } from '../../modules/crm/entities/pipeline-stage.entity';
 import { Pipeline } from '../../modules/crm/entities/pipeline.entity';
-import { SectorType } from '../../modules/crm/entities/sector-type.entity';
+import { Industry } from '../../modules/crm/entities/industry.entity';
 import { Tag } from '../../modules/crm/entities/tag.entity';
 import { CrmUser } from '../../modules/crm/entities/user.entity';
 import { DealStatus } from '../../modules/crm/enums/deal-status.enum';
@@ -25,7 +25,7 @@ import {
   DEFAULT_EMPRESAS,
   DEFAULT_LIFECYCLE_STAGES,
   DEFAULT_PIPELINES,
-  DEFAULT_SECTOR_TIPOS,
+  DEFAULT_INDUSTRIES,
   DEFAULT_TAGS,
 } from './data/crm.data';
 import { Seeder } from './seeder.interface';
@@ -42,7 +42,7 @@ export class CrmSeeder implements Seeder {
     const pipelineStageRepo = ds.getRepository(PipelineStage);
     const dealRepo = ds.getRepository(Deal);
     const historyRepo = ds.getRepository(DealStageHistory);
-    const sectorTypeRepo = ds.getRepository(SectorType);
+    const industryRepo = ds.getRepository(Industry);
     const companyRepo = ds.getRepository(Company);
     const customFieldRepo = ds.getRepository(CustomField);
     const teamRepo = ds.getRepository(Team);
@@ -255,38 +255,37 @@ export class CrmSeeder implements Seeder {
           );
         }
       }
-      console.log(`  �o. Tags seeded for: ${business.name}`);
+      console.log(`  o. Tags seeded for: ${business.name}`);
     }
 
-    // �"? 3.5. Sector Tipos + Empresas �"?
+    // 3.5. Industries + Empresas
 
-    console.log('\n�Y�� [3.5] Seeding sector tipos and empresas...');
+    console.log('\n🏢 [3.5] Seeding industries and empresas...');
 
     for (const entry of BUSINESSES_DATA) {
       const business = await businessRepo.findOne({
         where: { email: entry.business.email },
       });
       if (!business) continue;
-
-      // Sector types
-      const sectorMap: Record<string, SectorType> = {};
-      for (const sectorData of DEFAULT_SECTOR_TIPOS) {
-        let sector = await sectorTypeRepo.findOne({
-          where: { business_id: business.id, name: sectorData.name },
+      console.log(`\n  --- 3. Seeding Industries for: ${business.name} ---`);
+      const industryMap: Record<string, Industry> = {};
+      for (const industryData of DEFAULT_INDUSTRIES) {
+        let industry = await industryRepo.findOne({
+          where: { business_id: business.id, name: industryData.name },
         });
-        if (!sector) {
-          sector = await sectorTypeRepo.save(
-            sectorTypeRepo.create({
+        if (!industry) {
+          industry = await industryRepo.save(
+            industryRepo.create({
               business_id: business.id,
-              name: sectorData.name,
-              description: sectorData.description,
+              name: industryData.name,
+              description: industryData.description,
               is_active: true,
             }),
           );
         }
-        sectorMap[sectorData.name] = sector;
+        industryMap[industryData.name] = industry;
       }
-      console.log(`  �o. Sector tipos seeded for: ${business.name}`);
+      console.log(`  🏢 Industries seeded for: ${business.name}`);
 
       // Companies
       let companiesCreated = 0;
@@ -296,16 +295,17 @@ export class CrmSeeder implements Seeder {
         });
         if (existing) continue;
 
-        const sector = sectorMap[companyData.sectorName] ?? null;
+        const industry = industryMap[companyData.industryName] ?? null;
         await companyRepo.save(
           companyRepo.create({
             business_id: business.id,
             name: companyData.name,
             identification: companyData.identificacion ?? null,
+            tax_type: companyData.tax_type ?? null,
             website: companyData.website ?? null,
-            num_employees: companyData.num_empleados ?? null,
+            employee_range: companyData.employee_range ?? null,
             description: companyData.descripcion ?? null,
-            sector_type_id: sector?.id ?? null,
+            industry_id: industry?.id ?? null,
           }),
         );
         companiesCreated++;

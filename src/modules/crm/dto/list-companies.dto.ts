@@ -23,10 +23,25 @@ export class ListCompaniesDto {
   @IsOptional()
   search?: string;
 
-  @ApiPropertyOptional({ example: 'uuid-sector-type' })
-  @IsUUID()
+  @ApiPropertyOptional()
   @IsOptional()
-  sector_type_id?: string;
+  @IsString()
+  industry_id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  owner_id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  tax_type?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  employee_range?: string;
 
   @ApiPropertyOptional({ example: 'uuid-lifecycle-stage' })
   @IsUUID()

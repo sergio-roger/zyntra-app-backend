@@ -1,7 +1,8 @@
 import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
 import { Business } from '@auth/entities/business.entity';
-import { SectorType } from '@crm/entities/sector-type.entity';
+import { Industry } from '@crm/entities/industry.entity';
 import { Tag } from '@crm/entities/tag.entity';
+import { CrmUser } from '@crm/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
@@ -40,24 +41,27 @@ export class Company {
   identification: string | null;
 
   @Column('varchar', { nullable: true })
+  tax_type: string | null;
+
+  @Column('varchar', { nullable: true })
   website: string | null;
 
-  @Column('integer', { name: 'num_employees', nullable: true })
-  num_employees: number | null;
+  @Column('varchar', { name: 'employee_range', nullable: true })
+  employee_range: string | null;
 
   @Column('text', { nullable: true })
   description: string | null;
 
-  @Column('uuid', { name: 'sector_type_id', nullable: true })
-  sector_type_id: string | null;
+  @Column('uuid', { name: 'industry_id', nullable: true })
+  industry_id: string | null;
 
-  @ManyToOne(() => SectorType, {
+  @ManyToOne(() => Industry, {
     nullable: true,
     onDelete: 'SET NULL',
     eager: false,
   })
-  @JoinColumn({ name: 'sector_type_id' })
-  sector_type: SectorType | null;
+  @JoinColumn({ name: 'industry_id' })
+  industry: Industry | null;
 
   @Column('uuid', { name: 'lifecycle_stage_id', nullable: true })
   lifecycle_stage_id: string | null;
@@ -69,6 +73,17 @@ export class Company {
   })
   @JoinColumn({ name: 'lifecycle_stage_id' })
   lifecycle_stage: LifecycleStage | null;
+
+  @Column('uuid', { name: 'owner_id', nullable: true })
+  owner_id: string | null;
+
+  @ManyToOne(() => CrmUser, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
+  @JoinColumn({ name: 'owner_id' })
+  owner: CrmUser | null;
 
   @ManyToMany(() => Tag, { eager: false })
   @JoinTable({

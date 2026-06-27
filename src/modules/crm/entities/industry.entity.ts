@@ -11,13 +11,13 @@ import {
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
 
-@Entity({ name: 'sector_types', schema: 'crm' })
+@Entity({ name: 'industries', schema: 'crm' })
 @Index(['business_id'])
 @Index(['business_id', 'name'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })
-export class SectorType {
+export class Industry {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

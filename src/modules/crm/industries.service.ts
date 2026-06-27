@@ -5,26 +5,26 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SectorType } from '@crm/entities/sector-type.entity';
+import { Industry } from '@crm/entities/industry.entity';
 import { Business } from '@auth/entities/business.entity';
-import { CreateSectorTypeDto } from './dto/create-sector-type.dto';
-import { UpdateSectorTypeDto } from './dto/update-sector-type.dto';
+import { CreateIndustryDto } from './dto/create-industry.dto';
+import { UpdateIndustryDto } from './dto/update-industry.dto';
 
 @Injectable()
-export class SectorTypesService {
+export class IndustriesService {
   constructor(
-    @InjectRepository(SectorType)
-    private readonly repo: Repository<SectorType>,
+    @InjectRepository(Industry)
+    private readonly repo: Repository<Industry>,
   ) {}
 
-  async findAll(business: Business): Promise<SectorType[]> {
+  async findAll(business: Business): Promise<Industry[]> {
     return this.repo.find({
       where: { business_id: business.id },
       order: { name: 'ASC' },
     });
   }
 
-  async findOne(business: Business, id: string): Promise<SectorType> {
+  async findOne(business: Business, id: string): Promise<Industry> {
     const sector = await this.repo.findOne({
       where: { id, business_id: business.id },
     });
@@ -34,8 +34,8 @@ export class SectorTypesService {
 
   async create(
     business: Business,
-    dto: CreateSectorTypeDto,
-  ): Promise<SectorType> {
+    dto: CreateIndustryDto,
+  ): Promise<Industry> {
     const existing = await this.repo.findOne({
       where: { business_id: business.id, name: dto.name },
     });
@@ -51,8 +51,8 @@ export class SectorTypesService {
   async update(
     business: Business,
     id: string,
-    dto: UpdateSectorTypeDto,
-  ): Promise<SectorType> {
+    dto: UpdateIndustryDto,
+  ): Promise<Industry> {
     const sector = await this.findOne(business, id);
 
     if (dto.name && dto.name !== sector.name) {

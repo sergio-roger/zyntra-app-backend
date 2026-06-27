@@ -31,7 +31,7 @@ export class ExportCompaniesDto {
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()
-  sector_type_id?: string;
+  industry_id?: string;
 
   @ApiPropertyOptional()
   @IsUUID()

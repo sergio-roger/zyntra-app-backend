@@ -30,11 +30,15 @@ export class CreateCompanyDto {
   @IsOptional()
   website?: string;
 
-  @ApiPropertyOptional({ example: 120 })
-  @IsInt()
-  @Min(1)
+  @ApiPropertyOptional({ example: 'RUC' })
+  @IsString()
   @IsOptional()
-  num_employees?: number;
+  @MaxLength(20)
+  tax_type?: string;
+  @ApiPropertyOptional({ example: '1-50' })
+  @IsString()
+  @IsOptional()
+  employee_range?: string;
 
   @ApiPropertyOptional({ example: 'Empresa líder en distribución industrial' })
   @IsString()
@@ -45,12 +49,17 @@ export class CreateCompanyDto {
   @ApiPropertyOptional({ example: 'uuid-del-sector' })
   @IsUUID()
   @IsOptional()
-  sector_type_id?: string;
+  industry_id?: string;
 
   @ApiPropertyOptional({ example: 'uuid-del-lifecycle-stage' })
   @IsUUID()
   @IsOptional()
   lifecycle_stage_id?: string;
+
+  @ApiPropertyOptional({ example: 'uuid-del-owner' })
+  @IsUUID()
+  @IsOptional()
+  owner_id?: string;
 
   @ApiPropertyOptional({
     type: [String],

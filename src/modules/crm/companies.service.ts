@@ -33,7 +33,7 @@ export class CompaniesService {
 
     const qb = this.repo
       .createQueryBuilder('e')
-      .leftJoinAndSelect('e.sector_type', 'st')
+      .leftJoinAndSelect('e.industry', 'st')
       .leftJoinAndSelect('e.lifecycle_stage', 'ls')
       .leftJoinAndSelect('e.tags', 't')
       .where('e.business_id = :bid', { bid: business.id });
@@ -45,8 +45,8 @@ export class CompaniesService {
       );
     }
 
-    if (query.sector_type_id) {
-      qb.andWhere('e.sector_type_id = :stId', { stId: query.sector_type_id });
+    if (query.industry_id) {
+      qb.andWhere('e.industry_id = :stId', { stId: query.industry_id });
     }
 
     if (query.lifecycle_stage_id) {
@@ -72,7 +72,7 @@ export class CompaniesService {
   async findOne(business: Business, id: string): Promise<Company> {
     const company = await this.repo.findOne({
       where: { id, business_id: business.id },
-      relations: ['sector_type', 'lifecycle_stage', 'tags'],
+      relations: ['industry', 'lifecycle_stage', 'tags', 'owner'],
     });
     if (!company) throw new NotFoundException('Company not found');
     return company;
@@ -150,14 +150,12 @@ export class CompaniesService {
         return company.identification ?? '';
       case 'website':
         return company.website ?? '';
-      case 'num_employees':
-        return company.num_employees !== null && company.num_employees !== undefined
-          ? String(company.num_employees)
-          : '';
+      case 'employee_range':
+        return company.employee_range ?? '';
       case 'description':
         return company.description ?? '';
-      case 'sector_type':
-        return company.sector_type?.name ?? '';
+      case 'industry':
+        return company.industry?.name ?? '';
       case 'lifecycle_stage':
         return company.lifecycle_stage?.name ?? '';
       case 'tags':
@@ -179,7 +177,7 @@ export class CompaniesService {
   async exportCsv(business: Business, dto: ExportCompaniesDto): Promise<Buffer> {
     const qb = this.repo
       .createQueryBuilder('e')
-      .leftJoinAndSelect('e.sector_type', 'st')
+      .leftJoinAndSelect('e.industry', 'st')
       .leftJoinAndSelect('e.lifecycle_stage', 'ls')
       .leftJoinAndSelect('e.tags', 't')
       .where('e.business_id = :bid', { bid: business.id });
@@ -190,8 +188,8 @@ export class CompaniesService {
         { search: `%${dto.search.toLowerCase()}%` },
       );
     }
-    if (dto.sector_type_id)
-      qb.andWhere('e.sector_type_id = :stId', { stId: dto.sector_type_id });
+    if (dto.industry_id)
+      qb.andWhere('e.industry_id = :stId', { stId: dto.industry_id });
     if (dto.lifecycle_stage_id)
       qb.andWhere('e.lifecycle_stage_id = :lsId', { lsId: dto.lifecycle_stage_id });
     if (dto.createdAtFrom)

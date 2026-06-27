@@ -20,7 +20,7 @@ import { DealStageHistory } from '@crm/entities/deal-stage-history.entity';
 import { Deal } from '@crm/entities/deal.entity';
 import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
 import { Pipeline } from '@crm/entities/pipeline.entity';
-import { SectorType } from '@crm/entities/sector-type.entity';
+import { Industry } from './entities/industry.entity';
 import { Segment } from '@crm/entities/segment.entity';
 import { Tag } from '@crm/entities/tag.entity';
 import { CrmTask } from '@crm/entities/task.entity';
@@ -28,8 +28,8 @@ import { Team } from '@crm/entities/team.entity';
 import { CrmUser } from '@crm/entities/user.entity';
 import { PipelinesController } from '@crm/pipelines.controller';
 import { PipelinesService } from '@crm/pipelines.service';
-import { SectorTypesController } from '@crm/sector-types.controller';
-import { SectorTypesService } from '@crm/sector-types.service';
+import { IndustriesController } from '@crm/industries.controller';
+import { IndustriesService } from '@crm/industries.service';
 import { SegmentsController } from '@crm/segments.controller';
 import { SegmentsService } from '@crm/segments.service';
 import { TagsController } from '@crm/tags.controller';
@@ -54,7 +54,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       Pipeline,
       PipelineStage,
       DealStageHistory,
-      SectorType,
+      Industry,
       Company,
       Plan,
     ]),
@@ -70,7 +70,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     DealsController,
     SegmentsController,
     PipelinesController,
-    SectorTypesController,
+    IndustriesController,
     CompaniesController,
   ],
   providers: [
@@ -83,7 +83,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     DealsService,
     SegmentsService,
     PipelinesService,
-    SectorTypesService,
+    IndustriesService,
     CompaniesService,
   ],
   exports: [
@@ -96,7 +96,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     DealsService,
     SegmentsService,
     PipelinesService,
-    SectorTypesService,
+    IndustriesService,
     CompaniesService,
   ],
 })
