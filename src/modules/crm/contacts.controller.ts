@@ -7,10 +7,13 @@ import {
   Param,
   Body,
   Query,
+  Res,
   UseGuards,
   HttpCode,
   ParseUUIDPipe,
+  StreamableFile,
 } from '@nestjs/common';
+import { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -31,6 +34,7 @@ import { ContactsService } from '@crm/contacts.service';
 import { CreateContactDto } from '@crm/dto/create-contact.dto';
 import { UpdateContactDto } from '@crm/dto/update-contact.dto';
 import { ListContactsDto } from '@crm/dto/list-contacts.dto';
+import { ExportContactsDto } from '@crm/dto/export-contacts.dto';
 import { CreateActivityDto } from '@crm/dto/create-activity.dto';
 import { ConvertToDealDto } from '@crm/dto/deal.dto';
 import { ActivityType } from '@crm/enums/activity-type.enum';
@@ -151,6 +155,24 @@ export class ContactsController {
     @Body() dto: ConvertToDealDto,
   ) {
     return this.contacts.convertToDeal(business, id, dto);
+  }
+
+  @Post('contacts/export')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Export filtered contacts as CSV' })
+  async exportCsv(
+    @CurrentBusiness() business: Business,
+    @Body() dto: ExportContactsDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const buffer = await this.contacts.exportCsv(business, dto);
+    const filename = `contactos_${new Date().toISOString().slice(0, 10)}.csv`;
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length,
+    });
+    return new StreamableFile(buffer);
   }
 
   @Post('contacts/import')

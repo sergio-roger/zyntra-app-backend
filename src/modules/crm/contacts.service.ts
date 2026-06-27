@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Brackets } from 'typeorm';
+import { writeToString } from 'fast-csv';
 import { Contact } from '@crm/entities/contact.entity';
 import { Tag } from '@crm/entities/tag.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
@@ -15,6 +16,7 @@ import { Business } from '@auth/entities/business.entity';
 import { CreateContactDto } from '@crm/dto/create-contact.dto';
 import { UpdateContactDto } from '@crm/dto/update-contact.dto';
 import { ListContactsDto } from '@crm/dto/list-contacts.dto';
+import { ExportContactsDto, ExportColumnDto } from '@crm/dto/export-contacts.dto';
 import { CreateActivityDto } from '@crm/dto/create-activity.dto';
 import { ConvertToDealDto } from '@crm/dto/deal.dto';
 import { ActivityType } from '@crm/enums/activity-type.enum';
@@ -300,6 +302,115 @@ export class ContactsService {
     );
 
     return savedDeal;
+  }
+
+  private static readonly SOURCE_LABELS: Record<string, string> = {
+    chatbot: 'Chatbot',
+    email: 'Email',
+    form: 'Formulario',
+    import: 'Importación',
+    instagram: 'Instagram',
+    manual: 'Manual',
+    whatsapp: 'WhatsApp',
+  };
+
+  private formatDate(value: Date | string | null | undefined): string {
+    if (!value) return '';
+    const d = new Date(value as string);
+    if (isNaN(d.getTime())) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  }
+
+  private getColumnValue(contact: Contact, col: ExportColumnDto): string {
+    const key = col.key;
+    if (key.startsWith('cf_')) {
+      const field = key.slice(3);
+      const val = (contact.customFields as Record<string, unknown> | null)?.[field];
+      return val === null || val === undefined ? '' : String(val);
+    }
+    switch (key) {
+      case 'tags':
+        return (contact.tags ?? []).map((t) => t.name).join(', ');
+      case 'lifecycleStage':
+        return contact.lifecycleStage?.name ?? '';
+      case 'ownerName':
+        return contact.owner?.name ?? '';
+      case 'source':
+        return ContactsService.SOURCE_LABELS[contact.source] ?? contact.source ?? '';
+      case 'createdAt':
+        return this.formatDate(contact.createdAt);
+      case 'lastActivityAt':
+        return this.formatDate(contact.lastActivityAt);
+      case 'updatedAt':
+        return this.formatDate(contact.updatedAt);
+      default:
+        return String((contact as unknown as Record<string, unknown>)[key] ?? '');
+    }
+  }
+
+  async exportCsv(business: Business, dto: ExportContactsDto): Promise<Buffer> {
+    const qb = this.contactsRepo
+      .createQueryBuilder('c')
+      .leftJoinAndSelect('c.tags', 't')
+      .leftJoinAndSelect('c.lifecycleStage', 'ls')
+      .leftJoinAndSelect('c.owner', 'o')
+      .where('c.businessId = :bid', { bid: business.id });
+
+    if (dto.lifecycleStageId)
+      qb.andWhere('c.lifecycleStageId = :lifecycleStageId', { lifecycleStageId: dto.lifecycleStageId });
+    if (dto.source)
+      qb.andWhere('c.source = :source', { source: dto.source });
+    if (dto.ownerId === 'unassigned') {
+      qb.andWhere('c.ownerId IS NULL');
+    } else if (dto.ownerId) {
+      qb.andWhere('c.ownerId = :ownerId', { ownerId: dto.ownerId });
+    }
+    if (dto.search) {
+      qb.andWhere(
+        new Brackets((q) => {
+          q.where('c.name ILIKE :s', { s: `%${dto.search}%` })
+            .orWhere('c.email ILIKE :s', { s: `%${dto.search}%` })
+            .orWhere('c.phone ILIKE :s', { s: `%${dto.search}%` });
+        }),
+      );
+    }
+    if (dto.createdAtFrom) qb.andWhere('c.createdAt >= :createdAtFrom', { createdAtFrom: dto.createdAtFrom });
+    if (dto.createdAtTo) qb.andWhere('c.createdAt <= :createdAtTo', { createdAtTo: dto.createdAtTo });
+    if (dto.lastActivityAtFrom) qb.andWhere('c.lastActivityAt >= :lastActivityAtFrom', { lastActivityAtFrom: dto.lastActivityAtFrom });
+    if (dto.lastActivityAtTo) qb.andWhere('c.lastActivityAt <= :lastActivityAtTo', { lastActivityAtTo: dto.lastActivityAtTo });
+    if (dto.customFieldFilters) {
+      try {
+        const conditions: Array<{ field: string; operator: string; value: unknown }> = JSON.parse(dto.customFieldFilters);
+        conditions.forEach((cond, idx) => {
+          const rawName = cond.field.replace('custom_fields.', '');
+          const col = rawName.replace(/[^a-z0-9_]/gi, '');
+          if (!col) return;
+          const key = `cf_${idx}`;
+          switch (cond.operator) {
+            case 'equals': qb.andWhere(`c.custom_fields->>'${col}' = :${key}`, { [key]: String(cond.value) }); break;
+            case 'not_equals': qb.andWhere(`c.custom_fields->>'${col}' != :${key}`, { [key]: String(cond.value) }); break;
+            case 'contains': qb.andWhere(`c.custom_fields->>'${col}' ILIKE :${key}`, { [key]: `%${cond.value}%` }); break;
+            case 'greater_than': qb.andWhere(`(c.custom_fields->>'${col}')::numeric > :${key}`, { [key]: Number(cond.value) }); break;
+            case 'less_than': qb.andWhere(`(c.custom_fields->>'${col}')::numeric < :${key}`, { [key]: Number(cond.value) }); break;
+            case 'is_empty': qb.andWhere(`(c.custom_fields->>'${col}' IS NULL OR c.custom_fields->>'${col}' = '')`); break;
+            case 'is_not_empty': qb.andWhere(`(c.custom_fields->>'${col}' IS NOT NULL AND c.custom_fields->>'${col}' != '')`); break;
+          }
+        });
+      } catch { /* ignore malformed JSON */ }
+    }
+
+    qb.orderBy('c.updatedAt', 'DESC');
+    const contacts = await qb.getMany();
+
+    const headerRow = dto.columns.map((c) => c.label);
+    const dataRows = contacts.map((contact) =>
+      dto.columns.map((col) => this.getColumnValue(contact, col)),
+    );
+
+    const csvString = await writeToString([headerRow, ...dataRows], { headers: false });
+    return Buffer.from('﻿' + csvString, 'utf-8');
   }
 
   async import(

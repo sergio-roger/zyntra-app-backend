@@ -45,6 +45,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-session": "^2.1.1",
+    "fast-csv": "^5.0.7",
     "mongoose": "^9.5.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
