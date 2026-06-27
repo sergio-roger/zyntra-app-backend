@@ -72,4 +72,14 @@ export class ListContactsDto {
   @IsOptional()
   @IsDateString()
   createdAtTo?: string;
+
+  @ApiPropertyOptional({ description: 'ISO 8601 datetime — filter contacts with last activity on or after this date' })
+  @IsOptional()
+  @IsDateString()
+  lastActivityAtFrom?: string;
+
+  @ApiPropertyOptional({ description: 'ISO 8601 datetime — filter contacts with last activity on or before this date' })
+  @IsOptional()
+  @IsDateString()
+  lastActivityAtTo?: string;
 }

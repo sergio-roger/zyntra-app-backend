@@ -84,6 +84,10 @@ export class ContactsService {
       qb.andWhere('c.createdAt >= :createdAtFrom', { createdAtFrom: query.createdAtFrom });
     if (query.createdAtTo)
       qb.andWhere('c.createdAt <= :createdAtTo', { createdAtTo: query.createdAtTo });
+    if (query.lastActivityAtFrom)
+      qb.andWhere('c.lastActivityAt >= :lastActivityAtFrom', { lastActivityAtFrom: query.lastActivityAtFrom });
+    if (query.lastActivityAtTo)
+      qb.andWhere('c.lastActivityAt <= :lastActivityAtTo', { lastActivityAtTo: query.lastActivityAtTo });
 
     qb.orderBy('c.updatedAt', 'DESC')
       .skip((page - 1) * limit)
