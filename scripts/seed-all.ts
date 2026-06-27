@@ -2,10 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
-import {
-  Business,
-  PlanStatus,
-} from '@auth/entities/business.entity';
+import { Business, PlanStatus } from '@auth/entities/business.entity';
 import { PlanDescription } from '@auth/entities/plan-description.entity';
 import { BillingCycle, Plan } from '@auth/entities/plan.entity';
 import { Contact } from '@crm/entities/contact.entity';
@@ -387,7 +384,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'New Lead',
     description: 'Contacto recién ingresado al sistema.',
-    icon: 'new',
+    icon: '\u{1F331}',
     position: 0,
     type: LifecycleStageType.ACTIVE,
     is_default: true,
@@ -397,7 +394,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Hot Lead',
     description: 'Contacto con alto interés demostrado.',
-    icon: 'hot',
+    icon: '\u{1F525}',
     position: 1,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -407,7 +404,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Payment',
     description: 'En proceso de pago o facturación.',
-    icon: 'payment',
+    icon: '\u{1F4B3}',
     position: 2,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -417,7 +414,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Customer',
     description: 'Venta cerrada con éxito.',
-    icon: 'won',
+    icon: '\u{1F389}',
     position: 3,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -427,7 +424,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Cold Lead',
     description: 'Contacto sin interés o perdido.',
-    icon: 'lost',
+    icon: '\u{2744}\u{FE0F}',
     position: 4,
     type: LifecycleStageType.LOST,
     is_default: false,
@@ -557,14 +554,23 @@ const DEFAULT_PIPELINES = [
 // �"?�"?�"? Sector Tipos �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
 const DEFAULT_SECTOR_TIPOS = [
-  { name: 'Tecnología', description: 'Software, hardware y servicios digitales' },
+  {
+    name: 'Tecnología',
+    description: 'Software, hardware y servicios digitales',
+  },
   { name: 'Comercio', description: 'Distribución, retail y ventas mayoristas' },
   { name: 'Manufactura', description: 'Producción industrial y fabricación' },
-  { name: 'Servicios Profesionales', description: 'Consultoría, legal, contabilidad' },
+  {
+    name: 'Servicios Profesionales',
+    description: 'Consultoría, legal, contabilidad',
+  },
   { name: 'Salud', description: 'Clínicas, farmacias y servicios médicos' },
   { name: 'Educación', description: 'Instituciones educativas y formación' },
   { name: 'Construcción', description: 'Inmobiliaria, obras y arquitectura' },
-  { name: 'Alimentos y Bebidas', description: 'Restaurantes, catering y producción alimentaria' },
+  {
+    name: 'Alimentos y Bebidas',
+    description: 'Restaurantes, catering y producción alimentaria',
+  },
 ];
 
 // �"?�"?�"? Empresas de demo �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
@@ -583,7 +589,8 @@ const DEFAULT_EMPRESAS = [
     identificacion: '0923456780001',
     website: 'https://andina.com.ec',
     num_empleados: 120,
-    descripcion: 'Distribución de productos de consumo masivo en la región andina',
+    descripcion:
+      'Distribución de productos de consumo masivo en la región andina',
     sectorName: 'Comercio',
   },
   {
@@ -853,7 +860,9 @@ async function bootstrap() {
       await stageRepo.save(stages);
       console.log(`  �o. Lifecycle stages created for: ${business.name}`);
     } else {
-      console.log(`  �"�️  Lifecycle stages already exist for: ${business.name}`);
+      console.log(
+        `  �"�️  Lifecycle stages already exist for: ${business.name}`,
+      );
     }
 
     // Tags
@@ -929,7 +938,9 @@ async function bootstrap() {
       companiesCreated++;
     }
     if (companiesCreated > 0) {
-      console.log(`  🔹 ${companiesCreated} company(ies) created for: ${business.name}`);
+      console.log(
+        `  🔹 ${companiesCreated} company(ies) created for: ${business.name}`,
+      );
     } else {
       console.log(`  🔹 Companies already exist for: ${business.name}`);
     }
@@ -1132,7 +1143,9 @@ async function bootstrap() {
     }
 
     if (dealsCreated > 0) {
-      console.log(`  �o. ${dealsCreated} deal(s) created for: ${business.name}`);
+      console.log(
+        `  �o. ${dealsCreated} deal(s) created for: ${business.name}`,
+      );
     }
   }
 
@@ -1156,4 +1169,3 @@ bootstrap().catch((err) => {
   console.error('\n�O Seed failed:', err);
   process.exit(1);
 });
-

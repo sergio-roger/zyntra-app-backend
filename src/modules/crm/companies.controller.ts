@@ -62,10 +62,7 @@ export class CompaniesController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create a company' })
   @ApiCreatedResponse({ description: 'Company created' })
-  create(
-    @CurrentBusiness() business: Business,
-    @Body() dto: CreateCompanyDto,
-  ) {
+  create(@CurrentBusiness() business: Business, @Body() dto: CreateCompanyDto) {
     return this.service.create(business, dto);
   }
 

@@ -44,10 +44,14 @@ export class CompaniesService {
     }
 
     if (query.lifecycle_stage_id) {
-      qb.andWhere('e.lifecycle_stage_id = :lsId', { lsId: query.lifecycle_stage_id });
+      qb.andWhere('e.lifecycle_stage_id = :lsId', {
+        lsId: query.lifecycle_stage_id,
+      });
     }
 
-    qb.orderBy('e.name', 'ASC').skip((page - 1) * limit).take(limit);
+    qb.orderBy('e.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit);
 
     const [items, total] = await qb.getManyAndCount();
     return {
@@ -72,7 +76,8 @@ export class CompaniesService {
     const existing = await this.repo.findOne({
       where: { business_id: business.id, name: dto.name },
     });
-    if (existing) throw new ConflictException('A company with this name already exists');
+    if (existing)
+      throw new ConflictException('A company with this name already exists');
 
     const { tag_ids, ...rest } = dto;
     const company = this.repo.create({ ...rest, business_id: business.id });
@@ -89,14 +94,19 @@ export class CompaniesService {
     return this.repo.save(company);
   }
 
-  async update(business: Business, id: string, dto: UpdateCompanyDto): Promise<Company> {
+  async update(
+    business: Business,
+    id: string,
+    dto: UpdateCompanyDto,
+  ): Promise<Company> {
     const company = await this.findOne(business, id);
 
     if (dto.name && dto.name !== company.name) {
       const existing = await this.repo.findOne({
         where: { business_id: business.id, name: dto.name },
       });
-      if (existing) throw new ConflictException('A company with this name already exists');
+      if (existing)
+        throw new ConflictException('A company with this name already exists');
     }
 
     const { tag_ids, ...rest } = dto;
@@ -104,7 +114,10 @@ export class CompaniesService {
 
     if (tag_ids !== undefined) {
       company.tags = tag_ids.length
-        ? await this.tagsRepo.findBy({ id: In(tag_ids), business_id: business.id })
+        ? await this.tagsRepo.findBy({
+            id: In(tag_ids),
+            business_id: business.id,
+          })
         : [];
     }
 

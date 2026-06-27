@@ -52,13 +52,18 @@ export class CreateCompanyDto {
   @IsOptional()
   lifecycle_stage_id?: string;
 
-  @ApiPropertyOptional({ type: [String], example: ['uuid-tag-1', 'uuid-tag-2'] })
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['uuid-tag-1', 'uuid-tag-2'],
+  })
   @IsArray()
   @IsUUID('4', { each: true })
   @IsOptional()
   tag_ids?: string[];
 
-  @ApiPropertyOptional({ example: { industria: 'manufactura', pais: 'Ecuador' } })
+  @ApiPropertyOptional({
+    example: { industria: 'manufactura', pais: 'Ecuador' },
+  })
   @IsObject()
   @IsOptional()
   custom_fields?: Record<string, any>;

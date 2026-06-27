@@ -47,7 +47,10 @@ export class SectorTypesController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create a sector type' })
   @ApiCreatedResponse({ description: 'Sector type created' })
-  create(@CurrentBusiness() business: Business, @Body() dto: CreateSectorTypeDto) {
+  create(
+    @CurrentBusiness() business: Business,
+    @Body() dto: CreateSectorTypeDto,
+  ) {
     return this.service.create(business, dto);
   }
 

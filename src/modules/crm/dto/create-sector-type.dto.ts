@@ -14,7 +14,9 @@ export class CreateSectorTypeDto {
   @MaxLength(100)
   name: string;
 
-  @ApiPropertyOptional({ example: 'Empresas del sector tecnológico y software' })
+  @ApiPropertyOptional({
+    example: 'Empresas del sector tecnológico y software',
+  })
   @IsString()
   @IsOptional()
   @MaxLength(500)

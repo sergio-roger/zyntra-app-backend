@@ -85,7 +85,11 @@ export class Contact {
   @Column('uuid', { name: 'company_id', nullable: true })
   companyId: string | null;
 
-  @ManyToOne(() => Company, { nullable: true, onDelete: 'SET NULL', eager: false })
+  @ManyToOne(() => Company, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
   @JoinColumn({ name: 'company_id' })
   company: Company | null;
 
