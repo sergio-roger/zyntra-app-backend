@@ -32,10 +32,7 @@ export class IndustriesService {
     return sector;
   }
 
-  async create(
-    business: Business,
-    dto: CreateIndustryDto,
-  ): Promise<Industry> {
+  async create(business: Business, dto: CreateIndustryDto): Promise<Industry> {
     const existing = await this.repo.findOne({
       where: { business_id: business.id, name: dto.name },
     });

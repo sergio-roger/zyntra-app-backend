@@ -51,7 +51,7 @@ describe('CompaniesService', () => {
   const tagsRepo = {
     find: jest.fn(),
   };
-  
+
   const crmUsersRepo = {
     find: jest.fn(),
   };
@@ -100,7 +100,9 @@ describe('CompaniesService', () => {
     });
 
     it('should throw conflict if name already exists in same business', async () => {
-      companiesRepo.findOne.mockResolvedValueOnce(makeCompany({ name: 'Existing' }));
+      companiesRepo.findOne.mockResolvedValueOnce(
+        makeCompany({ name: 'Existing' }),
+      );
       await expect(
         service.create(mockBusiness, { name: 'Existing' }),
       ).rejects.toThrow(ConflictException);
@@ -111,11 +113,18 @@ describe('CompaniesService', () => {
     it('should update a company successfully', async () => {
       const existing = makeCompany();
       companiesRepo.findOne.mockResolvedValueOnce(existing);
-      companiesRepo.save.mockResolvedValueOnce({ ...existing, name: 'Updated Name', tax_type: 'NIF' });
+      companiesRepo.save.mockResolvedValueOnce({
+        ...existing,
+        name: 'Updated Name',
+        tax_type: 'NIF',
+      });
 
-      const res = await service.update(mockBusiness, 'company-uuid', { name: 'Updated Name', tax_type: 'NIF' });
+      const res = await service.update(mockBusiness, 'company-uuid', {
+        name: 'Updated Name',
+        tax_type: 'NIF',
+      });
       expect(companiesRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Updated Name', tax_type: 'NIF' })
+        expect.objectContaining({ name: 'Updated Name', tax_type: 'NIF' }),
       );
       expect(res.name).toBe('Updated Name');
     });

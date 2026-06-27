@@ -25,7 +25,10 @@ export class CustomFieldsService {
     private readonly companyRepo: Repository<Company>,
   ) {}
 
-  async findAll(business: Business, entityType?: string): Promise<CustomField[]> {
+  async findAll(
+    business: Business,
+    entityType?: string,
+  ): Promise<CustomField[]> {
     return this.fieldRepo.find({
       where: {
         business_id: business.id,

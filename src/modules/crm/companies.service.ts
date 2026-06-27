@@ -144,7 +144,10 @@ export class CompaniesService {
     return `${dd}/${mm}/${d.getFullYear()}`;
   }
 
-  private getColumnValue(company: Company, col: ExportCompanyColumnDto): string {
+  private getColumnValue(
+    company: Company,
+    col: ExportCompanyColumnDto,
+  ): string {
     switch (col.key) {
       case 'identification':
         return company.identification ?? '';
@@ -167,14 +170,22 @@ export class CompaniesService {
       default:
         if (col.key.startsWith('cf_')) {
           const field = col.key.slice(3);
-          const val = (company.custom_fields as Record<string, unknown> | null)?.[field];
+          const val = (
+            company.custom_fields as Record<string, unknown> | null
+          )?.[field];
           return val === null || val === undefined ? '' : String(val);
         }
-        return String(((company as unknown as Record<string, unknown>)[col.key] ?? '') as any);
+        return String(
+          ((company as unknown as Record<string, unknown>)[col.key] ??
+            '') as any,
+        );
     }
   }
 
-  async exportCsv(business: Business, dto: ExportCompaniesDto): Promise<Buffer> {
+  async exportCsv(
+    business: Business,
+    dto: ExportCompaniesDto,
+  ): Promise<Buffer> {
     const qb = this.repo
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.industry', 'st')
@@ -191,7 +202,9 @@ export class CompaniesService {
     if (dto.industry_id)
       qb.andWhere('e.industry_id = :stId', { stId: dto.industry_id });
     if (dto.lifecycle_stage_id)
-      qb.andWhere('e.lifecycle_stage_id = :lsId', { lsId: dto.lifecycle_stage_id });
+      qb.andWhere('e.lifecycle_stage_id = :lsId', {
+        lsId: dto.lifecycle_stage_id,
+      });
     if (dto.createdAtFrom)
       qb.andWhere('e.created_at >= :from', { from: dto.createdAtFrom });
     if (dto.createdAtTo)
