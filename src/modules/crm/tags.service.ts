@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Tag } from './entities/tag.entity';
+import { Tag } from '@crm/entities/tag.entity';
 import { Business } from '@auth/entities/business.entity';
-import { CreateTagDto } from './dto/create-tag.dto';
-import { UpdateTagDto } from './dto/update-tag.dto';
+import { CreateTagDto } from '@crm/dto/create-tag.dto';
+import { UpdateTagDto } from '@crm/dto/update-tag.dto';
 
 @Injectable()
 export class TagsService {
@@ -17,9 +17,13 @@ export class TagsService {
     private readonly tagsRepo: Repository<Tag>,
   ) {}
 
-  async findAll(business: Business): Promise<Tag[]> {
+  async findAll(business: Business, entityType?: string): Promise<Tag[]> {
+    const where: any = { business_id: business.id };
+    if (entityType) {
+      where.entity_type = entityType;
+    }
     return this.tagsRepo.find({
-      where: { business_id: business.id },
+      where,
       order: { name: 'ASC' },
     });
   }

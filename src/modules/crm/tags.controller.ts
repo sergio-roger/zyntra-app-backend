@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -39,8 +40,11 @@ export class TagsController {
   @Get()
   @ApiOperation({ summary: 'List all tags for the business' })
   @ApiOkResponse({ description: 'List of tags' })
-  findAll(@CurrentBusiness() business: Business) {
-    return this.tagsService.findAll(business);
+  findAll(
+    @CurrentBusiness() business: Business,
+    @Query('entity_type') entityType?: string,
+  ) {
+    return this.tagsService.findAll(business, entityType);
   }
 
   @Post()

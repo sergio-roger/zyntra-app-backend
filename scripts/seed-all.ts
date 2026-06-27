@@ -440,18 +440,49 @@ const DEFAULT_TAGS = [
     name: 'VIP',
     color: '#f59e0b',
     description: 'Cliente o prospecto de alto valor',
+    entity_type: 'contact',
   },
-  { name: 'Frío', color: '#3b82f6', description: 'Sin interacción reciente' },
-  { name: 'Caliente', color: '#ef4444', description: 'Listo para cerrar' },
+  {
+    name: 'Frío',
+    color: '#3b82f6',
+    description: 'Sin interacción reciente',
+    entity_type: 'contact',
+  },
+  {
+    name: 'Caliente',
+    color: '#ef4444',
+    description: 'Listo para cerrar',
+    entity_type: 'contact',
+  },
   {
     name: 'Sin respuesta',
     color: '#6b7280',
     description: 'No ha respondido los últimos 7 días',
+    entity_type: 'contact',
   },
   {
     name: 'Potencial',
     color: '#10b981',
     description: 'Buen fit pero aún en evaluación',
+    entity_type: 'contact',
+  },
+  {
+    name: 'Enterprise',
+    color: '#3b82f6',
+    description: 'Gran corporación',
+    entity_type: 'company',
+  },
+  {
+    name: 'SMB',
+    color: '#10b981',
+    description: 'Pequeña o mediana empresa',
+    entity_type: 'company',
+  },
+  {
+    name: 'Partner',
+    color: '#8b5cf6',
+    description: 'Socio comercial estratégico',
+    entity_type: 'company',
   },
 ];
 
@@ -878,6 +909,7 @@ async function bootstrap() {
             name: tagData.name,
             color: tagData.color,
             description: tagData.description,
+            entity_type: tagData.entity_type,
           }),
         );
       }
