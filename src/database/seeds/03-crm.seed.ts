@@ -138,7 +138,7 @@ export class CrmSeeder implements Seeder {
     }
 
     // "?"? 2.1. Superadmin Business + Super Admin User "?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?
-    console.log('\n🌱 [2.1] Seeding global superadmin business and user...');
+    console.log('\n✅ [2.1] Seeding global superadmin business and user...');
     let superBusiness = await businessRepo.findOne({
       where: { email: 'superadmin@zyntra.com' },
     });
@@ -315,11 +315,11 @@ export class CrmSeeder implements Seeder {
           `  🔹 ${companiesCreated} company(ies) created for: ${business.name}`,
         );
       } else {
-        console.log(`  🔹 Companies already exist for: ${business.name}`);
+        console.log(`  ✅ Companies already exist for: ${business.name}`);
       }
     }
 
-    console.log('\n🌱 [4/5] Seeding contacts...');
+    console.log('\n✅ [4/5] Seeding contacts...');
 
     for (const entry of BUSINESSES_DATA) {
       const business = await businessRepo.findOne({
@@ -391,7 +391,7 @@ export class CrmSeeder implements Seeder {
             members: [adminUser, extraUser2].filter(Boolean) as CrmUser[],
           }),
         );
-        console.log(`  🔹 Teams and extra users created for: ${business.name}`);
+        console.log(`  ✅ Teams and extra users created for: ${business.name}`);
       }
 
       // 3. Custom Fields
