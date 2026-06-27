@@ -23,6 +23,7 @@ export const PLANS_DATA = [
       'Diseño visual (paleta de colores y tipografía)',
       'Bibliografías persuasivas optimizadas',
       'Guía de marca con IA',
+      '0 pipelines de ventas',
     ],
     modules: {
       dashboard: ModuleAccessLevel.FULL,
@@ -60,7 +61,7 @@ export const PLANS_DATA = [
     chatbot_limit: 1,
     funnel_limit: 0,
     channel_limit: 3,
-    pipeline_limit: 1,
+    pipeline_limit: 2,
     descriptions: [
       'Calendario Editorial',
       'Creación de Contenido',
@@ -69,7 +70,7 @@ export const PLANS_DATA = [
       '9 Anuncios de Conversión',
       'Análisis mensual de campañas',
       'Chat bot 24/7 automatizado con IA',
-      '1 pipeline de ventas',
+      'Hasta 2 pipelines de ventas',
     ],
     modules: {
       dashboard: ModuleAccessLevel.FULL,
