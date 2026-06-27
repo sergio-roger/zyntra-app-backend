@@ -7,6 +7,7 @@ import { Pipeline } from '@crm/entities/pipeline.entity';
 import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
 import { Deal } from '@crm/entities/deal.entity';
 import { Business } from '@auth/entities/business.entity';
+import { Plan } from '@auth/entities/plan.entity';
 import { PipelineStageType } from '@crm/enums/pipeline-stage-type.enum';
 
 const mockBusiness = { id: 'biz-uuid' } as Business;
@@ -65,6 +66,10 @@ describe('PipelinesService', () => {
     transaction: jest.fn(),
   };
 
+  const planRepo = {
+    findOne: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -72,6 +77,7 @@ describe('PipelinesService', () => {
         { provide: getRepositoryToken(Pipeline), useValue: pipelineRepo },
         { provide: getRepositoryToken(PipelineStage), useValue: stageRepo },
         { provide: getRepositoryToken(Deal), useValue: dealRepo },
+        { provide: getRepositoryToken(Plan), useValue: planRepo },
         { provide: DataSource, useValue: dataSource },
       ],
     }).compile();
@@ -97,6 +103,7 @@ describe('PipelinesService', () => {
         ],
       });
 
+      planRepo.findOne.mockResolvedValue(null);
       pipelineRepo.create.mockReturnValue(savedPipeline);
       pipelineRepo.save.mockResolvedValue(savedPipeline);
       stageRepo.save.mockResolvedValue(pipelineWithStages.stages);
@@ -117,6 +124,7 @@ describe('PipelinesService', () => {
 
     it('creates stages with correct types: 4 ACTIVE, 1 WON, 1 LOST', async () => {
       const savedPipeline = makePipeline();
+      planRepo.findOne.mockResolvedValue(null);
       pipelineRepo.create.mockReturnValue(savedPipeline);
       pipelineRepo.save.mockResolvedValue(savedPipeline);
       stageRepo.save.mockResolvedValue([]);
@@ -137,6 +145,7 @@ describe('PipelinesService', () => {
 
     it('unsets is_default on existing pipelines when creating a new default', async () => {
       const savedPipeline = makePipeline({ is_default: true });
+      planRepo.findOne.mockResolvedValue(null);
       pipelineRepo.update.mockResolvedValue({ affected: 1 });
       pipelineRepo.create.mockReturnValue(savedPipeline);
       pipelineRepo.save.mockResolvedValue(savedPipeline);

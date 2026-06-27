@@ -18,7 +18,7 @@ export class TagsService {
   ) {}
 
   async findAll(business: Business, entityType?: string): Promise<Tag[]> {
-    const where: any = { business_id: business.id };
+    const where: Record<string, string> = { business_id: business.id };
     if (entityType) {
       where.entity_type = entityType;
     }

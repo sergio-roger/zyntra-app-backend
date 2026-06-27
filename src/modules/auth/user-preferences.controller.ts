@@ -9,7 +9,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentCrmUser, CrmUserContext } from '@common/decorators/current-crm-user.decorator';
+import {
+  CurrentCrmUser,
+  CrmUserContext,
+} from '@common/decorators/current-crm-user.decorator';
 import { UserPreferencesService } from './user-preferences.service';
 
 @ApiTags('user-preferences')
@@ -17,9 +20,7 @@ import { UserPreferencesService } from './user-preferences.service';
 @UseGuards(JwtAuthGuard)
 @Controller('auth/user/preferences')
 export class UserPreferencesController {
-  constructor(
-    private readonly preferencesService: UserPreferencesService,
-  ) {}
+  constructor(private readonly preferencesService: UserPreferencesService) {}
 
   @Get(':key')
   @ApiOperation({ summary: 'Get a user preference' })
@@ -39,7 +40,7 @@ export class UserPreferencesController {
   async upsert(
     @CurrentCrmUser() user: CrmUserContext,
     @Param('key') key: string,
-    @Body() body: { value: any },
+    @Body() body: { value: unknown },
   ) {
     if (!user.id) {
       throw new NotFoundException('Usuario no identificado');

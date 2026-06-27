@@ -19,7 +19,7 @@ export class UserPreference {
   key: string;
 
   @Column('jsonb', { default: {} })
-  value: any;
+  value: unknown;
 
   @UpdateDateColumn()
   updated_at: Date;

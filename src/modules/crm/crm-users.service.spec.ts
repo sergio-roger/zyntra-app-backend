@@ -5,6 +5,7 @@ import { CrmUsersService } from './crm-users.service';
 import { CrmUser } from './entities/user.entity';
 import { Business } from '@auth/entities/business.entity';
 import { NotFoundException, ConflictException } from '@nestjs/common';
+import { UserRole } from '@crm/enums/user-role.enum';
 
 const mockBusiness = {
   id: 'business-uuid-1234',
@@ -93,7 +94,11 @@ describe('CrmUsersService', () => {
   });
 
   describe('create', () => {
-    const createDto = { name: 'Alice Smith', email: 'alice@example.com' };
+    const createDto = {
+      name: 'Alice Smith',
+      email: 'alice@example.com',
+      role: UserRole.AGENT,
+    };
 
     it('should create and save a new user if email is unique for the business', async () => {
       mockRepository.findOne.mockResolvedValue(null);
@@ -127,6 +132,7 @@ describe('CrmUsersService', () => {
         service.create(mockBusiness, {
           name: 'John Dup',
           email: mockCrmUser.email,
+          role: UserRole.AGENT,
         }),
       ).rejects.toThrow(ConflictException);
     });

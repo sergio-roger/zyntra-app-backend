@@ -16,7 +16,11 @@ export class UserPreferencesService {
     });
   }
 
-  async upsert(userId: string, key: string, value: any): Promise<UserPreference> {
+  async upsert(
+    userId: string,
+    key: string,
+    value: unknown,
+  ): Promise<UserPreference> {
     let preference = await this.preferenceRepo.findOne({
       where: { user_id: userId, key },
     });

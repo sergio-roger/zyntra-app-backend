@@ -40,19 +40,20 @@ describe('AuthController', () => {
   describe('getMenus', () => {
     it('should call authService.getMenuTree with the correct parameters and return the menu tree', async () => {
       const mockCaller = { id: 'user-123', role: 'admin' };
-      const mockBusiness: Business = {
+      const mockBusiness = {
         id: 'biz-123',
         name: 'Test Business',
         email: 'test@business.com',
         password_hash: 'hash',
         plan_id: 'plan-123',
         plan_status: PlanStatus.ACTIVE,
-        stripe_customer_id: null,
+        trial_ends_at: new Date(),
+        stripe_customer_id: 'cus_test123',
         created_at: new Date(),
         updated_at: new Date(),
         crmUsers: [],
-        plan: null,
-      };
+        plan_object: null,
+      } as unknown as Business;
 
       const mockMenuTree = [
         {
