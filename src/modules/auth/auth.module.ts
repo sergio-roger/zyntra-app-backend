@@ -13,8 +13,11 @@ import { Role } from './entities/role.entity';
 import { Menu } from './entities/menu.entity';
 import { Permission } from './entities/permission.entity';
 import { PlanModule } from './entities/plan-module.entity';
+import { UserPreference } from './entities/user-preference.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { CrmUser } from '@crm/entities/user.entity';
+import { UserPreferencesService } from './user-preferences.service';
+import { UserPreferencesController } from './user-preferences.controller';
 
 @Module({
   imports: [
@@ -27,6 +30,7 @@ import { CrmUser } from '@crm/entities/user.entity';
       Menu,
       Permission,
       PlanModule,
+      UserPreference,
     ]),
     PassportModule,
     JwtModule.registerAsync({
@@ -38,8 +42,12 @@ import { CrmUser } from '@crm/entities/user.entity';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy],
-  controllers: [AuthController, SettingsPermissionsController],
+  providers: [AuthService, JwtStrategy, UserPreferencesService],
+  controllers: [
+    AuthController,
+    SettingsPermissionsController,
+    UserPreferencesController,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}
