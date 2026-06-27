@@ -1,13 +1,6 @@
-import { NestFactory } from '@nestjs/core';
-import { DataSource } from 'typeorm';
-import { AppModule } from '../src/app.module';
-import { Role } from '../src/modules/auth/entities/role.entity';
-import { Menu } from '../src/modules/auth/entities/menu.entity';
-import { Permission } from '../src/modules/auth/entities/permission.entity';
-
 // ─── Roles ────────────────────────────────────────────────────────────────────
 
-const ROLES_DATA = [
+export const ROLES_DATA = [
   {
     name: 'admin',
     label: 'Administrador',
@@ -52,7 +45,7 @@ const ROLES_DATA = [
 
 // ─── Menus ────────────────────────────────────────────────────────────────────
 
-const MENUS_DATA = [
+export const MENUS_DATA = [
   // Raíces
   {
     key: 'dashboard',
@@ -389,13 +382,13 @@ const MENUS_DATA = [
 
 // ─── Permission sets by role ──────────────────────────────────────────────────
 
-const ADMIN_MENUS = MENUS_DATA.map((m) => m.key);
+export const ADMIN_MENUS = MENUS_DATA.map((m) => m.key);
 
-const MANAGER_MENUS = MENUS_DATA.filter(
+export const MANAGER_MENUS = MENUS_DATA.filter(
   (m) => !['billing', 'settings_users'].includes(m.key),
 ).map((m) => m.key);
 
-const AGENT_MENUS = [
+export const AGENT_MENUS = [
   'dashboard',
   'dashboard_home',
   'crm',
@@ -413,117 +406,9 @@ const AGENT_MENUS = [
   'settings_my_account',
 ];
 
-const ROLE_PERMISSIONS: Record<string, string[]> = {
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
   superAdmin: ADMIN_MENUS,
   admin: ADMIN_MENUS,
   manager: MANAGER_MENUS,
   agent: AGENT_MENUS,
 };
-
-// ─── Bootstrap ────────────────────────────────────────────────────────────────
-
-async function bootstrap() {
-  const app = await NestFactory.createApplicationContext(AppModule);
-  const ds = app.get(DataSource);
-
-  const roleRepo = ds.getRepository(Role);
-  const menuRepo = ds.getRepository(Menu);
-  const permRepo = ds.getRepository(Permission);
-
-  // ── 1. Roles ──────────────────────────────────────────────────────────────
-
-  console.log('\n🔐 [1/3] Seeding roles...');
-  const roleMap: Record<string, Role> = {};
-
-  for (const data of ROLES_DATA) {
-    let role = await roleRepo.findOne({ where: { name: data.name } });
-    if (!role) {
-      role = await roleRepo.save(roleRepo.create(data));
-      console.log(`  ✅ Role created: ${data.name}`);
-    } else {
-      Object.assign(role, {
-        label: data.label,
-        description: data.description,
-        isEditable: data.isEditable,
-        badge: data.badge,
-        badgeColor: data.badgeColor,
-        iconColor: data.iconColor,
-      });
-      role = await roleRepo.save(role);
-      console.log(`  🔄 Role updated: ${data.name}`);
-    }
-    roleMap[data.name] = role;
-  }
-
-  // ── 2. Menus (upsert by key) ───────────────────────────────────────────────
-
-  console.log('\n📋 [2/3] Seeding menus...');
-  const menuMap: Record<string, Menu> = {};
-
-  for (const data of MENUS_DATA) {
-    let menu = await menuRepo.findOne({ where: { key: data.key } });
-    if (!menu) {
-      menu = await menuRepo.save(menuRepo.create(data));
-      console.log(`  ✅ Menu created: ${data.key}`);
-    } else {
-      // Update label/path/description in case they changed
-      Object.assign(menu, {
-        label: data.label,
-        path: data.path,
-        parent_key: data.parent_key,
-        description: data.description,
-      });
-      menu = await menuRepo.save(menu);
-    }
-    menuMap[data.key] = menu;
-  }
-
-  console.log(`  ✅ ${MENUS_DATA.length} menus processed`);
-
-  // ── 3. Permissions ────────────────────────────────────────────────────────
-
-  console.log('\n🔑 [3/3] Seeding permissions...');
-  let created = 0;
-  let skipped = 0;
-
-  for (const [roleName, menuKeys] of Object.entries(ROLE_PERMISSIONS)) {
-    const role = roleMap[roleName];
-    for (const menuKey of menuKeys) {
-      const menu = menuMap[menuKey];
-      if (!menu) continue;
-
-      const existing = await permRepo.findOne({
-        where: { role_id: role.id, menu_id: menu.id },
-      });
-
-      if (!existing) {
-        await permRepo.save(
-          permRepo.create({
-            business_id: null,
-            role_id: role.id,
-            menu_id: menu.id,
-          }),
-        );
-        created++;
-      } else {
-        skipped++;
-      }
-    }
-  }
-
-  console.log(
-    `  ✅ ${created} permissions created, ${skipped} already existed`,
-  );
-  console.log(`\n  Summary:`);
-  console.log(`  • ADMIN   → ${ADMIN_MENUS.length} menus`);
-  console.log(`  • MANAGER → ${MANAGER_MENUS.length} menus`);
-  console.log(`  • AGENT   → ${AGENT_MENUS.length} menus`);
-
-  console.log('\n✨ RBAC seed finished!\n');
-  await app.close();
-}
-
-bootstrap().catch((err) => {
-  console.error('\n❌ RBAC seed failed:', err);
-  process.exit(1);
-});
