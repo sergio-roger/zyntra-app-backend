@@ -5,12 +5,18 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { stringify } from 'csv-stringify/sync';
 import { Company } from '@crm/entities/company.entity';
 import { Tag } from '@crm/entities/tag.entity';
 import { Business } from '@auth/entities/business.entity';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ListCompaniesDto } from './dto/list-companies.dto';
+import {
+  ExportCompaniesDto,
+  ExportCompanyColumnDto,
+  ImportCompanyRowDto,
+} from './dto/export-companies.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -127,5 +133,101 @@ export class CompaniesService {
   async remove(business: Business, id: string): Promise<void> {
     const company = await this.findOne(business, id);
     await this.repo.softRemove(company);
+  }
+
+  private formatDate(value: Date | string | null | undefined): string {
+    if (!value) return '';
+    const d = new Date(value as string);
+    if (isNaN(d.getTime())) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  }
+
+  private getColumnValue(company: Company, col: ExportCompanyColumnDto): string {
+    switch (col.key) {
+      case 'identification':
+        return company.identification ?? '';
+      case 'website':
+        return company.website ?? '';
+      case 'num_employees':
+        return company.num_employees !== null && company.num_employees !== undefined
+          ? String(company.num_employees)
+          : '';
+      case 'description':
+        return company.description ?? '';
+      case 'sector_type':
+        return company.sector_type?.name ?? '';
+      case 'lifecycle_stage':
+        return company.lifecycle_stage?.name ?? '';
+      case 'tags':
+        return (company.tags ?? []).map((t) => t.name).join(', ');
+      case 'created_at':
+        return this.formatDate(company.created_at);
+      case 'updated_at':
+        return this.formatDate(company.updated_at);
+      default:
+        if (col.key.startsWith('cf_')) {
+          const field = col.key.slice(3);
+          const val = (company.custom_fields as Record<string, unknown> | null)?.[field];
+          return val === null || val === undefined ? '' : String(val);
+        }
+        return String(((company as unknown as Record<string, unknown>)[col.key] ?? '') as any);
+    }
+  }
+
+  async exportCsv(business: Business, dto: ExportCompaniesDto): Promise<Buffer> {
+    const qb = this.repo
+      .createQueryBuilder('e')
+      .leftJoinAndSelect('e.sector_type', 'st')
+      .leftJoinAndSelect('e.lifecycle_stage', 'ls')
+      .leftJoinAndSelect('e.tags', 't')
+      .where('e.business_id = :bid', { bid: business.id });
+
+    if (dto.search) {
+      qb.andWhere(
+        '(LOWER(e.name) LIKE :search OR LOWER(e.identification) LIKE :search)',
+        { search: `%${dto.search.toLowerCase()}%` },
+      );
+    }
+    if (dto.sector_type_id)
+      qb.andWhere('e.sector_type_id = :stId', { stId: dto.sector_type_id });
+    if (dto.lifecycle_stage_id)
+      qb.andWhere('e.lifecycle_stage_id = :lsId', { lsId: dto.lifecycle_stage_id });
+    if (dto.createdAtFrom)
+      qb.andWhere('e.created_at >= :from', { from: dto.createdAtFrom });
+    if (dto.createdAtTo)
+      qb.andWhere('e.created_at <= :to', { to: dto.createdAtTo });
+
+    qb.orderBy('e.name', 'ASC');
+    const companies = await qb.getMany();
+
+    const rows: string[][] = [
+      dto.columns.map((c) => c.label),
+      ...companies.map((company) =>
+        dto.columns.map((col) => this.getColumnValue(company, col)),
+      ),
+    ];
+
+    const csvString = stringify(rows, { bom: true });
+    return Buffer.from(csvString, 'utf-8');
+  }
+
+  async import(
+    business: Business,
+    rows: ImportCompanyRowDto[],
+  ): Promise<{ count: number }> {
+    let inserted = 0;
+    for (const row of rows) {
+      const existing = await this.repo.findOne({
+        where: { business_id: business.id, name: row.name },
+      });
+      if (existing) continue;
+      await this.repo.save(
+        this.repo.create({ ...row, business_id: business.id, tags: [] }),
+      );
+      inserted++;
+    }
+    return { count: inserted };
   }
 }

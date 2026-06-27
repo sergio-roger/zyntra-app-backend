@@ -136,6 +136,14 @@ export const MENUS_DATA = [
       'Bandeja especializada para nuevos leads capturados en embudos.',
   },
   {
+    key: 'crm_companies',
+    label: 'Empresas',
+    path: '/crm/companies',
+    parent_key: 'crm',
+    description:
+      'Gestión de empresas y organizaciones vinculadas a contactos y negocios.',
+  },
+  {
     key: 'crm_deals',
     label: 'Negocios',
     path: '/crm/deals',
@@ -394,6 +402,7 @@ export const AGENT_MENUS = [
   'crm',
   'crm_contacts',
   'crm_leads',
+  'crm_companies',
   'crm_deals',
   'crm_tasks',
   'crm_segments',

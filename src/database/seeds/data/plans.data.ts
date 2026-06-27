@@ -31,6 +31,7 @@ export const PLANS_DATA = [
       crm: ModuleAccessLevel.LOCKED,
       crm_contacts: ModuleAccessLevel.LOCKED,
       crm_leads: ModuleAccessLevel.LOCKED,
+      crm_companies: ModuleAccessLevel.LOCKED,
       crm_deals: ModuleAccessLevel.LOCKED,
       crm_tags: ModuleAccessLevel.LOCKED,
       crm_tasks: ModuleAccessLevel.LOCKED,

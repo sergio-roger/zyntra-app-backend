@@ -7,10 +7,13 @@ import {
   Param,
   Body,
   Query,
+  Res,
   UseGuards,
   HttpCode,
   ParseUUIDPipe,
+  StreamableFile,
 } from '@nestjs/common';
+import { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -29,6 +32,7 @@ import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ListCompaniesDto } from './dto/list-companies.dto';
+import { ExportCompaniesDto, ImportCompanyRowDto } from './dto/export-companies.dto';
 
 @ApiTags('crm-companies')
 @ApiBearerAuth()
@@ -88,5 +92,34 @@ export class CompaniesController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.service.remove(business, id);
+  }
+
+  @Post('export')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Export filtered companies as CSV' })
+  async exportCsv(
+    @CurrentBusiness() business: Business,
+    @Body() dto: ExportCompaniesDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const buffer = await this.service.exportCsv(business, dto);
+    const filename = `empresas_${new Date().toISOString().slice(0, 10)}.csv`;
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length,
+    });
+    return new StreamableFile(buffer);
+  }
+
+  @Post('import')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Bulk import companies from CSV' })
+  @ApiCreatedResponse()
+  import(
+    @CurrentBusiness() business: Business,
+    @Body() rows: ImportCompanyRowDto[],
+  ) {
+    return this.service.import(business, rows);
   }
 }
