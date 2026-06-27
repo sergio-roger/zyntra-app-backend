@@ -6,11 +6,18 @@ import {
   IsBoolean,
   IsArray,
   MaxLength,
+  IsIn,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CustomFieldType } from '@crm/enums/custom-field-type.enum';
 
 export class CreateCustomFieldDto {
+  @ApiPropertyOptional({ example: 'contact', enum: ['contact', 'company'] })
+  @IsString()
+  @IsIn(['contact', 'company'])
+  @IsOptional()
+  entity_type?: string;
+
   @ApiProperty({ example: 'birthday' })
   @IsString()
   @IsNotEmpty()

@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   HttpCode,
   ParseUUIDPipe,
@@ -39,8 +40,11 @@ export class CustomFieldsController {
   @Get()
   @ApiOperation({ summary: 'List all custom fields' })
   @ApiOkResponse({ description: 'List of custom fields' })
-  findAll(@CurrentBusiness() business: Business) {
-    return this.fieldsService.findAll(business);
+  findAll(
+    @CurrentBusiness() business: Business,
+    @Query('entity_type') entityType?: string,
+  ) {
+    return this.fieldsService.findAll(business, entityType);
   }
 
   @Post()
