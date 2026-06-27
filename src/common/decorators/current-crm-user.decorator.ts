@@ -9,10 +9,10 @@ export interface CrmUserContext {
 export const CurrentCrmUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): CrmUserContext => {
     const request = ctx.switchToHttp().getRequest<{
-      user?: { crm_user_id?: string; role?: UserRole };
+      user?: { id?: string; crm_user_id?: string; role?: UserRole };
     }>();
     return {
-      id: request.user?.crm_user_id ?? null,
+      id: request.user?.crm_user_id ?? request.user?.id ?? null,
       role: request.user?.role ?? UserRole.ADMIN,
     };
   },
