@@ -1,6 +1,8 @@
 import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
 import { Business } from '@auth/entities/business.entity';
+import { Company } from '@crm/entities/company.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
+import { Tag } from '@crm/entities/tag.entity';
 import { CrmUser } from '@crm/entities/user.entity';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 import {
@@ -18,8 +20,6 @@ import {
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
-import { Tag } from './tag.entity';
-import { Company } from './company.entity';
 
 @Entity({ name: 'contacts', schema: 'crm' })
 @Index(['businessId', 'source'])

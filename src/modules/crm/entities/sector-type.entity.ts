@@ -13,7 +13,7 @@ import { Business } from '@auth/entities/business.entity';
 
 @Entity({ name: 'sector_types', schema: 'crm' })
 @Index(['business_id'])
-@Index('UQ_business_sector_name', ['business_id', 'name'], {
+@Index(['business_id', 'name'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })

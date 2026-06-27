@@ -18,13 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed:plans": "ts-node -r tsconfig-paths/register scripts/seed-plans.ts",
-    "seed:plan-modules": "ts-node -r tsconfig-paths/register scripts/seed-plan-modules.ts",
-    "seed": "ts-node -r tsconfig-paths/register scripts/seed-all.ts",
     "db:reset": "ts-node -r tsconfig-paths/register scripts/reset-db.ts",
-    "db:clean-seed": "npm run db:reset && npm run seed && npm run seed:rbac && npm run seed:plans",
-    "seed:rbac": "ts-node -r tsconfig-paths/register scripts/seed-rbac.ts",
-    "migrate:permissions-business-id": "ts-node -r tsconfig-paths/register scripts/migrate-permissions-business-id.ts"
+    "db:seed": "ts-node -r tsconfig-paths/register scripts/seed-all.ts && ts-node -r tsconfig-paths/register scripts/seed-rbac.ts && ts-node -r tsconfig-paths/register scripts/seed-plans.ts",
+    "db:clean-seed": "npm run db:reset && npm run db:seed"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",

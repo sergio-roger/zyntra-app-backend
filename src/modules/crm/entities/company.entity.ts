@@ -1,24 +1,24 @@
+import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { Business } from '@auth/entities/business.entity';
+import { SectorType } from '@crm/entities/sector-type.entity';
+import { Tag } from '@crm/entities/tag.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
   DeleteDateColumn,
-  ManyToOne,
-  ManyToMany,
+  Entity,
+  Index,
   JoinColumn,
   JoinTable,
-  Index,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Business } from '@auth/entities/business.entity';
-import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
-import { Tag } from './tag.entity';
-import { SectorType } from './sector-type.entity';
 
 @Entity({ name: 'companies', schema: 'crm' })
 @Index(['business_id'])
-@Index('UQ_business_company_name', ['business_id', 'name'], {
+@Index(['business_id', 'name'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })
