@@ -12,7 +12,7 @@ import {
   Min,
 } from 'class-validator';
 
-export class CreateEmpresaDto {
+export class CreateCompanyDto {
   @ApiProperty({ example: 'Acme Corp S.A.' })
   @IsString()
   @IsNotEmpty()
@@ -23,7 +23,7 @@ export class CreateEmpresaDto {
   @IsString()
   @IsOptional()
   @MaxLength(50)
-  identificacion?: string;
+  identification?: string;
 
   @ApiPropertyOptional({ example: 'https://acme.com' })
   @IsUrl()
@@ -34,18 +34,18 @@ export class CreateEmpresaDto {
   @IsInt()
   @Min(1)
   @IsOptional()
-  num_empleados?: number;
+  num_employees?: number;
 
   @ApiPropertyOptional({ example: 'Empresa líder en distribución industrial' })
   @IsString()
   @IsOptional()
   @MaxLength(1000)
-  descripcion?: string;
+  description?: string;
 
   @ApiPropertyOptional({ example: 'uuid-del-sector' })
   @IsUUID()
   @IsOptional()
-  sector_tipo_id?: string;
+  sector_type_id?: string;
 
   @ApiPropertyOptional({ example: 'uuid-del-lifecycle-stage' })
   @IsUUID()

@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 
-export class ListEmpresasDto {
+export class ListCompaniesDto {
   @ApiPropertyOptional({ example: 1 })
   @Type(() => Number)
   @IsInt()
@@ -23,10 +23,10 @@ export class ListEmpresasDto {
   @IsOptional()
   search?: string;
 
-  @ApiPropertyOptional({ example: 'uuid-sector-tipo' })
+  @ApiPropertyOptional({ example: 'uuid-sector-type' })
   @IsUUID()
   @IsOptional()
-  sector_tipo_id?: string;
+  sector_type_id?: string;
 
   @ApiPropertyOptional({ example: 'uuid-lifecycle-stage' })
   @IsUUID()

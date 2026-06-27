@@ -13,7 +13,7 @@ export class CreateCrmUserDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'juan@empresa.com' })
+  @ApiProperty({ example: 'juan@company.com' })
   @IsEmail()
   email: string;
 

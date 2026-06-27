@@ -5,20 +5,20 @@ import { AppModule } from '../src/app.module';
 import {
   Business,
   PlanStatus,
-} from '../src/modules/auth/entities/business.entity';
-import { PlanDescription } from '../src/modules/auth/entities/plan-description.entity';
-import { BillingCycle, Plan } from '../src/modules/auth/entities/plan.entity';
-import { Contact } from '../src/modules/crm/entities/contact.entity';
-import { Tag } from '../src/modules/crm/entities/tag.entity';
-import { CrmUser } from '../src/modules/crm/entities/user.entity';
-import { Deal } from '../src/modules/crm/entities/deal.entity';
-import { Pipeline } from '../src/modules/crm/entities/pipeline.entity';
-import { PipelineStage } from '../src/modules/crm/entities/pipeline-stage.entity';
-import { DealStageHistory } from '../src/modules/crm/entities/deal-stage-history.entity';
-import { SectorTipo } from '../src/modules/crm/entities/sector-tipo.entity';
-import { Empresa } from '../src/modules/crm/entities/empresa.entity';
-import { ContactSource } from '../src/modules/crm/enums/contact-source.enum';
-import { UserRole } from '../src/modules/crm/enums/user-role.enum';
+} from '@auth/entities/business.entity';
+import { PlanDescription } from '@auth/entities/plan-description.entity';
+import { BillingCycle, Plan } from '@auth/entities/plan.entity';
+import { Contact } from '@crm/entities/contact.entity';
+import { Tag } from '@crm/entities/tag.entity';
+import { CrmUser } from '@crm/entities/user.entity';
+import { Deal } from '@crm/entities/deal.entity';
+import { Pipeline } from '@crm/entities/pipeline.entity';
+import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
+import { DealStageHistory } from '@crm/entities/deal-stage-history.entity';
+import { SectorType } from '@crm/entities/sector-type.entity';
+import { Company } from '@crm/entities/company.entity';
+import { ContactSource } from '@crm/enums/contact-source.enum';
+import { UserRole } from '@crm/enums/user-role.enum';
 
 enum ContactStage {
   LEAD = 'lead',
@@ -383,13 +383,11 @@ const BUSINESSES_DATA = [
   },
 ];
 
-// �"?�"?�"? Default lifecycle stages �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
-
 const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'New Lead',
     description: 'Contacto recién ingresado al sistema.',
-    icon: '�Y?.',
+    icon: 'new',
     position: 0,
     type: LifecycleStageType.ACTIVE,
     is_default: true,
@@ -399,7 +397,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Hot Lead',
     description: 'Contacto con alto interés demostrado.',
-    icon: '�Y"�',
+    icon: 'hot',
     position: 1,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -409,7 +407,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Payment',
     description: 'En proceso de pago o facturación.',
-    icon: '�Y'�',
+    icon: 'payment',
     position: 2,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -419,7 +417,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Customer',
     description: 'Venta cerrada con éxito.',
-    icon: '�Y�?',
+    icon: 'won',
     position: 3,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -429,7 +427,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Cold Lead',
     description: 'Contacto sin interés o perdido.',
-    icon: '�"️',
+    icon: 'lost',
     position: 4,
     type: LifecycleStageType.LOST,
     is_default: false,
@@ -631,8 +629,8 @@ async function bootstrap() {
   const pipelineStageRepo = ds.getRepository(PipelineStage);
   const dealRepo = ds.getRepository(Deal);
   const historyRepo = ds.getRepository(DealStageHistory);
-  const sectorTipoRepo = ds.getRepository(SectorTipo);
-  const empresaRepo = ds.getRepository(Empresa);
+  const sectorTypeRepo = ds.getRepository(SectorType);
+  const companyRepo = ds.getRepository(Company);
 
   const passwordHash = await argon2.hash('Zyntra2025!', {
     secret: Buffer.from(
@@ -762,8 +760,8 @@ async function bootstrap() {
     agentUserMap[entry.business.email] = agentUser;
   }
 
-  // �"?�"? 2.1. Superadmin Business + Super Admin User �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
-  console.log('\n�Y'' [2.1] Seeding global superadmin business and user...');
+  // "?"? 2.1. Superadmin Business + Super Admin User "?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?
+  console.log('\n🌱 [2.1] Seeding global superadmin business and user...');
   let superBusiness = await businessRepo.findOne({
     where: { email: 'superadmin@zyntra.com' },
   });
@@ -888,15 +886,15 @@ async function bootstrap() {
     });
     if (!business) continue;
 
-    // Sector tipos
-    const sectorMap: Record<string, SectorTipo> = {};
+    // Sector types
+    const sectorMap: Record<string, SectorType> = {};
     for (const sectorData of DEFAULT_SECTOR_TIPOS) {
-      let sector = await sectorTipoRepo.findOne({
+      let sector = await sectorTypeRepo.findOne({
         where: { business_id: business.id, name: sectorData.name },
       });
       if (!sector) {
-        sector = await sectorTipoRepo.save(
-          sectorTipoRepo.create({
+        sector = await sectorTypeRepo.save(
+          sectorTypeRepo.create({
             business_id: business.id,
             name: sectorData.name,
             description: sectorData.description,
@@ -908,38 +906,36 @@ async function bootstrap() {
     }
     console.log(`  �o. Sector tipos seeded for: ${business.name}`);
 
-    // Empresas
-    let empresasCreated = 0;
-    for (const empresaData of DEFAULT_EMPRESAS) {
-      const existing = await empresaRepo.findOne({
-        where: { business_id: business.id, name: empresaData.name },
+    // Companies
+    let companiesCreated = 0;
+    for (const companyData of DEFAULT_EMPRESAS) {
+      const existing = await companyRepo.findOne({
+        where: { business_id: business.id, name: companyData.name },
       });
       if (existing) continue;
 
-      const sector = sectorMap[empresaData.sectorName] ?? null;
-      await empresaRepo.save(
-        empresaRepo.create({
+      const sector = sectorMap[companyData.sectorName] ?? null;
+      await companyRepo.save(
+        companyRepo.create({
           business_id: business.id,
-          name: empresaData.name,
-          identificacion: empresaData.identificacion ?? null,
-          website: empresaData.website ?? null,
-          num_empleados: empresaData.num_empleados ?? null,
-          descripcion: empresaData.descripcion ?? null,
-          sector_tipo_id: sector?.id ?? null,
+          name: companyData.name,
+          identification: companyData.identificacion ?? null,
+          website: companyData.website ?? null,
+          num_employees: companyData.num_empleados ?? null,
+          description: companyData.descripcion ?? null,
+          sector_type_id: sector?.id ?? null,
         }),
       );
-      empresasCreated++;
+      companiesCreated++;
     }
-    if (empresasCreated > 0) {
-      console.log(`  �o. ${empresasCreated} empresa(s) created for: ${business.name}`);
+    if (companiesCreated > 0) {
+      console.log(`  🔹 ${companiesCreated} company(ies) created for: ${business.name}`);
     } else {
-      console.log(`  �"�️  Empresas already exist for: ${business.name}`);
+      console.log(`  🔹 Companies already exist for: ${business.name}`);
     }
   }
 
-  // �"?�"? 4. Contacts �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
-
-  console.log('\n�Y'� [4/5] Seeding contacts...');
+  console.log('\n🌱 [4/5] Seeding contacts...');
 
   for (const entry of BUSINESSES_DATA) {
     const business = await businessRepo.findOne({

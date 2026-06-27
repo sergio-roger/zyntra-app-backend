@@ -25,32 +25,32 @@ import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { EmpresasService } from './empresas.service';
-import { CreateEmpresaDto } from './dto/create-empresa.dto';
-import { UpdateEmpresaDto } from './dto/update-empresa.dto';
-import { ListEmpresasDto } from './dto/list-empresas.dto';
+import { CompaniesService } from './companies.service';
+import { CreateCompanyDto } from './dto/create-company.dto';
+import { UpdateCompanyDto } from './dto/update-company.dto';
+import { ListCompaniesDto } from './dto/list-companies.dto';
 
-@ApiTags('crm-empresas')
+@ApiTags('crm-companies')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@RequiresModule('crm_empresas')
-@Controller('crm/empresas')
-export class EmpresasController {
-  constructor(private readonly service: EmpresasService) {}
+@RequiresModule('crm_companies')
+@Controller('crm/companies')
+export class CompaniesController {
+  constructor(private readonly service: CompaniesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar empresas del negocio' })
-  @ApiOkResponse({ description: 'Lista paginada de empresas' })
+  @ApiOperation({ summary: 'List companies' })
+  @ApiOkResponse({ description: 'Paginated list of companies' })
   list(
     @CurrentBusiness() business: Business,
-    @Query() query: ListEmpresasDto,
+    @Query() query: ListCompaniesDto,
   ) {
     return this.service.list(business, query);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener detalle de una empresa' })
-  @ApiOkResponse({ description: 'Empresa encontrada' })
+  @ApiOperation({ summary: 'Get company details' })
+  @ApiOkResponse({ description: 'Company found' })
   findOne(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -60,23 +60,23 @@ export class EmpresasController {
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Crear una empresa' })
-  @ApiCreatedResponse({ description: 'Empresa creada' })
+  @ApiOperation({ summary: 'Create a company' })
+  @ApiCreatedResponse({ description: 'Company created' })
   create(
     @CurrentBusiness() business: Business,
-    @Body() dto: CreateEmpresaDto,
+    @Body() dto: CreateCompanyDto,
   ) {
     return this.service.create(business, dto);
   }
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Actualizar una empresa' })
-  @ApiOkResponse({ description: 'Empresa actualizada' })
+  @ApiOperation({ summary: 'Update a company' })
+  @ApiOkResponse({ description: 'Company updated' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateEmpresaDto,
+    @Body() dto: UpdateCompanyDto,
   ) {
     return this.service.update(business, id, dto);
   }
@@ -84,8 +84,8 @@ export class EmpresasController {
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
-  @ApiOperation({ summary: 'Eliminar una empresa (soft delete)' })
-  @ApiNoContentResponse({ description: 'Empresa eliminada' })
+  @ApiOperation({ summary: 'Delete a company (soft delete)' })
+  @ApiNoContentResponse({ description: 'Company deleted' })
   remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
