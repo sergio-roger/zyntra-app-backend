@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  StreamableFile,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -11,14 +12,17 @@ import { ApiResponse } from '@common/interfaces/api-response.interface';
 @Injectable()
 export class TransformInterceptor implements NestInterceptor<
   unknown,
-  ApiResponse<unknown>
+  ApiResponse<unknown> | StreamableFile
 > {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<ApiResponse<unknown>> {
+  ): Observable<ApiResponse<unknown> | StreamableFile> {
     return next.handle().pipe(
       map((data: unknown) => {
+        if (data instanceof StreamableFile) {
+          return data;
+        }
         // Default envelope: data is the whole controller return; envelope
         // message stays generic. Domain fields named "message" inside the
         // payload (e.g. a chatbot reply) are NOT promoted to the envelope.
