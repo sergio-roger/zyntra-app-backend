@@ -1,6 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsInt,
   IsOptional,
@@ -61,4 +62,14 @@ export class ListContactsDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isArchived?: boolean;
+
+  @ApiPropertyOptional({ description: 'ISO 8601 datetime — filter contacts created on or after this date' })
+  @IsOptional()
+  @IsDateString()
+  createdAtFrom?: string;
+
+  @ApiPropertyOptional({ description: 'ISO 8601 datetime — filter contacts created on or before this date' })
+  @IsOptional()
+  @IsDateString()
+  createdAtTo?: string;
 }

@@ -80,6 +80,10 @@ export class ContactsService {
         }),
       );
     }
+    if (query.createdAtFrom)
+      qb.andWhere('c.createdAt >= :createdAtFrom', { createdAtFrom: query.createdAtFrom });
+    if (query.createdAtTo)
+      qb.andWhere('c.createdAt <= :createdAtTo', { createdAtTo: query.createdAtTo });
 
     qb.orderBy('c.updatedAt', 'DESC')
       .skip((page - 1) * limit)
