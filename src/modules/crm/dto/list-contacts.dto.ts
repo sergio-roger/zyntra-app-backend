@@ -82,4 +82,9 @@ export class ListContactsDto {
   @IsOptional()
   @IsDateString()
   lastActivityAtTo?: string;
+
+  @ApiPropertyOptional({ description: 'JSON array of custom field conditions: [{field, operator, value}]' })
+  @IsOptional()
+  @IsString()
+  customFieldFilters?: string;
 }

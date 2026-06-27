@@ -88,6 +88,42 @@ export class ContactsService {
       qb.andWhere('c.lastActivityAt >= :lastActivityAtFrom', { lastActivityAtFrom: query.lastActivityAtFrom });
     if (query.lastActivityAtTo)
       qb.andWhere('c.lastActivityAt <= :lastActivityAtTo', { lastActivityAtTo: query.lastActivityAtTo });
+    if (query.customFieldFilters) {
+      try {
+        const conditions: Array<{ field: string; operator: string; value: any }> = JSON.parse(query.customFieldFilters);
+        conditions.forEach((cond, idx) => {
+          const rawName = cond.field.replace('custom_fields.', '');
+          const col = rawName.replace(/[^a-z0-9_]/gi, '');
+          if (!col) return;
+          const key = `cf_${idx}`;
+          switch (cond.operator) {
+            case 'equals':
+              qb.andWhere(`c.custom_fields->>'${col}' = :${key}`, { [key]: String(cond.value) });
+              break;
+            case 'not_equals':
+              qb.andWhere(`c.custom_fields->>'${col}' != :${key}`, { [key]: String(cond.value) });
+              break;
+            case 'contains':
+              qb.andWhere(`c.custom_fields->>'${col}' ILIKE :${key}`, { [key]: `%${cond.value}%` });
+              break;
+            case 'greater_than':
+              qb.andWhere(`(c.custom_fields->>'${col}')::numeric > :${key}`, { [key]: Number(cond.value) });
+              break;
+            case 'less_than':
+              qb.andWhere(`(c.custom_fields->>'${col}')::numeric < :${key}`, { [key]: Number(cond.value) });
+              break;
+            case 'is_empty':
+              qb.andWhere(`(c.custom_fields->>'${col}' IS NULL OR c.custom_fields->>'${col}' = '')`);
+              break;
+            case 'is_not_empty':
+              qb.andWhere(`(c.custom_fields->>'${col}' IS NOT NULL AND c.custom_fields->>'${col}' != '')`);
+              break;
+          }
+        });
+      } catch {
+        // ignore malformed JSON
+      }
+    }
 
     qb.orderBy('c.updatedAt', 'DESC')
       .skip((page - 1) * limit)
