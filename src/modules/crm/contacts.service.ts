@@ -77,6 +77,7 @@ export class ContactsService {
       .leftJoinAndSelect('c.tags', 't')
       .leftJoinAndSelect('c.lifecycleStage', 'ls')
       .leftJoinAndSelect('c.owner', 'o')
+      .leftJoinAndSelect('c.empresa', 'emp')
       .where('c.businessId = :bid', { bid: businessId });
   }
 
@@ -404,6 +405,8 @@ export class ContactsService {
         return contact.lifecycleStage?.name ?? '';
       case 'ownerName':
         return contact.owner?.name ?? '';
+      case 'empresa':
+        return (contact.empresa as { name: string } | null)?.name ?? '';
       case 'source':
         return (
           ContactsService.SOURCE_LABELS[contact.source] ?? contact.source ?? ''
@@ -430,6 +433,7 @@ export class ContactsService {
       .leftJoinAndSelect('c.tags', 't')
       .leftJoinAndSelect('c.lifecycleStage', 'ls')
       .leftJoinAndSelect('c.owner', 'o')
+      .leftJoinAndSelect('c.empresa', 'emp')
       .where('c.businessId = :bid', { bid: business.id });
 
     if (dto.lifecycleStageId)

@@ -19,6 +19,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Tag } from './tag.entity';
+import { Empresa } from './empresa.entity';
 
 @Entity({ name: 'contacts', schema: 'crm' })
 @Index(['businessId', 'source'])
@@ -81,8 +82,12 @@ export class Contact {
   @Column('text', { nullable: true })
   notes: string | null;
 
-  @Column('varchar', { name: 'company_name', nullable: true })
-  companyName: string | null;
+  @Column('uuid', { name: 'empresa_id', nullable: true })
+  empresaId: string | null;
+
+  @ManyToOne(() => Empresa, { nullable: true, onDelete: 'SET NULL', eager: false })
+  @JoinColumn({ name: 'empresa_id' })
+  empresa: Empresa | null;
 
   @Column('decimal', {
     name: 'deal_value',

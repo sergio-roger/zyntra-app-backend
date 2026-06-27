@@ -15,6 +15,8 @@ import { Deal } from '../src/modules/crm/entities/deal.entity';
 import { Pipeline } from '../src/modules/crm/entities/pipeline.entity';
 import { PipelineStage } from '../src/modules/crm/entities/pipeline-stage.entity';
 import { DealStageHistory } from '../src/modules/crm/entities/deal-stage-history.entity';
+import { SectorTipo } from '../src/modules/crm/entities/sector-tipo.entity';
+import { Empresa } from '../src/modules/crm/entities/empresa.entity';
 import { ContactSource } from '../src/modules/crm/enums/contact-source.enum';
 import { UserRole } from '../src/modules/crm/enums/user-role.enum';
 
@@ -32,7 +34,7 @@ import {
   LifecycleStageType,
 } from '../src/modules/lifecycle/entities/lifecycle-stage.entity';
 
-// ─── Plans ────────────────────────────────────────────────────────────────────
+// �"?�"?�"? Plans �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
 const PLANS_DATA = [
   {
@@ -103,7 +105,7 @@ const PLANS_DATA = [
   },
 ];
 
-// ─── Businesses & admin users (one per plan) ──────────────────────────────────
+// �"?�"?�"? Businesses & admin users (one per plan) �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
 const BUSINESSES_DATA = [
   {
@@ -129,7 +131,6 @@ const BUSINESSES_DATA = [
         phone: '+593991001001',
         stage: ContactStage.LEAD,
         source: ContactSource.MANUAL,
-        company_name: 'García Designs',
         deal_value: 150,
         lifecycleName: 'New Lead',
       },
@@ -139,7 +140,6 @@ const BUSINESSES_DATA = [
         phone: '+593991001002',
         stage: ContactStage.PROSPECT,
         source: ContactSource.WHATSAPP,
-        company_name: 'López & Co',
         deal_value: 99,
         lifecycleName: 'Hot Lead',
       },
@@ -149,7 +149,6 @@ const BUSINESSES_DATA = [
         phone: '+593991001003',
         stage: ContactStage.QUALIFIED,
         source: ContactSource.INSTAGRAM,
-        company_name: null,
         deal_value: 99,
         lifecycleName: 'Payment',
       },
@@ -159,7 +158,6 @@ const BUSINESSES_DATA = [
         phone: '+593991001004',
         stage: ContactStage.CUSTOMER,
         source: ContactSource.FORM,
-        company_name: 'Sánchez Studio',
         deal_value: 99,
         lifecycleName: 'Customer',
       },
@@ -169,7 +167,6 @@ const BUSINESSES_DATA = [
         phone: '+593991001005',
         stage: ContactStage.LOST,
         source: ContactSource.CHATBOT,
-        company_name: null,
         deal_value: 0,
         lifecycleName: 'Cold Lead',
       },
@@ -179,7 +176,6 @@ const BUSINESSES_DATA = [
         phone: '+593991001006',
         stage: ContactStage.LEAD,
         source: ContactSource.EMAIL,
-        company_name: 'Rod Media',
         deal_value: 99,
         lifecycleName: 'New Lead',
       },
@@ -189,7 +185,6 @@ const BUSINESSES_DATA = [
         phone: '+593991001007',
         stage: ContactStage.PROSPECT,
         source: ContactSource.MANUAL,
-        company_name: null,
         deal_value: 99,
         lifecycleName: 'Hot Lead',
       },
@@ -199,7 +194,6 @@ const BUSINESSES_DATA = [
         phone: '+593991001008',
         stage: ContactStage.QUALIFIED,
         source: ContactSource.WHATSAPP,
-        company_name: 'Vargas Branding',
         deal_value: 99,
         lifecycleName: 'Payment',
       },
@@ -228,7 +222,6 @@ const BUSINESSES_DATA = [
         phone: '+593992002001',
         stage: ContactStage.LEAD,
         source: ContactSource.INSTAGRAM,
-        company_name: 'Morales Store',
         deal_value: 199,
         lifecycleName: 'New Lead',
       },
@@ -238,7 +231,6 @@ const BUSINESSES_DATA = [
         phone: '+593992002002',
         stage: ContactStage.PROSPECT,
         source: ContactSource.MANUAL,
-        company_name: 'Castro Digital',
         deal_value: 199,
         lifecycleName: 'Hot Lead',
       },
@@ -248,7 +240,6 @@ const BUSINESSES_DATA = [
         phone: '+593992002003',
         stage: ContactStage.CUSTOMER,
         source: ContactSource.FORM,
-        company_name: null,
         deal_value: 199,
         lifecycleName: 'Customer',
       },
@@ -258,7 +249,6 @@ const BUSINESSES_DATA = [
         phone: '+593992002004',
         stage: ContactStage.QUALIFIED,
         source: ContactSource.WHATSAPP,
-        company_name: 'Flores Ads',
         deal_value: 199,
         lifecycleName: 'Payment',
       },
@@ -268,7 +258,6 @@ const BUSINESSES_DATA = [
         phone: '+593992002005',
         stage: ContactStage.LOST,
         source: ContactSource.CHATBOT,
-        company_name: null,
         deal_value: 0,
         lifecycleName: 'Cold Lead',
       },
@@ -278,7 +267,6 @@ const BUSINESSES_DATA = [
         phone: '+593992002006',
         stage: ContactStage.LEAD,
         source: ContactSource.EMAIL,
-        company_name: 'Ruiz Marketing',
         deal_value: 199,
         lifecycleName: 'New Lead',
       },
@@ -288,7 +276,6 @@ const BUSINESSES_DATA = [
         phone: '+593992002007',
         stage: ContactStage.PROSPECT,
         source: ContactSource.INSTAGRAM,
-        company_name: null,
         deal_value: 199,
         lifecycleName: 'Hot Lead',
       },
@@ -298,7 +285,6 @@ const BUSINESSES_DATA = [
         phone: '+593992002008',
         stage: ContactStage.CUSTOMER,
         source: ContactSource.MANUAL,
-        company_name: 'Ortiz Media',
         deal_value: 199,
         lifecycleName: 'Customer',
       },
@@ -327,7 +313,6 @@ const BUSINESSES_DATA = [
         phone: '+593993003001',
         stage: ContactStage.LEAD,
         source: ContactSource.CHATBOT,
-        company_name: 'Silva Agency',
         deal_value: 449,
         lifecycleName: 'New Lead',
       },
@@ -337,7 +322,6 @@ const BUSINESSES_DATA = [
         phone: '+593993003002',
         stage: ContactStage.QUALIFIED,
         source: ContactSource.WHATSAPP,
-        company_name: 'Díaz Corp',
         deal_value: 449,
         lifecycleName: 'Payment',
       },
@@ -347,7 +331,6 @@ const BUSINESSES_DATA = [
         phone: '+593993003003',
         stage: ContactStage.CUSTOMER,
         source: ContactSource.FORM,
-        company_name: 'Vega Solutions',
         deal_value: 449,
         lifecycleName: 'Customer',
       },
@@ -357,7 +340,6 @@ const BUSINESSES_DATA = [
         phone: '+593993003004',
         stage: ContactStage.PROSPECT,
         source: ContactSource.MANUAL,
-        company_name: null,
         deal_value: 449,
         lifecycleName: 'Hot Lead',
       },
@@ -367,7 +349,6 @@ const BUSINESSES_DATA = [
         phone: '+593993003005',
         stage: ContactStage.LOST,
         source: ContactSource.EMAIL,
-        company_name: null,
         deal_value: 0,
         lifecycleName: 'Cold Lead',
       },
@@ -377,7 +358,6 @@ const BUSINESSES_DATA = [
         phone: '+593993003006',
         stage: ContactStage.CUSTOMER,
         source: ContactSource.INSTAGRAM,
-        company_name: 'Ramos Digital',
         deal_value: 449,
         lifecycleName: 'Customer',
       },
@@ -387,7 +367,6 @@ const BUSINESSES_DATA = [
         phone: '+593993003007',
         stage: ContactStage.LEAD,
         source: ContactSource.CHATBOT,
-        company_name: null,
         deal_value: 449,
         lifecycleName: 'New Lead',
       },
@@ -397,7 +376,6 @@ const BUSINESSES_DATA = [
         phone: '+593993003008',
         stage: ContactStage.QUALIFIED,
         source: ContactSource.WHATSAPP,
-        company_name: 'Cruz SEO',
         deal_value: 449,
         lifecycleName: 'Payment',
       },
@@ -405,13 +383,13 @@ const BUSINESSES_DATA = [
   },
 ];
 
-// ─── Default lifecycle stages ─────────────────────────────────────────────────
+// �"?�"?�"? Default lifecycle stages �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
 const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'New Lead',
     description: 'Contacto recién ingresado al sistema.',
-    icon: '🆕',
+    icon: '�Y?.',
     position: 0,
     type: LifecycleStageType.ACTIVE,
     is_default: true,
@@ -421,7 +399,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Hot Lead',
     description: 'Contacto con alto interés demostrado.',
-    icon: '🔥',
+    icon: '�Y"�',
     position: 1,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -431,7 +409,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Payment',
     description: 'En proceso de pago o facturación.',
-    icon: '💵',
+    icon: '�Y'�',
     position: 2,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -441,7 +419,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Customer',
     description: 'Venta cerrada con éxito.',
-    icon: '🏆',
+    icon: '�Y�?',
     position: 3,
     type: LifecycleStageType.ACTIVE,
     is_default: false,
@@ -451,7 +429,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   {
     name: 'Cold Lead',
     description: 'Contacto sin interés o perdido.',
-    icon: '❄️',
+    icon: '�"️',
     position: 4,
     type: LifecycleStageType.LOST,
     is_default: false,
@@ -460,7 +438,7 @@ const DEFAULT_LIFECYCLE_STAGES = [
   },
 ];
 
-// ─── Default tags ─────────────────────────────────────────────────────────────
+// �"?�"?�"? Default tags �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
 const DEFAULT_TAGS = [
   {
@@ -482,7 +460,7 @@ const DEFAULT_TAGS = [
   },
 ];
 
-// ─── Default pipelines per business ──────────────────────────────────────────
+// �"?�"?�"? Default pipelines per business �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
 const DEFAULT_PIPELINES = [
   {
@@ -578,7 +556,65 @@ const DEFAULT_PIPELINES = [
   },
 ];
 
-// ─── Bootstrap ────────────────────────────────────────────────────────────────
+// �"?�"?�"? Sector Tipos �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+
+const DEFAULT_SECTOR_TIPOS = [
+  { name: 'Tecnología', description: 'Software, hardware y servicios digitales' },
+  { name: 'Comercio', description: 'Distribución, retail y ventas mayoristas' },
+  { name: 'Manufactura', description: 'Producción industrial y fabricación' },
+  { name: 'Servicios Profesionales', description: 'Consultoría, legal, contabilidad' },
+  { name: 'Salud', description: 'Clínicas, farmacias y servicios médicos' },
+  { name: 'Educación', description: 'Instituciones educativas y formación' },
+  { name: 'Construcción', description: 'Inmobiliaria, obras y arquitectura' },
+  { name: 'Alimentos y Bebidas', description: 'Restaurantes, catering y producción alimentaria' },
+];
+
+// �"?�"?�"? Empresas de demo �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+
+const DEFAULT_EMPRESAS = [
+  {
+    name: 'TechSolutions S.A.',
+    identificacion: '0912345670001',
+    website: 'https://techsolutions.ec',
+    num_empleados: 45,
+    descripcion: 'Empresa líder en desarrollo de software a medida',
+    sectorName: 'Tecnología',
+  },
+  {
+    name: 'Distribuidora Andina',
+    identificacion: '0923456780001',
+    website: 'https://andina.com.ec',
+    num_empleados: 120,
+    descripcion: 'Distribución de productos de consumo masivo en la región andina',
+    sectorName: 'Comercio',
+  },
+  {
+    name: 'Constructora Cóndor',
+    identificacion: '0934567890001',
+    website: null,
+    num_empleados: 200,
+    descripcion: 'Proyectos de construcción residencial y comercial',
+    sectorName: 'Construcción',
+  },
+  {
+    name: 'García Designs',
+    identificacion: null,
+    website: 'https://garciadesigns.com',
+    num_empleados: 8,
+    descripcion: 'Diseño gráfico y branding',
+    sectorName: 'Servicios Profesionales',
+  },
+  {
+    name: 'López & Co',
+    identificacion: null,
+    website: null,
+    num_empleados: 15,
+    descripcion: 'Consultoría empresarial',
+    sectorName: 'Servicios Profesionales',
+  },
+];
+
+// �"?�"?�"? Bootstrap �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -595,6 +631,8 @@ async function bootstrap() {
   const pipelineStageRepo = ds.getRepository(PipelineStage);
   const dealRepo = ds.getRepository(Deal);
   const historyRepo = ds.getRepository(DealStageHistory);
+  const sectorTipoRepo = ds.getRepository(SectorTipo);
+  const empresaRepo = ds.getRepository(Empresa);
 
   const passwordHash = await argon2.hash('Zyntra2025!', {
     secret: Buffer.from(
@@ -604,9 +642,9 @@ async function bootstrap() {
 
   const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-  // ── 1. Plans ──────────────────────────────────────────────────────────────
+  // �"?�"? 1. Plans �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
-  console.log('\n🌱 [1/5] Seeding plans...');
+  console.log('\n�YO� [1/5] Seeding plans...');
 
   const planMap: Record<string, Plan> = {};
 
@@ -639,17 +677,17 @@ async function bootstrap() {
         }),
       );
       await descRepo.save(descriptions);
-      console.log(`  ✅ Plan created: ${data.name}`);
+      console.log(`  �o. Plan created: ${data.name}`);
     } else {
-      console.log(`  ℹ️  Plan already exists: ${data.name}`);
+      console.log(`  �"�️  Plan already exists: ${data.name}`);
     }
 
     planMap[data.name] = plan;
   }
 
-  // ── 2. Businesses + admin users ───────────────────────────────────────────
+  // �"?�"? 2. Businesses + admin users �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
-  console.log('\n🏢 [2/5] Seeding businesses and admin users...');
+  console.log('\n�Y�� [2/5] Seeding businesses and admin users...');
 
   const agentUserMap: Record<string, CrmUser> = {};
 
@@ -672,9 +710,9 @@ async function bootstrap() {
           trial_ends_at: trialEndsAt,
         }),
       );
-      console.log(`  ✅ Business created: ${business.name}`);
+      console.log(`  �o. Business created: ${business.name}`);
     } else {
-      console.log(`  ℹ️  Business already exists: ${business.name}`);
+      console.log(`  �"�️  Business already exists: ${business.name}`);
     }
 
     // Admin user
@@ -694,9 +732,9 @@ async function bootstrap() {
           is_active: true,
         }),
       );
-      console.log(`  ✅ Admin user created: ${entry.adminUser.email}`);
+      console.log(`  �o. Admin user created: ${entry.adminUser.email}`);
     } else {
-      console.log(`  ℹ️  Admin user already exists: ${entry.adminUser.email}`);
+      console.log(`  �"�️  Admin user already exists: ${entry.adminUser.email}`);
     }
 
     // Agent user
@@ -716,16 +754,16 @@ async function bootstrap() {
           is_active: true,
         }),
       );
-      console.log(`  ✅ Agent user created: ${entry.agentUser.email}`);
+      console.log(`  �o. Agent user created: ${entry.agentUser.email}`);
     } else {
-      console.log(`  ℹ️  Agent user already exists: ${entry.agentUser.email}`);
+      console.log(`  �"�️  Agent user already exists: ${entry.agentUser.email}`);
     }
 
     agentUserMap[entry.business.email] = agentUser;
   }
 
-  // ── 2.1. Superadmin Business + Super Admin User ───────────────────────────────
-  console.log('\n👑 [2.1] Seeding global superadmin business and user...');
+  // �"?�"? 2.1. Superadmin Business + Super Admin User �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+  console.log('\n�Y'' [2.1] Seeding global superadmin business and user...');
   let superBusiness = await businessRepo.findOne({
     where: { email: 'superadmin@zyntra.com' },
   });
@@ -739,10 +777,10 @@ async function bootstrap() {
         trial_ends_at: trialEndsAt,
       }),
     );
-    console.log(`  ✅ Superadmin Business created: ${superBusiness.name}`);
+    console.log(`  �o. Superadmin Business created: ${superBusiness.name}`);
   } else {
     console.log(
-      `  ℹ️  Superadmin Business already exists: ${superBusiness.name}`,
+      `  �"�️  Superadmin Business already exists: ${superBusiness.name}`,
     );
   }
 
@@ -764,9 +802,9 @@ async function bootstrap() {
         is_active: true,
       }),
     );
-    console.log(`  ✅ Super Admin user created: superuser@zyntra.com`);
+    console.log(`  �o. Super Admin user created: superuser@zyntra.com`);
   } else {
-    console.log(`  ℹ️  Super Admin user already exists: superuser@zyntra.com`);
+    console.log(`  �"�️  Super Admin user already exists: superuser@zyntra.com`);
   }
 
   // Seeding lifecycle stages & tags for superBusiness
@@ -795,9 +833,9 @@ async function bootstrap() {
     }
   }
 
-  // ── 3. Lifecycle stages + tags per business ───────────────────────────────
+  // �"?�"? 3. Lifecycle stages + tags per business �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
-  console.log('\n📋 [3/5] Seeding lifecycle stages and tags...');
+  console.log('\n�Y"< [3/5] Seeding lifecycle stages and tags...');
 
   for (const entry of BUSINESSES_DATA) {
     const business = await businessRepo.findOne({
@@ -815,9 +853,9 @@ async function bootstrap() {
         stageRepo.create({ ...s, business_id: business.id }),
       );
       await stageRepo.save(stages);
-      console.log(`  ✅ Lifecycle stages created for: ${business.name}`);
+      console.log(`  �o. Lifecycle stages created for: ${business.name}`);
     } else {
-      console.log(`  ℹ️  Lifecycle stages already exist for: ${business.name}`);
+      console.log(`  �"�️  Lifecycle stages already exist for: ${business.name}`);
     }
 
     // Tags
@@ -837,12 +875,71 @@ async function bootstrap() {
         );
       }
     }
-    console.log(`  ✅ Tags seeded for: ${business.name}`);
+    console.log(`  �o. Tags seeded for: ${business.name}`);
   }
 
-  // ── 4. Contacts ───────────────────────────────────────────────────────────
+  // �"?�"? 3.5. Sector Tipos + Empresas �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
-  console.log('\n👥 [4/5] Seeding contacts...');
+  console.log('\n�Y�� [3.5] Seeding sector tipos and empresas...');
+
+  for (const entry of BUSINESSES_DATA) {
+    const business = await businessRepo.findOne({
+      where: { email: entry.business.email },
+    });
+    if (!business) continue;
+
+    // Sector tipos
+    const sectorMap: Record<string, SectorTipo> = {};
+    for (const sectorData of DEFAULT_SECTOR_TIPOS) {
+      let sector = await sectorTipoRepo.findOne({
+        where: { business_id: business.id, name: sectorData.name },
+      });
+      if (!sector) {
+        sector = await sectorTipoRepo.save(
+          sectorTipoRepo.create({
+            business_id: business.id,
+            name: sectorData.name,
+            description: sectorData.description,
+            is_active: true,
+          }),
+        );
+      }
+      sectorMap[sectorData.name] = sector;
+    }
+    console.log(`  �o. Sector tipos seeded for: ${business.name}`);
+
+    // Empresas
+    let empresasCreated = 0;
+    for (const empresaData of DEFAULT_EMPRESAS) {
+      const existing = await empresaRepo.findOne({
+        where: { business_id: business.id, name: empresaData.name },
+      });
+      if (existing) continue;
+
+      const sector = sectorMap[empresaData.sectorName] ?? null;
+      await empresaRepo.save(
+        empresaRepo.create({
+          business_id: business.id,
+          name: empresaData.name,
+          identificacion: empresaData.identificacion ?? null,
+          website: empresaData.website ?? null,
+          num_empleados: empresaData.num_empleados ?? null,
+          descripcion: empresaData.descripcion ?? null,
+          sector_tipo_id: sector?.id ?? null,
+        }),
+      );
+      empresasCreated++;
+    }
+    if (empresasCreated > 0) {
+      console.log(`  �o. ${empresasCreated} empresa(s) created for: ${business.name}`);
+    } else {
+      console.log(`  �"�️  Empresas already exist for: ${business.name}`);
+    }
+  }
+
+  // �"?�"? 4. Contacts �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
+
+  console.log('\n�Y'� [4/5] Seeding contacts...');
 
   for (const entry of BUSINESSES_DATA) {
     const business = await businessRepo.findOne({
@@ -870,7 +967,7 @@ async function bootstrap() {
 
       if (!existing) {
         const lifecycleStage = stageByName[contactData.lifecycleName];
-        // Distribute ownership: even index → admin, odd index → agent
+        // Distribute ownership: even index �?' admin, odd index �?' agent
         const owner = i % 2 === 0 ? adminUser : agentUser;
         await contactRepo.save(
           contactRepo.create({
@@ -880,7 +977,6 @@ async function bootstrap() {
             phone: contactData.phone,
             lifecycleStageId: lifecycleStage?.id ?? null,
             source: contactData.source,
-            companyName: contactData.company_name,
             dealValue: contactData.deal_value,
             ownerId: owner?.id ?? null,
           }),
@@ -890,13 +986,13 @@ async function bootstrap() {
     }
 
     console.log(
-      `  ✅ ${created} contact(s) created for: ${business.name}${created < entry.contacts.length ? ' (some skipped — already existed)' : ''}`,
+      `  �o. ${created} contact(s) created for: ${business.name}${created < entry.contacts.length ? ' (some skipped �?" already existed)' : ''}`,
     );
   }
 
-  // ── 5. Pipelines + Stages + Deals ─────────────────────────────────────────
+  // �"?�"? 5. Pipelines + Stages + Deals �"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?�"?
 
-  console.log('\n🔀 [5/5] Seeding pipelines, stages and deals...');
+  console.log('\n�Y"? [5/5] Seeding pipelines, stages and deals...');
 
   const allBusinessEmails = BUSINESSES_DATA.map((e) => e.business.email);
   allBusinessEmails.push('superadmin@zyntra.com');
@@ -910,7 +1006,7 @@ async function bootstrap() {
     });
 
     if (existingPipelines.length > 0) {
-      console.log(`  ℹ️  Pipelines already exist for: ${business.name}`);
+      console.log(`  �"�️  Pipelines already exist for: ${business.name}`);
       continue;
     }
 
@@ -948,7 +1044,7 @@ async function bootstrap() {
       pipelineMap[pipelineData.name] = { pipeline, stageMap };
     }
 
-    console.log(`  ✅ Pipelines + stages created for: ${business.name}`);
+    console.log(`  �o. Pipelines + stages created for: ${business.name}`);
 
     // Seed sample deals tied to the default pipeline
     const defaultPipelineData = pipelineMap['Ventas Nuevas'];
@@ -1040,27 +1136,28 @@ async function bootstrap() {
     }
 
     if (dealsCreated > 0) {
-      console.log(`  ✅ ${dealsCreated} deal(s) created for: ${business.name}`);
+      console.log(`  �o. ${dealsCreated} deal(s) created for: ${business.name}`);
     }
   }
 
-  console.log('\n✨ Seed finished successfully!\n');
+  console.log('\n�o� Seed finished successfully!\n');
   console.log(
-    '  📧 Business/Company login credentials (all plans use password: Zyntra2025!):',
+    '  �Y"� Business/Company login credentials (all plans use password: Zyntra2025!):',
   );
   for (const entry of BUSINESSES_DATA) {
-    console.log(`     • ${entry.business.email} (Company)`);
-    console.log(`     • ${entry.adminUser.email} (CRM Admin)`);
-    console.log(`     • ${entry.agentUser.email} (CRM Agente)`);
+    console.log(`     �?� ${entry.business.email} (Company)`);
+    console.log(`     �?� ${entry.adminUser.email} (CRM Admin)`);
+    console.log(`     �?� ${entry.agentUser.email} (CRM Agente)`);
   }
-  console.log(`     • superadmin@zyntra.com (Company - Global Admin)`);
-  console.log(`     • superuser@zyntra.com (Super Admin CRM)`);
+  console.log(`     �?� superadmin@zyntra.com (Company - Global Admin)`);
+  console.log(`     �?� superuser@zyntra.com (Super Admin CRM)`);
   console.log('');
 
   await app.close();
 }
 
 bootstrap().catch((err) => {
-  console.error('\n❌ Seed failed:', err);
+  console.error('\n�O Seed failed:', err);
   process.exit(1);
 });
+
