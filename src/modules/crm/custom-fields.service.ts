@@ -1,22 +1,25 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { CustomField } from './entities/custom-field.entity';
 import { Business } from '@auth/entities/business.entity';
 import {
   CreateCustomFieldDto,
   UpdateCustomFieldDto,
-} from './dto/custom-field.dto';
+} from '@crm/dto/custom-field.dto';
+import { Contact } from '@crm/entities/contact.entity';
+import { CustomField } from '@crm/entities/custom-field.entity';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class CustomFieldsService {
   constructor(
     @InjectRepository(CustomField)
     private readonly fieldRepo: Repository<CustomField>,
+    @InjectRepository(Contact)
+    private readonly contactRepo: Repository<Contact>,
   ) {}
 
   async findAll(business: Business): Promise<CustomField[]> {
@@ -62,6 +65,20 @@ export class CustomFieldsService {
       where: { id, business_id: business.id },
     });
     if (!field) throw new NotFoundException('Campo no encontrado');
+
+    const contactCountWithData = await this.contactRepo
+      .createQueryBuilder('c')
+      .where('c.businessId = :businessId', { businessId: business.id })
+      .andWhere(
+        `c.custom_fields->>:fieldName IS NOT NULL AND c.custom_fields->>:fieldName != ''`,
+        { fieldName: field.name },
+      )
+      .getCount();
+
+    if (contactCountWithData > 0) {
+      throw new ConflictException('field_has_data');
+    }
+
     await this.fieldRepo.softRemove(field);
   }
 }
