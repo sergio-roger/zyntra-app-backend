@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import { CurrentCrmUser, CrmUserContext } from '@common/decorators/current-crm-user.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
@@ -44,14 +45,17 @@ export class PipelinesController {
   // ─── Pipelines ─────────────────────────────────────────────────────────────
 
   @Get()
-  @ApiOperation({ summary: 'List all pipelines (with stages)' })
+  @ApiOperation({ summary: 'List pipelines visible to the current user' })
   @ApiOkResponse({ description: 'List of pipelines with their stages' })
-  list(@CurrentBusiness() business: Business) {
-    return this.pipelines.list(business);
+  list(
+    @CurrentBusiness() business: Business,
+    @CurrentCrmUser() crmUser: CrmUserContext,
+  ) {
+    return this.pipelines.list(business, crmUser);
   }
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a pipeline' })
   @ApiCreatedResponse()
   create(
@@ -62,7 +66,7 @@ export class PipelinesController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update pipeline name / order / default flag' })
   @ApiOkResponse({ description: 'Pipeline updated' })
   update(
@@ -74,7 +78,7 @@ export class PipelinesController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @HttpCode(204)
   @ApiOperation({
     summary: 'Soft-delete a pipeline (blocks if it has active deals)',
@@ -110,7 +114,7 @@ export class PipelinesController {
   }
 
   @Post(':pipelineId/stages')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Add a stage to a pipeline' })
   @ApiCreatedResponse()
   createStage(
@@ -122,7 +126,7 @@ export class PipelinesController {
   }
 
   @Patch(':pipelineId/stages/reorder')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Bulk reorder stages in a single transaction' })
   @ApiOkResponse({ description: 'Stages reordered' })
   reorderStages(
@@ -134,7 +138,7 @@ export class PipelinesController {
   }
 
   @Patch('stages/:stageId')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update a stage (name, color, probability, type)' })
   @ApiOkResponse({ description: 'Stage updated' })
   updateStage(
@@ -146,7 +150,7 @@ export class PipelinesController {
   }
 
   @Delete('stages/:stageId')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a stage (blocks if it has active deals)' })
   @ApiNoContentResponse({ description: 'Stage deleted' })

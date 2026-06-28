@@ -21,6 +21,8 @@ import {
   UpdateStageDto,
   ReorderStagesDto,
 } from '@crm/dto/pipeline.dto';
+import { CrmUserContext } from '@common/decorators/current-crm-user.decorator';
+import { UserRole } from '@crm/enums/user-role.enum';
 
 @Injectable()
 export class PipelinesService {
@@ -38,12 +40,28 @@ export class PipelinesService {
 
   // ─── Pipelines ─────────────────────────────────────────────────────────────
 
-  async list(business: Business): Promise<Pipeline[]> {
-    return this.pipelineRepo.find({
-      where: { business_id: business.id },
-      relations: ['stages', 'team'],
-      order: { position: 'ASC', stages: { position: 'ASC' } },
-    });
+  async list(business: Business, crmUser: CrmUserContext): Promise<Pipeline[]> {
+    // Admin o login de Business (sin crm_user_id) ven todos los pipelines
+    if (!crmUser.id || crmUser.role === UserRole.ADMIN) {
+      return this.pipelineRepo.find({
+        where: { business_id: business.id },
+        relations: ['stages', 'team'],
+        order: { position: 'ASC', stages: { position: 'ASC' } },
+      });
+    }
+
+    // Manager/Agent: solo pipelines con equipo asignado donde el usuario es miembro
+    return this.pipelineRepo
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.stages', 'stages')
+      .leftJoinAndSelect('p.team', 'team')
+      .innerJoin('team.members', 'member')
+      .where('p.business_id = :bid', { bid: business.id })
+      .andWhere('p.team_id IS NOT NULL')
+      .andWhere('member.id = :uid', { uid: crmUser.id })
+      .orderBy('p.position', 'ASC')
+      .addOrderBy('stages.position', 'ASC')
+      .getMany();
   }
 
   async findOne(business: Business, id: string): Promise<Pipeline> {
