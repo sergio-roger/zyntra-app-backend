@@ -1,25 +1,16 @@
+import { Business } from '@auth/entities/business.entity';
+import { CreateSegmentDto } from '@crm/dto/create-segment.dto';
+import { UpdateSegmentDto } from '@crm/dto/update-segment.dto';
+import { Contact } from '@crm/entities/contact.entity';
+import { Segment, SegmentCondition } from '@crm/entities/segment.entity';
+import { SegmentResponse } from '@crm/interfaces/segment-response.interface';
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { Segment, SegmentCondition } from './entities/segment.entity';
-import { Contact } from './entities/contact.entity';
-import { Business } from '@auth/entities/business.entity';
-import { CreateSegmentDto } from './dto/create-segment.dto';
-import { UpdateSegmentDto } from './dto/update-segment.dto';
-
-export interface SegmentResponse {
-  id: string;
-  name: string;
-  description: string | null;
-  conditions: SegmentCondition[];
-  type: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 @Injectable()
 export class SegmentsService {

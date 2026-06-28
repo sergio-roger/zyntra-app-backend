@@ -15,22 +15,7 @@ import { UpdateTaskDto } from '@crm/dto/update-task.dto';
 import { CrmTask } from '@crm/entities/task.entity';
 import { ActivityType } from '@crm/enums/activity-type.enum';
 import { CallerContext } from '@crm/interfaces/caller-context.interface';
-
-export interface TaskResponse {
-  id: string;
-  title: string;
-  description: string | null;
-  dueDate: Date;
-  status: TaskStatus;
-  priority: TaskPriority;
-  contactId: string | null;
-  dealId: string | null;
-  assignedTo: string | null;
-  contact: any;
-  deal: any;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { TaskResponse } from '@crm/interfaces/task-response.interface';
 
 @Injectable()
 export class CrmTasksService {
