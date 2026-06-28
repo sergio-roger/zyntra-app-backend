@@ -26,7 +26,6 @@ import {
 
 @Injectable()
 export class DealsService {
-
   constructor(
     @InjectRepository(Deal)
     private readonly dealsRepo: Repository<Deal>,
@@ -102,7 +101,14 @@ export class DealsService {
   async findOne(business: Business, id: string): Promise<Deal> {
     const deal = await this.dealsRepo.findOne({
       where: { id, business_id: business.id },
-      relations: ['contacts', 'company', 'assigned_to', 'team', 'stage', 'pipeline'],
+      relations: [
+        'contacts',
+        'company',
+        'assigned_to',
+        'team',
+        'stage',
+        'pipeline',
+      ],
     });
     if (!deal) throw new NotFoundException('Deal not found');
     return deal;
@@ -282,14 +288,14 @@ export class DealsService {
     toStage: PipelineStage,
   ): Promise<void> {
     if (deal.contacts && deal.contacts.length > 0) {
-      const activities = deal.contacts.map(contact => 
+      const activities = deal.contacts.map((contact) =>
         this.activitiesRepo.create({
           contact_id: contact.id,
           type: ActivityType.STAGE_CHANGE,
           content: `Negocio "${deal.title}": etapa cambiada a "${toStage.name}"`,
           metadata: { deal_id: deal.id, from: fromStageId, to: toStage.id },
           created_by: ActivityCreatedBy.USER,
-        })
+        }),
       );
       await this.activitiesRepo.save(activities);
     }

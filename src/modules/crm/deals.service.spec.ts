@@ -309,8 +309,8 @@ describe('DealsService', () => {
 
       expect(activitiesRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ type: ActivityType.STAGE_CHANGE })
-        ])
+          expect.objectContaining({ type: ActivityType.STAGE_CHANGE }),
+        ]),
       );
     });
   });

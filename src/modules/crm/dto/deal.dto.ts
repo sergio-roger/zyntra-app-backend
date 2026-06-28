@@ -48,7 +48,7 @@ export class CreateDealDto {
 
   @ApiProperty({ example: ['uuid-del-contacto'] })
   @IsArray()
-  @IsUUID("all", { each: true })
+  @IsUUID('all', { each: true })
   contactIds: string[];
 
   @ApiProperty({ example: 'uuid-de-la-empresa', required: false })

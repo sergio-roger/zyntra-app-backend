@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException, ConflictException } from '@nestjs/common';
@@ -157,7 +158,11 @@ describe('CompaniesService', () => {
     it('equals operator — strips custom_fields. snake_case prefix', async () => {
       await service.list(mockBusiness, {
         customFieldFilters: JSON.stringify([
-          { field: 'custom_fields.industry', operator: 'equals', value: 'SaaS' },
+          {
+            field: 'custom_fields.industry',
+            operator: 'equals',
+            value: 'SaaS',
+          },
         ]),
       } as any);
 
@@ -183,7 +188,11 @@ describe('CompaniesService', () => {
     it('contains operator — wraps value with ILIKE wildcards', async () => {
       await service.list(mockBusiness, {
         customFieldFilters: JSON.stringify([
-          { field: 'customFields.notes', operator: 'contains', value: 'enterprise' },
+          {
+            field: 'customFields.notes',
+            operator: 'contains',
+            value: 'enterprise',
+          },
         ]),
       } as any);
 
@@ -196,7 +205,11 @@ describe('CompaniesService', () => {
     it('greater_than operator — casts to numeric', async () => {
       await service.list(mockBusiness, {
         customFieldFilters: JSON.stringify([
-          { field: 'customFields.employees', operator: 'greater_than', value: 100 },
+          {
+            field: 'customFields.employees',
+            operator: 'greater_than',
+            value: 100,
+          },
         ]),
       } as any);
 
@@ -209,7 +222,11 @@ describe('CompaniesService', () => {
     it('less_than operator — casts to numeric', async () => {
       await service.list(mockBusiness, {
         customFieldFilters: JSON.stringify([
-          { field: 'customFields.revenue', operator: 'less_than', value: 1000000 },
+          {
+            field: 'customFields.revenue',
+            operator: 'less_than',
+            value: 1000000,
+          },
         ]),
       } as any);
 
@@ -234,7 +251,11 @@ describe('CompaniesService', () => {
     it('is_not_empty operator', async () => {
       await service.list(mockBusiness, {
         customFieldFilters: JSON.stringify([
-          { field: 'customFields.website', operator: 'is_not_empty', value: '' },
+          {
+            field: 'customFields.website',
+            operator: 'is_not_empty',
+            value: '',
+          },
         ]),
       } as any);
 
@@ -247,7 +268,11 @@ describe('CompaniesService', () => {
       await service.list(mockBusiness, {
         customFieldFilters: JSON.stringify([
           { field: 'customFields.tier', operator: 'equals', value: 'gold' },
-          { field: 'customFields.employees', operator: 'greater_than', value: 50 },
+          {
+            field: 'customFields.employees',
+            operator: 'greater_than',
+            value: 50,
+          },
         ]),
       } as any);
 

@@ -78,12 +78,12 @@ export class Deal {
   @JoinColumn({ name: 'company_id' })
   company: Company | null;
 
-  @ManyToMany(() => Contact, contact => contact.deals)
+  @ManyToMany(() => Contact, (contact) => contact.deals)
   @JoinTable({
     name: 'deal_contacts',
     schema: 'crm',
     joinColumn: { name: 'deal_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'contact_id', referencedColumnName: 'id' }
+    inverseJoinColumn: { name: 'contact_id', referencedColumnName: 'id' },
   })
   contacts: Contact[];
 

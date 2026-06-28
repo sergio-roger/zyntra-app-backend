@@ -627,9 +627,17 @@ export class CrmSeeder implements Seeder {
       const allDeals = await dealRepo.find({
         where: { business_id: business.id },
       });
-      const admin = await userRepo.findOne({ where: { business_id: business.id, email: 'admin@zyntra.com' } });
-      const fallbackUser = await userRepo.findOne({ where: { business_id: business.id } });
-      const assignedUserId = admin ? admin.id : (fallbackUser ? fallbackUser.id : null);
+      const admin = await userRepo.findOne({
+        where: { business_id: business.id, email: 'admin@zyntra.com' },
+      });
+      const fallbackUser = await userRepo.findOne({
+        where: { business_id: business.id },
+      });
+      const assignedUserId = admin
+        ? admin.id
+        : fallbackUser
+          ? fallbackUser.id
+          : null;
 
       for (let i = 0; i < allDeals.length; i++) {
         const d = allDeals[i];

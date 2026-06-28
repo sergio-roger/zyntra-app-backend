@@ -80,7 +80,7 @@ export class Contact {
   })
   tags: Tag[];
 
-  @ManyToMany(() => Deal, deal => deal.contacts)
+  @ManyToMany(() => Deal, (deal) => deal.contacts)
   deals: Deal[];
 
   @Column('text', { nullable: true })

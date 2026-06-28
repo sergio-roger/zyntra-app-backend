@@ -20,7 +20,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
-import { CurrentCrmUser, CrmUserContext } from '@common/decorators/current-crm-user.decorator';
+import {
+  CurrentCrmUser,
+  CrmUserContext,
+} from '@common/decorators/current-crm-user.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';

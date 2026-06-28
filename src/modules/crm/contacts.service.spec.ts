@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException } from '@nestjs/common';
@@ -255,7 +255,11 @@ describe('ContactsService', () => {
     it('not_equals operator', async () => {
       await service.list(mockBusiness, {
         customFieldFilters: JSON.stringify([
-          { field: 'customFields.status', operator: 'not_equals', value: 'inactive' },
+          {
+            field: 'customFields.status',
+            operator: 'not_equals',
+            value: 'inactive',
+          },
         ]),
       } as any);
 
@@ -319,7 +323,11 @@ describe('ContactsService', () => {
     it('is_not_empty operator — checks not null and not empty string', async () => {
       await service.list(mockBusiness, {
         customFieldFilters: JSON.stringify([
-          { field: 'customFields.linkedin', operator: 'is_not_empty', value: '' },
+          {
+            field: 'customFields.linkedin',
+            operator: 'is_not_empty',
+            value: '',
+          },
         ]),
       } as any);
 
