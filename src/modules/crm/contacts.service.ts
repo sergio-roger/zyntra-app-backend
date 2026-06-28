@@ -342,13 +342,13 @@ export class ContactsService {
 
     const deal = this.dealsRepo.create({
       business_id: business.id,
-      contact_id: contact.id,
+      contacts: [contact],
       title: dto.title,
       value: dto.value ?? 0,
-      pipeline_id: dto.pipeline_id,
-      stage_id: dto.stage_id,
-      expected_close_date: dto.expected_close_date
-        ? new Date(dto.expected_close_date)
+      pipeline_id: dto.pipelineId,
+      stage_id: dto.stageId,
+      expected_close_date: dto.expectedCloseDate
+        ? new Date(dto.expectedCloseDate)
         : null,
       description: dto.description,
     });

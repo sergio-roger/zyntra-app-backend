@@ -19,6 +19,9 @@ import { UserRole } from '../../modules/crm/enums/user-role.enum';
 import { CustomFieldType } from '../../modules/crm/enums/custom-field-type.enum';
 import { CustomField } from '../../modules/crm/entities/custom-field.entity';
 import { Team } from '../../modules/crm/entities/team.entity';
+import { CrmTask } from '../../modules/crm/entities/task.entity';
+import { TaskStatus } from '../../modules/crm/enums/task-status.enum';
+import { TaskPriority } from '../../modules/crm/enums/task-priority.enum';
 import { LifecycleStage } from '../../modules/lifecycle/entities/lifecycle-stage.entity';
 import {
   BUSINESSES_DATA,
@@ -46,6 +49,7 @@ export class CrmSeeder implements Seeder {
     const companyRepo = ds.getRepository(Company);
     const customFieldRepo = ds.getRepository(CustomField);
     const teamRepo = ds.getRepository(Team);
+    const taskRepo = ds.getRepository(CrmTask);
 
     const passwordHash = await argon2.hash('Zyntra2025!', {
       secret: Buffer.from(
@@ -568,6 +572,9 @@ export class CrmSeeder implements Seeder {
         },
       ];
 
+      const companies = await companyRepo.find({
+        where: { businessId: business.id },
+      });
       let dealsCreated = 0;
       for (const dealData of sampleDeals) {
         const contact = contacts[dealData.contactIdx];
@@ -586,7 +593,8 @@ export class CrmSeeder implements Seeder {
           dealRepo.create({
             business_id: business.id,
             title: dealData.title,
-            contact_id: contact.id,
+            contacts: [contact],
+            company_id: dealsCreated % 2 === 0 ? companies[0]?.id : null, // randomly assign company if it exists
             pipeline_id: defaultPipeline.id,
             stage_id: stage.id,
             value: dealData.value,
@@ -610,14 +618,48 @@ export class CrmSeeder implements Seeder {
 
       if (dealsCreated > 0) {
         console.log(
-          `  �o. ${dealsCreated} deal(s) created for: ${business.name}`,
+          `  o. ${dealsCreated} deal(s) created for: ${business.name}`,
+        );
+      }
+
+      // Tasks Seed
+      let tasksCreated = 0;
+      const allDeals = await dealRepo.find({
+        where: { business_id: business.id },
+      });
+      const admin = await userRepo.findOne({ where: { business_id: business.id, email: 'admin@zyntra.com' } });
+      const fallbackUser = await userRepo.findOne({ where: { business_id: business.id } });
+      const assignedUserId = admin ? admin.id : (fallbackUser ? fallbackUser.id : null);
+
+      for (let i = 0; i < allDeals.length; i++) {
+        const d = allDeals[i];
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + (i + 2)); // Some days in the future
+
+        await taskRepo.save(
+          taskRepo.create({
+            business_id: business.id,
+            title: `Llamada de seguimiento - ${d.title}`,
+            description: 'Verificar avances de la propuesta.',
+            due_date: dueDate,
+            status: i % 2 === 0 ? TaskStatus.PENDING : TaskStatus.COMPLETED,
+            priority: i % 3 === 0 ? TaskPriority.HIGH : TaskPriority.MEDIUM,
+            deal_id: d.id,
+            assigned_to: assignedUserId,
+          }),
+        );
+        tasksCreated++;
+      }
+      if (tasksCreated > 0) {
+        console.log(
+          `  o. ${tasksCreated} task(s) created for: ${business.name}`,
         );
       }
     }
 
-    console.log('\n�o� Seed finished successfully!\n');
+    console.log('\no Seed finished successfully!\n');
     console.log(
-      '  �Y"� Business/Company login credentials (all plans use password: Zyntra2025!):',
+      '  Y" Business/Company login credentials (all plans use password: Zyntra2025!):',
     );
     for (const entry of BUSINESSES_DATA) {
       console.log(`     �?� ${entry.business.email} (Company)`);

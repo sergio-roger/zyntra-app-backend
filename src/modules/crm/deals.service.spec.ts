@@ -1,17 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { DealsService } from './deals.service';
-import { Deal } from '@crm/entities/deal.entity';
-import { Contact } from '@crm/entities/contact.entity';
-import { ContactActivity } from '@crm/entities/contact-activity.entity';
-import { Pipeline } from '@crm/entities/pipeline.entity';
-import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
-import { DealStageHistory } from '@crm/entities/deal-stage-history.entity';
 import { Business } from '@auth/entities/business.entity';
+import { ContactActivity } from '@crm/entities/contact-activity.entity';
+import { Contact } from '@crm/entities/contact.entity';
+import { DealStageHistory } from '@crm/entities/deal-stage-history.entity';
+import { Deal } from '@crm/entities/deal.entity';
+import { PipelineStage } from '@crm/entities/pipeline-stage.entity';
+import { Pipeline } from '@crm/entities/pipeline.entity';
+import { ActivityType } from '@crm/enums/activity-type.enum';
 import { DealStatus } from '@crm/enums/deal-status.enum';
 import { PipelineStageType } from '@crm/enums/pipeline-stage-type.enum';
-import { ActivityType } from '@crm/enums/activity-type.enum';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { DealsService } from './deals.service';
 
 const mockBusiness = { id: 'biz-uuid' } as Business;
 
