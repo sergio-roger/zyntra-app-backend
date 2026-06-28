@@ -4,6 +4,7 @@ import { Company } from '@crm/entities/company.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
 import { Tag } from '@crm/entities/tag.entity';
 import { CrmUser } from '@crm/entities/user.entity';
+import { Deal } from '@crm/entities/deal.entity';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 import {
   Column,
@@ -78,6 +79,9 @@ export class Contact {
     inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
   })
   tags: Tag[];
+
+  @ManyToMany(() => Deal, deal => deal.contacts)
+  deals: Deal[];
 
   @Column('text', { nullable: true })
   notes: string | null;

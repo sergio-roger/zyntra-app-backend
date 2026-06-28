@@ -16,28 +16,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, QueryDeepPartialEntity, Repository } from 'typeorm';
+import {
+  Brackets,
+  In,
+  IsNull,
+  QueryDeepPartialEntity,
+  Repository,
+} from 'typeorm';
 
 @Injectable()
 export class DealsService {
-  // ─── Field maps for generic DTO → entity patching ─────────────────────────
-
-  /** DTO fields that copy straight to the Deal entity. */
-  private static readonly SIMPLE_FIELDS = [
-    'title',
-    'value',
-    'currency',
-    'pipeline_id',
-    'contact_id',
-    'probability',
-  ] as const;
-
-  /** DTO fields that accept `null` (nullable columns). */
-  private static readonly NULLABLE_FIELDS = [
-    'description',
-    'assigned_to_id',
-    'team_id',
-  ] as const;
 
   constructor(
     @InjectRepository(Deal)
@@ -62,28 +50,33 @@ export class DealsService {
 
     const qb = this.dealsRepo
       .createQueryBuilder('d')
-      .leftJoinAndSelect('d.contact', 'c')
+      .leftJoinAndSelect('d.contacts', 'c')
+      .leftJoinAndSelect('d.company', 'comp')
       .leftJoinAndSelect('d.assigned_to', 'u')
       .leftJoinAndSelect('d.stage', 's')
       .where('d.business_id = :bid', { bid: business.id });
 
-    if (query.pipeline_id)
-      qb.andWhere('d.pipeline_id = :pid', { pid: query.pipeline_id });
-    if (query.stage_id)
-      qb.andWhere('d.stage_id = :sid', { sid: query.stage_id });
+    if (query.pipelineId)
+      qb.andWhere('d.pipeline_id = :pid', { pid: query.pipelineId });
+    if (query.stageId) qb.andWhere('d.stage_id = :sid', { sid: query.stageId });
     if (query.status)
       qb.andWhere('d.status = :status', { status: query.status });
-    if (query.contact_id)
-      qb.andWhere('d.contact_id = :cid', { cid: query.contact_id });
-    if (query.assigned_to_id)
-      qb.andWhere('d.assigned_to_id = :uid', { uid: query.assigned_to_id });
-    if (query.team_id) qb.andWhere('d.team_id = :tid', { tid: query.team_id });
+    if (query.contactId) {
+      qb.innerJoin('d.contacts', 'contactFilter');
+      qb.andWhere('contactFilter.id = :cid', { cid: query.contactId });
+    }
+    if (query.companyId)
+      qb.andWhere('d.company_id = :compid', { compid: query.companyId });
+    if (query.assignedToId)
+      qb.andWhere('d.assigned_to_id = :uid', { uid: query.assignedToId });
+    if (query.teamId) qb.andWhere('d.team_id = :tid', { tid: query.teamId });
 
     if (query.search) {
+      qb.leftJoin('d.contacts', 'searchContacts');
       qb.andWhere(
         new Brackets((q) => {
           q.where('d.title ILIKE :s', { s: `%${query.search}%` }).orWhere(
-            'c.name ILIKE :s',
+            'searchContacts.name ILIKE :s',
             { s: `%${query.search}%` },
           );
         }),
@@ -109,7 +102,7 @@ export class DealsService {
   async findOne(business: Business, id: string): Promise<Deal> {
     const deal = await this.dealsRepo.findOne({
       where: { id, business_id: business.id },
-      relations: ['contact', 'assigned_to', 'team', 'stage', 'pipeline'],
+      relations: ['contacts', 'company', 'assigned_to', 'team', 'stage', 'pipeline'],
     });
     if (!deal) throw new NotFoundException('Deal not found');
     return deal;
@@ -118,18 +111,20 @@ export class DealsService {
   // ─── Create ────────────────────────────────────────────────────────────────
 
   async create(business: Business, dto: CreateDealDto): Promise<Deal> {
-    const contact = await this.contactsRepo.findOne({
-      where: { id: dto.contact_id, businessId: business.id },
-    });
-    if (!contact) throw new NotFoundException('Contact not found');
+    const contacts =
+      dto.contactIds?.length > 0
+        ? await this.contactsRepo.find({
+            where: { id: In(dto.contactIds), businessId: business.id },
+          })
+        : [];
 
     const pipeline = await this.pipelineRepo.findOne({
-      where: { id: dto.pipeline_id, business_id: business.id },
+      where: { id: dto.pipelineId, business_id: business.id },
     });
     if (!pipeline) throw new NotFoundException('Pipeline not found');
 
     const stage = await this.stageRepo.findOne({
-      where: { id: dto.stage_id, pipeline_id: pipeline.id },
+      where: { id: dto.stageId, pipeline_id: pipeline.id },
     });
     if (!stage)
       throw new BadRequestException(
@@ -139,10 +134,23 @@ export class DealsService {
     const { status, closed_at } = this.deriveStatusFromStage(stage);
 
     const deal = this.dealsRepo.create({
-      ...dto,
+      title: dto.title,
+      description: dto.description,
+      value: dto.value,
+      currency: dto.currency,
+      pipeline_id: dto.pipelineId,
+      stage_id: dto.stageId,
+      company_id: dto.companyId,
+      assigned_to_id: dto.assignedToId,
+      team_id: dto.teamId,
+      expected_close_date: dto.expectedCloseDate
+        ? new Date(dto.expectedCloseDate)
+        : null,
+      probability: dto.probability,
       business_id: business.id,
       status,
       closed_at,
+      contacts,
     });
 
     const saved = await this.dealsRepo.save(deal);
@@ -155,15 +163,18 @@ export class DealsService {
       }),
     );
 
-    await this.activitiesRepo.save(
-      this.activitiesRepo.create({
-        contact_id: contact.id,
-        type: ActivityType.SYSTEM,
-        content: `Nuevo negocio creado: "${saved.title}" por valor de ${saved.value} ${saved.currency}`,
-        metadata: { deal_id: saved.id, value: saved.value },
-        created_by: ActivityCreatedBy.SYSTEM,
-      }),
-    );
+    if (contacts.length > 0) {
+      const activities = contacts.map((c) =>
+        this.activitiesRepo.create({
+          contact_id: c.id,
+          type: ActivityType.SYSTEM,
+          content: `Nuevo negocio creado: "${saved.title}" por valor de ${saved.value} ${saved.currency}`,
+          metadata: { deal_id: saved.id, value: saved.value },
+          created_by: ActivityCreatedBy.SYSTEM,
+        }),
+      );
+      await this.activitiesRepo.save(activities);
+    }
 
     return saved;
   }
@@ -178,17 +189,30 @@ export class DealsService {
     const deal = await this.findOne(business, id);
     const patch = this.buildPatch(dto);
 
-    if (dto.stage_id && dto.stage_id !== deal.stage_id) {
-      const pipelineId = (dto.pipeline_id ?? deal.pipeline_id) as string;
-      await this.applyStageChange(deal, dto.stage_id, pipelineId, patch);
-    } else if (dto.stage_id !== undefined) {
-      patch.stage_id = dto.stage_id;
+    if (dto.stageId && dto.stageId !== deal.stage_id) {
+      const pipelineId = (dto.pipelineId ?? deal.pipeline_id) as string;
+      await this.applyStageChange(deal, dto.stageId, pipelineId, patch);
+    } else if (dto.stageId !== undefined) {
+      patch.stage_id = dto.stageId;
     }
 
-    await this.dealsRepo.update(
-      { id: deal.id, business_id: business.id },
-      patch,
-    );
+    if (dto.contactIds) {
+      const contacts =
+        dto.contactIds.length > 0
+          ? await this.contactsRepo.find({
+              where: { id: In(dto.contactIds), businessId: business.id },
+            })
+          : [];
+      // Updating ManyToMany manually via save
+      deal.contacts = contacts;
+      Object.assign(deal, patch);
+      await this.dealsRepo.save(deal);
+    } else {
+      await this.dealsRepo.update(
+        { id: deal.id, business_id: business.id },
+        patch,
+      );
+    }
 
     return this.findOne(business, id);
   }
@@ -199,17 +223,22 @@ export class DealsService {
   private buildPatch(dto: UpdateDealDto): QueryDeepPartialEntity<Deal> {
     const patch: Record<string, unknown> = {};
 
-    for (const key of DealsService.SIMPLE_FIELDS) {
-      if (dto[key] !== undefined) patch[key] = dto[key];
-    }
+    if (dto.title !== undefined) patch.title = dto.title;
+    if (dto.value !== undefined) patch.value = dto.value;
+    if (dto.currency !== undefined) patch.currency = dto.currency;
+    if (dto.pipelineId !== undefined) patch.pipeline_id = dto.pipelineId;
+    if (dto.companyId !== undefined) patch.company_id = dto.companyId;
+    if (dto.probability !== undefined) patch.probability = dto.probability;
 
-    for (const key of DealsService.NULLABLE_FIELDS) {
-      if (dto[key] !== undefined) patch[key] = dto[key] ?? null;
-    }
+    if (dto.description !== undefined)
+      patch.description = dto.description ?? null;
+    if (dto.assignedToId !== undefined)
+      patch.assigned_to_id = dto.assignedToId ?? null;
+    if (dto.teamId !== undefined) patch.team_id = dto.teamId ?? null;
 
-    if (dto.expected_close_date !== undefined) {
-      patch.expected_close_date = dto.expected_close_date
-        ? new Date(dto.expected_close_date)
+    if (dto.expectedCloseDate !== undefined) {
+      patch.expected_close_date = dto.expectedCloseDate
+        ? new Date(dto.expectedCloseDate)
         : null;
     }
 
@@ -252,15 +281,18 @@ export class DealsService {
     fromStageId: string,
     toStage: PipelineStage,
   ): Promise<void> {
-    await this.activitiesRepo.save(
-      this.activitiesRepo.create({
-        contact_id: deal.contact_id,
-        type: ActivityType.STAGE_CHANGE,
-        content: `Negocio "${deal.title}": etapa cambiada a "${toStage.name}"`,
-        metadata: { deal_id: deal.id, from: fromStageId, to: toStage.id },
-        created_by: ActivityCreatedBy.USER,
-      }),
-    );
+    if (deal.contacts && deal.contacts.length > 0) {
+      const activities = deal.contacts.map(contact => 
+        this.activitiesRepo.create({
+          contact_id: contact.id,
+          type: ActivityType.STAGE_CHANGE,
+          content: `Negocio "${deal.title}": etapa cambiada a "${toStage.name}"`,
+          metadata: { deal_id: deal.id, from: fromStageId, to: toStage.id },
+          created_by: ActivityCreatedBy.USER,
+        })
+      );
+      await this.activitiesRepo.save(activities);
+    }
   }
 
   /**
@@ -308,7 +340,7 @@ export class DealsService {
 
     const deals = await this.dealsRepo.find({
       where: { business_id: business.id, pipeline_id: pipelineId },
-      relations: ['contact', 'assigned_to', 'stage'],
+      relations: ['contacts', 'company', 'assigned_to', 'stage'],
       order: { updated_at: 'DESC' },
     });
 

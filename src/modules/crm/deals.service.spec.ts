@@ -36,7 +36,7 @@ const makeDeal = (overrides: Partial<Deal> = {}): Deal =>
     pipeline_id: 'pipe-uuid',
     stage_id: 'stage-uuid',
     status: DealStatus.OPEN,
-    contact_id: 'contact-uuid',
+    contacts: [{ id: 'contact-uuid' } as Contact],
     closed_at: null,
     deleted_at: null,
     ...overrides,
@@ -159,7 +159,7 @@ describe('DealsService', () => {
       dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
 
       const result = await service.update(mockBusiness, 'deal-uuid', {
-        stage_id: 'stage-new',
+        stageId: 'stage-new',
       });
 
       expect(result.status).toBe(DealStatus.OPEN);
@@ -192,7 +192,7 @@ describe('DealsService', () => {
       dealsRepo.update.mockResolvedValue({ affected: 1 });
 
       const result = await service.update(mockBusiness, 'deal-uuid', {
-        stage_id: 'stage-won',
+        stageId: 'stage-won',
       });
 
       expect(result.status).toBe(DealStatus.WON);
@@ -222,7 +222,7 @@ describe('DealsService', () => {
       dealsRepo.update.mockResolvedValue({ affected: 1 });
 
       const result = await service.update(mockBusiness, 'deal-uuid', {
-        stage_id: 'stage-lost',
+        stageId: 'stage-lost',
       });
 
       expect(result.status).toBe(DealStatus.LOST);
@@ -237,7 +237,7 @@ describe('DealsService', () => {
 
       await expect(
         service.update(mockBusiness, 'deal-uuid', {
-          stage_id: 'stage-other-pipeline',
+          stageId: 'stage-other-pipeline',
         }),
       ).rejects.toThrow(BadRequestException);
 
@@ -251,7 +251,7 @@ describe('DealsService', () => {
       dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
 
       await service.update(mockBusiness, 'deal-uuid', {
-        stage_id: 'same-stage',
+        stageId: 'same-stage',
       });
 
       expect(stageRepo.findOne).not.toHaveBeenCalled();
@@ -274,7 +274,7 @@ describe('DealsService', () => {
       dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
 
       await service.update(mockBusiness, 'deal-uuid', {
-        stage_id: 'stage-new',
+        stageId: 'stage-new',
       });
 
       // closes open history entry
@@ -304,11 +304,13 @@ describe('DealsService', () => {
       dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
 
       await service.update(mockBusiness, 'deal-uuid', {
-        stage_id: 'stage-new',
+        stageId: 'stage-new',
       });
 
       expect(activitiesRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ type: ActivityType.STAGE_CHANGE }),
+        expect.arrayContaining([
+          expect.objectContaining({ type: ActivityType.STAGE_CHANGE })
+        ])
       );
     });
   });

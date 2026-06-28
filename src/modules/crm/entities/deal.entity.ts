@@ -8,9 +8,12 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  JoinTable,
   Index,
+  ManyToMany,
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
+import { Company } from './company.entity';
 import { Contact } from './contact.entity';
 import { CrmUser } from './user.entity';
 import { Team } from './team.entity';
@@ -68,12 +71,21 @@ export class Deal {
   @JoinColumn({ name: 'stage_id' })
   stage: PipelineStage;
 
-  @Column('uuid')
-  contact_id: string;
+  @Column('uuid', { nullable: true })
+  company_id: string | null;
 
-  @ManyToOne(() => Contact, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'contact_id' })
-  contact: Contact;
+  @ManyToOne(() => Company, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'company_id' })
+  company: Company | null;
+
+  @ManyToMany(() => Contact, contact => contact.deals)
+  @JoinTable({
+    name: 'deal_contacts',
+    schema: 'crm',
+    joinColumn: { name: 'deal_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'contact_id', referencedColumnName: 'id' }
+  })
+  contacts: Contact[];
 
   @Column('uuid', { nullable: true })
   assigned_to_id: string | null;
