@@ -50,6 +50,11 @@ export class ExportCompaniesDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  ownerId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   customFieldFilters?: string;
 
   @ApiPropertyOptional({ type: [ExportCompanyColumnDto] })

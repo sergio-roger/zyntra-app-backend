@@ -36,6 +36,7 @@ export class CompaniesService {
       .leftJoinAndSelect('e.industry', 'st')
       .leftJoinAndSelect('e.lifecycleStage', 'ls')
       .leftJoinAndSelect('e.tags', 't')
+      .leftJoinAndSelect('e.owner', 'o')
       .where('e.businessId = :bid', { bid: business.id });
 
     if (query.search) {
@@ -52,6 +53,24 @@ export class CompaniesService {
     if (query.lifecycleStageId) {
       qb.andWhere('e.lifecycleStageId = :lsId', {
         lsId: query.lifecycleStageId,
+      });
+    }
+
+    if (query.ownerId === 'unassigned') {
+      qb.andWhere('e.ownerId IS NULL');
+    } else if (query.ownerId) {
+      qb.andWhere('e.ownerId = :ownerId', { ownerId: query.ownerId });
+    }
+
+    if (query.createdAtFrom) {
+      qb.andWhere('e.createdAt >= :createdAtFrom', {
+        createdAtFrom: query.createdAtFrom,
+      });
+    }
+
+    if (query.createdAtTo) {
+      qb.andWhere('e.createdAt <= :createdAtTo', {
+        createdAtTo: query.createdAtTo,
       });
     }
 
@@ -269,6 +288,7 @@ export class CompaniesService {
       .leftJoinAndSelect('e.industry', 'st')
       .leftJoinAndSelect('e.lifecycleStage', 'ls')
       .leftJoinAndSelect('e.tags', 't')
+      .leftJoinAndSelect('e.owner', 'o')
       .where('e.businessId = :bid', { bid: business.id });
 
     if (dto.search) {
@@ -283,6 +303,11 @@ export class CompaniesService {
       qb.andWhere('e.lifecycleStageId = :lsId', {
         lsId: dto.lifecycleStageId,
       });
+    if (dto.ownerId === 'unassigned') {
+      qb.andWhere('e.ownerId IS NULL');
+    } else if (dto.ownerId) {
+      qb.andWhere('e.ownerId = :ownerId', { ownerId: dto.ownerId });
+    }
     if (dto.createdAtFrom)
       qb.andWhere('e.createdAt >= :from', { from: dto.createdAtFrom });
     if (dto.createdAtTo)

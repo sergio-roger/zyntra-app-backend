@@ -48,6 +48,16 @@ export class ListCompaniesDto {
   @IsString()
   customFieldFilters?: string;
 
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  createdAtFrom?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  createdAtTo?: string;
+
   @ApiPropertyOptional({ example: 'uuid-lifecycle-stage' })
   @IsUUID()
   @IsOptional()
