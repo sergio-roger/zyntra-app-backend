@@ -45,7 +45,7 @@ export class ContactsService {
     business: Business,
   ): Promise<{ id: string; name: string }[]> {
     return this.crmUsersRepo.find({
-      where: { business_id: business.id, is_active: true },
+      where: { businessId: business.id, isActive: true },
       select: ['id', 'name'],
       order: { name: 'ASC' },
     });

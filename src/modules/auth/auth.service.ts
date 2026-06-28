@@ -160,22 +160,22 @@ export class AuthService {
 
     // 2. Try CrmUser login
     const crmUser = await this.crmUserRepository.findOne({
-      where: { email: normalizedEmail, is_active: true },
+      where: { email: normalizedEmail, isActive: true },
       select: {
         id: true,
         email: true,
         role: true,
-        password_hash: true,
-        business_id: true,
+        passwordHash: true,
+        businessId: true,
       },
     });
 
     if (crmUser) {
       this.logger.log(
-        `[login] CRM user found id=${crmUser.id} role=${crmUser.role} business_id=${crmUser.business_id}`,
+        `[login] CRM user found id=${crmUser.id} role=${crmUser.role} businessId=${crmUser.businessId}`,
       );
 
-      const businessEntity = await this.validateBusiness(crmUser.business_id);
+      const businessEntity = await this.validateBusiness(crmUser.businessId);
       if (businessEntity && businessEntity.plan_id === null) {
         this.logger.warn(
           `[login] blocked global admin CRM user email=${normalizedEmail} id=${crmUser.id}`,
@@ -186,9 +186,9 @@ export class AuthService {
       }
 
       if (
-        crmUser.password_hash &&
+        crmUser.passwordHash &&
         (await argon2.verify(
-          crmUser.password_hash,
+          crmUser.passwordHash,
           password,
           this.getArgonOptions(),
         ))
@@ -225,6 +225,7 @@ export class AuthService {
       const crmUserPartial = {
         id: user.crm_user_id,
         role: user.role ?? UserRole.ADMIN,
+        businessId: user.id,
       } as CrmUser;
       return this.generateCrmUserToken(user, crmUserPartial);
     }
@@ -256,7 +257,7 @@ export class AuthService {
 
   private generateCrmUserToken(
     business: Business,
-    crmUser: Pick<CrmUser, 'id' | 'role' | 'business_id'>,
+    crmUser: Pick<CrmUser, 'id' | 'role' | 'businessId'>,
   ) {
     const payload: JwtPayload = {
       sub: business.id,

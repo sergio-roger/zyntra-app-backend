@@ -14,10 +14,10 @@ const mockBusiness = {
 
 const mockCrmUser = {
   id: 'user-uuid-1',
-  business_id: 'business-uuid-1234',
+  businessId: 'business-uuid-1234',
   name: 'John Doe',
   email: 'john@example.com',
-} as CrmUser;
+} as unknown as CrmUser;
 
 describe('CrmUsersController', () => {
   let controller: CrmUsersController;
@@ -71,7 +71,7 @@ describe('CrmUsersController', () => {
       mockUsersService.create.mockResolvedValue({
         id: 'new-uuid',
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
       const result = await controller.create(mockBusiness, createDto);
       expect(service.create).toHaveBeenCalledWith(mockBusiness, createDto);

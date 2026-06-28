@@ -6,6 +6,7 @@ import { CrmUser } from './entities/user.entity';
 import { Business } from '@auth/entities/business.entity';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { UserRole } from '@crm/enums/user-role.enum';
+import { UserStatus } from '@crm/enums/user-status.enum';
 
 const mockBusiness = {
   id: 'business-uuid-1234',
@@ -14,7 +15,7 @@ const mockBusiness = {
 
 const mockCrmUser = {
   id: 'user-uuid-1',
-  business_id: 'business-uuid-1234',
+  businessId: 'business-uuid-1234',
   name: 'John Doe',
   email: 'john@example.com',
   teams: [],
@@ -56,16 +57,16 @@ describe('CrmUsersService', () => {
   });
 
   describe('list', () => {
-    it('should return all users for a business ordered by name', async () => {
+    it('should return all users for a business ordered by createdAt', async () => {
       const usersList = [mockCrmUser];
       mockRepository.find.mockResolvedValue(usersList);
 
       const result = await service.list(mockBusiness);
 
       expect(repo.find).toHaveBeenCalledWith({
-        where: { business_id: mockBusiness.id },
+        where: { businessId: mockBusiness.id },
         relations: ['teams'],
-        order: { name: 'ASC' },
+        order: { createdAt: 'ASC' },
       });
       expect(result).toEqual(usersList);
     });
@@ -78,7 +79,7 @@ describe('CrmUsersService', () => {
       const result = await service.findOne(mockBusiness, 'user-uuid-1');
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { id: 'user-uuid-1', business_id: mockBusiness.id },
+        where: { id: 'user-uuid-1', businessId: mockBusiness.id },
         relations: ['teams'],
       });
       expect(result).toEqual(mockCrmUser);
@@ -104,22 +105,32 @@ describe('CrmUsersService', () => {
       mockRepository.findOne.mockResolvedValue(null);
       mockRepository.create.mockReturnValue({
         ...createDto,
-        business_id: mockBusiness.id,
+        firstName: 'Alice',
+        lastName: 'Smith',
+        status: UserStatus.ACTIVE,
+        isActive: true,
+        isAccountActivated: false,
+        businessId: mockBusiness.id,
       });
       mockRepository.save.mockResolvedValue({
         id: 'new-user-uuid',
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
 
       const result = await service.create(mockBusiness, createDto);
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { email: createDto.email, business_id: mockBusiness.id },
+        where: { email: createDto.email, businessId: mockBusiness.id },
       });
       expect(repo.create).toHaveBeenCalledWith({
         ...createDto,
-        business_id: mockBusiness.id,
+        firstName: 'Alice',
+        lastName: 'Smith',
+        status: UserStatus.ACTIVE,
+        isActive: true,
+        isAccountActivated: false,
+        businessId: mockBusiness.id,
       });
       expect(repo.save).toHaveBeenCalled();
       expect(result).toHaveProperty('id');
@@ -165,13 +176,13 @@ describe('CrmUsersService', () => {
       mockRepository.findOne.mockResolvedValue(mockCrmUser);
       mockRepository.softRemove.mockResolvedValue({
         ...mockCrmUser,
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       });
 
       await service.remove(mockBusiness, mockCrmUser.id);
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { id: mockCrmUser.id, business_id: mockBusiness.id },
+        where: { id: mockCrmUser.id, businessId: mockBusiness.id },
         relations: ['teams'],
       });
       expect(repo.softRemove).toHaveBeenCalledWith(mockCrmUser);

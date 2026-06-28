@@ -42,7 +42,7 @@ export class TeamsService {
 
     if (member_ids && member_ids.length > 0) {
       team.members = await this.userRepo.find({
-        where: { id: In(member_ids), business_id: business.id },
+        where: { id: In(member_ids), businessId: business.id },
       });
     }
 
@@ -58,7 +58,7 @@ export class TeamsService {
     if (member_ids !== undefined) {
       if (member_ids.length > 0) {
         team.members = await this.userRepo.find({
-          where: { id: In(member_ids), business_id: business.id },
+          where: { id: In(member_ids), businessId: business.id },
         });
       } else {
         team.members = [];

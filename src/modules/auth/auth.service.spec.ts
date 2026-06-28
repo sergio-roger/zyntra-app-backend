@@ -30,9 +30,9 @@ const mockCrmUser: Partial<CrmUser> = {
   id: 'user-uuid',
   email: 'agent@test.com',
   role: UserRole.AGENT,
-  password_hash: '',
-  business_id: 'biz-uuid',
-  is_active: true,
+  passwordHash: '',
+  businessId: 'biz-uuid',
+  isActive: true,
 };
 
 describe('AuthService — unified login', () => {
@@ -43,7 +43,7 @@ describe('AuthService — unified login', () => {
       ),
     });
     mockBusiness.password_hash = HASHED;
-    mockCrmUser.password_hash = HASHED;
+    mockCrmUser.passwordHash = HASHED;
   });
   let service: AuthService;
 

@@ -403,7 +403,7 @@ describe('ContactsService', () => {
 
       expect(result).toEqual(members);
       expect(crmUsersRepo.find).toHaveBeenCalledWith({
-        where: { business_id: 'biz-uuid', is_active: true },
+        where: { businessId: 'biz-uuid', isActive: true },
         select: ['id', 'name'],
         order: { name: 'ASC' },
       });

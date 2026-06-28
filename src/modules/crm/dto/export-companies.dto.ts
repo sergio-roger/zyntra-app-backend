@@ -40,6 +40,11 @@ export class ExportCompaniesDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  employeeRange?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   createdAtFrom?: string;
 
   @ApiPropertyOptional()
