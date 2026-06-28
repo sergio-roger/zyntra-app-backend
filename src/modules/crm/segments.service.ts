@@ -11,6 +11,16 @@ import { Business } from '@auth/entities/business.entity';
 import { CreateSegmentDto } from './dto/create-segment.dto';
 import { UpdateSegmentDto } from './dto/update-segment.dto';
 
+export interface SegmentResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  conditions: SegmentCondition[];
+  type: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 @Injectable()
 export class SegmentsService {
   constructor(
@@ -20,22 +30,27 @@ export class SegmentsService {
     private readonly contactRepo: Repository<Contact>,
   ) {}
 
-  async findAll(business: Business): Promise<Segment[]> {
-    return this.segmentRepo.find({
+  async findAll(business: Business): Promise<SegmentResponse[]> {
+    const segments = await this.segmentRepo.find({
       where: { business_id: business.id },
       order: { name: 'ASC' },
     });
+
+    return segments.map((s) => this.mapSegment(s));
   }
 
-  async findOne(business: Business, id: string): Promise<Segment> {
+  async findOne(business: Business, id: string): Promise<SegmentResponse> {
     const segment = await this.segmentRepo.findOne({
       where: { id, business_id: business.id },
     });
     if (!segment) throw new NotFoundException('Segmento no encontrado');
-    return segment;
+    return this.mapSegment(segment);
   }
 
-  async create(business: Business, dto: CreateSegmentDto): Promise<Segment> {
+  async create(
+    business: Business,
+    dto: CreateSegmentDto,
+  ): Promise<SegmentResponse> {
     const existing = await this.segmentRepo.findOne({
       where: { business_id: business.id, name: dto.name },
     });
@@ -47,14 +62,16 @@ export class SegmentsService {
       ...dto,
       business_id: business.id,
     });
-    return this.segmentRepo.save(segment);
+    const saved = await this.segmentRepo.save(segment);
+
+    return this.mapSegment(saved) as any;
   }
 
   async update(
     business: Business,
     id: string,
     dto: UpdateSegmentDto,
-  ): Promise<Segment> {
+  ): Promise<SegmentResponse> {
     const segment = await this.findOne(business, id);
 
     if (dto.name && dto.name !== segment.name) {
@@ -67,12 +84,25 @@ export class SegmentsService {
     }
 
     Object.assign(segment, dto);
-    return this.segmentRepo.save(segment);
+    const saved = await this.segmentRepo.save(segment);
+    return this.mapSegment(saved);
   }
 
   async remove(business: Business, id: string): Promise<void> {
     const segment = await this.findOne(business, id);
     await this.segmentRepo.softRemove(segment);
+  }
+
+  private mapSegment(segment: Segment): SegmentResponse {
+    return {
+      id: segment.id,
+      name: segment.name,
+      description: segment.description,
+      conditions: segment.conditions,
+      type: segment.type,
+      createdAt: segment.created_at,
+      updatedAt: segment.updated_at,
+    };
   }
 
   buildQueryForConditions(

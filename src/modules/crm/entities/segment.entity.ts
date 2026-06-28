@@ -39,6 +39,9 @@ export class Segment {
   @Column('jsonb', { default: [] })
   conditions: SegmentCondition[];
 
+  @Column({ default: 'dynamic' })
+  type: string;
+
   @CreateDateColumn()
   created_at: Date;
 

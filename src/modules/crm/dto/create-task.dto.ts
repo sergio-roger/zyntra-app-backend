@@ -22,7 +22,7 @@ export class CreateTaskDto {
 
   @ApiProperty({ example: '2024-05-01T10:00:00Z' })
   @IsDateString()
-  due_date: string;
+  dueDate: string;
 
   @ApiPropertyOptional({ enum: TaskPriority })
   @IsEnum(TaskPriority)
@@ -32,10 +32,15 @@ export class CreateTaskDto {
   @ApiPropertyOptional({ example: 'uuid-del-contacto' })
   @IsUUID()
   @IsOptional()
-  contact_id?: string;
+  contactId?: string;
+
+  @ApiPropertyOptional({ example: 'uuid-del-deal' })
+  @IsUUID()
+  @IsOptional()
+  dealId?: string;
 
   @ApiPropertyOptional({ example: 'uuid-del-usuario' })
   @IsUUID()
   @IsOptional()
-  assigned_to?: string;
+  assignedTo?: string;
 }

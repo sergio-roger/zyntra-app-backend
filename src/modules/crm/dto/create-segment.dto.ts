@@ -23,6 +23,11 @@ export class CreateSegmentDto {
   @MaxLength(500)
   description?: string;
 
+  @ApiPropertyOptional({ example: 'dynamic' })
+  @IsString()
+  @IsOptional()
+  type?: 'dynamic' | 'static';
+
   @ApiProperty({
     example: [{ field: 'source', operator: 'equals', value: 'whatsapp' }],
   })

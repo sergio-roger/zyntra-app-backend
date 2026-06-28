@@ -45,9 +45,14 @@ export class CrmTasksController {
     @CurrentBusiness() business: Business,
     @CurrentCrmUser() caller: { id: string | null; role: UserRole },
     @Query('status') status?: TaskStatus,
-    @Query('contact_id') contact_id?: string,
+    @Query('contactId') contactId?: string,
+    @Query('dealId') dealId?: string,
   ) {
-    return this.tasksService.list(business, { status, contact_id }, caller);
+    return this.tasksService.list(
+      business,
+      { status, contactId, dealId },
+      caller,
+    );
   }
 
   @Post()
