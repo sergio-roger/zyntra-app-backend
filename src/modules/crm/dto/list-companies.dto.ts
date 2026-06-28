@@ -26,25 +26,30 @@ export class ListCompaniesDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  industry_id?: string;
+  industryId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  owner_id?: string;
+  ownerId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  tax_type?: string;
+  taxType?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  employee_range?: string;
+  employeeRange?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  customFieldFilters?: string;
 
   @ApiPropertyOptional({ example: 'uuid-lifecycle-stage' })
   @IsUUID()
   @IsOptional()
-  lifecycle_stage_id?: string;
+  lifecycleStageId?: string;
 }

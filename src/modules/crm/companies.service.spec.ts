@@ -41,9 +41,9 @@ describe('CompaniesService', () => {
   };
 
   const companiesRepo = {
-    createQueryBuilder: jest.fn(() => qb),
+    createQueryBuilder: jest.fn().mockReturnValue(qb),
     findOne: jest.fn(),
-    create: jest.fn(<T>(x: T): T => x),
+    create: jest.fn().mockImplementation((x: any) => x),
     save: jest.fn(),
     softRemove: jest.fn(),
   };

@@ -18,8 +18,8 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'companies', schema: 'crm' })
-@Index(['business_id'])
-@Index(['business_id', 'name'], {
+@Index(['businessId'])
+@Index(['businessId', 'name'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })
@@ -27,8 +27,8 @@ export class Company {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column('uuid', { name: 'business_id' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -40,20 +40,20 @@ export class Company {
   @Column('varchar', { nullable: true })
   identification: string | null;
 
-  @Column('varchar', { nullable: true })
-  tax_type: string | null;
+  @Column('varchar', { name: 'tax_type', nullable: true })
+  taxType: string | null;
 
   @Column('varchar', { nullable: true })
   website: string | null;
 
   @Column('varchar', { name: 'employee_range', nullable: true })
-  employee_range: string | null;
+  employeeRange: string | null;
 
   @Column('text', { nullable: true })
   description: string | null;
 
   @Column('uuid', { name: 'industry_id', nullable: true })
-  industry_id: string | null;
+  industryId: string | null;
 
   @ManyToOne(() => Industry, {
     nullable: true,
@@ -64,7 +64,7 @@ export class Company {
   industry: Industry | null;
 
   @Column('uuid', { name: 'lifecycle_stage_id', nullable: true })
-  lifecycle_stage_id: string | null;
+  lifecycleStageId: string | null;
 
   @ManyToOne(() => LifecycleStage, {
     nullable: true,
@@ -72,10 +72,10 @@ export class Company {
     eager: false,
   })
   @JoinColumn({ name: 'lifecycle_stage_id' })
-  lifecycle_stage: LifecycleStage | null;
+  lifecycleStage: LifecycleStage | null;
 
   @Column('uuid', { name: 'owner_id', nullable: true })
-  owner_id: string | null;
+  ownerId: string | null;
 
   @ManyToOne(() => CrmUser, {
     nullable: true,
@@ -95,14 +95,14 @@ export class Company {
   tags: Tag[];
 
   @Column('jsonb', { name: 'custom_fields', nullable: true })
-  custom_fields: Record<string, any> | null;
+  customFields: Record<string, any> | null;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

@@ -291,21 +291,21 @@ export class CrmSeeder implements Seeder {
       let companiesCreated = 0;
       for (const companyData of DEFAULT_EMPRESAS) {
         const existing = await companyRepo.findOne({
-          where: { business_id: business.id, name: companyData.name },
+          where: { businessId: business.id, name: companyData.name },
         });
         if (existing) continue;
 
         const industry = industryMap[companyData.industryName] ?? null;
         await companyRepo.save(
           companyRepo.create({
-            business_id: business.id,
+            businessId: business.id,
             name: companyData.name,
             identification: companyData.identificacion ?? null,
-            tax_type: companyData.tax_type ?? null,
+            taxType: companyData.tax_type ?? null,
             website: companyData.website ?? null,
-            employee_range: companyData.employee_range ?? null,
+            employeeRange: companyData.employee_range ?? null,
             description: companyData.descripcion ?? null,
-            industry_id: industry?.id ?? null,
+            industryId: industry?.id ?? null,
           }),
         );
         companiesCreated++;

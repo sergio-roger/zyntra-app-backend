@@ -6,7 +6,6 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -31,12 +30,12 @@ export class ExportCompaniesDto {
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()
-  industry_id?: string;
+  industryId?: string;
 
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()
-  lifecycle_stage_id?: string;
+  lifecycleStageId?: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -47,6 +46,11 @@ export class ExportCompaniesDto {
   @IsString()
   @IsOptional()
   createdAtTo?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  customFieldFilters?: string;
 
   @ApiPropertyOptional({ type: [ExportCompanyColumnDto] })
   @IsArray()

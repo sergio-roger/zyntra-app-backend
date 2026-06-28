@@ -45,14 +45,18 @@ export class CompaniesService {
       );
     }
 
-    if (query.industry_id) {
-      qb.andWhere('e.industry_id = :stId', { stId: query.industry_id });
+    if (query.industryId) {
+      qb.andWhere('e.industryId = :stId', { stId: query.industryId });
     }
 
-    if (query.lifecycle_stage_id) {
-      qb.andWhere('e.lifecycle_stage_id = :lsId', {
-        lsId: query.lifecycle_stage_id,
+    if (query.lifecycleStageId) {
+      qb.andWhere('e.lifecycleStageId = :lsId', {
+        lsId: query.lifecycleStageId,
       });
+    }
+
+    if (query.customFieldFilters) {
+      this.applyCustomFieldFilters(qb, query.customFieldFilters);
     }
 
     qb.orderBy('e.name', 'ASC')
@@ -69,10 +73,69 @@ export class CompaniesService {
     };
   }
 
+  private applyCustomFieldFilters(
+    qb: import('typeorm').SelectQueryBuilder<Company>,
+    rawJson: string,
+  ): void {
+    try {
+      const conditions = JSON.parse(rawJson) as Array<{
+        field: string;
+        operator: string;
+        value: unknown;
+      }>;
+      conditions.forEach((cond, idx) => {
+        const col = cond.field
+          .replace('custom_fields.', '')
+          .replace(/[^a-z0-9_]/gi, '');
+        if (!col) return;
+        const key = `cf_${idx}`;
+        switch (cond.operator) {
+          case 'equals':
+            qb.andWhere(`e.custom_fields->>'${col}' = :${key}`, {
+              [key]: String(cond.value),
+            });
+            break;
+          case 'not_equals':
+            qb.andWhere(`e.custom_fields->>'${col}' != :${key}`, {
+              [key]: String(cond.value),
+            });
+            break;
+          case 'contains':
+            qb.andWhere(`e.custom_fields->>'${col}' ILIKE :${key}`, {
+              [key]: `%${String(cond.value)}%`,
+            });
+            break;
+          case 'greater_than':
+            qb.andWhere(`(e.custom_fields->>'${col}')::numeric > :${key}`, {
+              [key]: Number(cond.value),
+            });
+            break;
+          case 'less_than':
+            qb.andWhere(`(e.custom_fields->>'${col}')::numeric < :${key}`, {
+              [key]: Number(cond.value),
+            });
+            break;
+          case 'is_empty':
+            qb.andWhere(
+              `(e.custom_fields->>'${col}' IS NULL OR e.custom_fields->>'${col}' = '')`,
+            );
+            break;
+          case 'is_not_empty':
+            qb.andWhere(
+              `(e.custom_fields->>'${col}' IS NOT NULL AND e.custom_fields->>'${col}' != '')`,
+            );
+            break;
+        }
+      });
+    } catch {
+      // ignore malformed JSON
+    }
+  }
+
   async findOne(business: Business, id: string): Promise<Company> {
     const company = await this.repo.findOne({
-      where: { id, business_id: business.id },
-      relations: ['industry', 'lifecycle_stage', 'tags', 'owner'],
+      where: { id, businessId: business.id },
+      relations: ['industry', 'lifecycleStage', 'tags', 'owner'],
     });
     if (!company) throw new NotFoundException('Company not found');
     return company;
@@ -80,17 +143,17 @@ export class CompaniesService {
 
   async create(business: Business, dto: CreateCompanyDto): Promise<Company> {
     const existing = await this.repo.findOne({
-      where: { business_id: business.id, name: dto.name },
+      where: { businessId: business.id, name: dto.name },
     });
     if (existing)
       throw new ConflictException('A company with this name already exists');
 
-    const { tag_ids, ...rest } = dto;
-    const company = this.repo.create({ ...rest, business_id: business.id });
+    const { tagIds, ...rest } = dto;
+    const company = this.repo.create({ ...rest, businessId: business.id });
 
-    if (tag_ids?.length) {
+    if (tagIds?.length) {
       company.tags = await this.tagsRepo.findBy({
-        id: In(tag_ids),
+        id: In(tagIds),
         business_id: business.id,
       });
     } else {
@@ -109,22 +172,24 @@ export class CompaniesService {
 
     if (dto.name && dto.name !== company.name) {
       const existing = await this.repo.findOne({
-        where: { business_id: business.id, name: dto.name },
+        where: { businessId: business.id, name: dto.name },
       });
       if (existing)
         throw new ConflictException('A company with this name already exists');
     }
 
-    const { tag_ids, ...rest } = dto;
+    const { tagIds, ...rest } = dto;
     Object.assign(company, rest);
 
-    if (tag_ids !== undefined) {
-      company.tags = tag_ids.length
-        ? await this.tagsRepo.findBy({
-            id: In(tag_ids),
-            business_id: business.id,
-          })
-        : [];
+    if (tagIds !== undefined) {
+      if (tagIds.length === 0) {
+        company.tags = [];
+      } else {
+        company.tags = await this.tagsRepo.findBy({
+          id: In(tagIds),
+          business_id: business.id,
+        });
+      }
     }
 
     return this.repo.save(company);
@@ -153,32 +218,44 @@ export class CompaniesService {
         return company.identification ?? '';
       case 'website':
         return company.website ?? '';
-      case 'employee_range':
-        return company.employee_range ?? '';
+      case 'employeeRange':
+        return company.employeeRange ?? '';
       case 'description':
         return company.description ?? '';
       case 'industry':
         return company.industry?.name ?? '';
-      case 'lifecycle_stage':
-        return company.lifecycle_stage?.name ?? '';
+      case 'lifecycleStage':
+        return company.lifecycleStage?.name ?? '';
       case 'tags':
         return (company.tags ?? []).map((t) => t.name).join(', ');
-      case 'created_at':
-        return this.formatDate(company.created_at);
-      case 'updated_at':
-        return this.formatDate(company.updated_at);
-      default:
+      case 'createdAt':
+        return this.formatDate(company.createdAt);
+      case 'updatedAt':
+        return this.formatDate(company.updatedAt);
+      default: {
         if (col.key.startsWith('cf_')) {
           const field = col.key.slice(3);
           const val = (
-            company.custom_fields as Record<string, unknown> | null
+            company.customFields as Record<string, unknown> | null
           )?.[field];
-          return val === null || val === undefined ? '' : String(val);
+          if (val === null || val === undefined) return '';
+          return typeof val === 'object'
+            ? JSON.stringify(val)
+            : String(val as string | number | boolean);
         }
-        return String(
-          ((company as unknown as Record<string, unknown>)[col.key] ??
-            '') as any,
-        );
+        const defaultVal = ((company as unknown as Record<string, unknown>)[
+          col.key
+        ] ?? '') as unknown;
+        if (
+          defaultVal === null ||
+          defaultVal === undefined ||
+          defaultVal === ''
+        )
+          return '';
+        return typeof defaultVal === 'object'
+          ? JSON.stringify(defaultVal)
+          : String(defaultVal as string | number | boolean);
+      }
     }
   }
 
@@ -189,9 +266,9 @@ export class CompaniesService {
     const qb = this.repo
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.industry', 'st')
-      .leftJoinAndSelect('e.lifecycle_stage', 'ls')
+      .leftJoinAndSelect('e.lifecycleStage', 'ls')
       .leftJoinAndSelect('e.tags', 't')
-      .where('e.business_id = :bid', { bid: business.id });
+      .where('e.businessId = :bid', { bid: business.id });
 
     if (dto.search) {
       qb.andWhere(
@@ -199,16 +276,19 @@ export class CompaniesService {
         { search: `%${dto.search.toLowerCase()}%` },
       );
     }
-    if (dto.industry_id)
-      qb.andWhere('e.industry_id = :stId', { stId: dto.industry_id });
-    if (dto.lifecycle_stage_id)
-      qb.andWhere('e.lifecycle_stage_id = :lsId', {
-        lsId: dto.lifecycle_stage_id,
+    if (dto.industryId)
+      qb.andWhere('e.industryId = :stId', { stId: dto.industryId });
+    if (dto.lifecycleStageId)
+      qb.andWhere('e.lifecycleStageId = :lsId', {
+        lsId: dto.lifecycleStageId,
       });
     if (dto.createdAtFrom)
-      qb.andWhere('e.created_at >= :from', { from: dto.createdAtFrom });
+      qb.andWhere('e.createdAt >= :from', { from: dto.createdAtFrom });
     if (dto.createdAtTo)
-      qb.andWhere('e.created_at <= :to', { to: dto.createdAtTo });
+      qb.andWhere('e.createdAt <= :to', { to: dto.createdAtTo });
+    if (dto.customFieldFilters) {
+      this.applyCustomFieldFilters(qb, dto.customFieldFilters);
+    }
 
     qb.orderBy('e.name', 'ASC');
     const companies = await qb.getMany();
@@ -231,11 +311,11 @@ export class CompaniesService {
     let inserted = 0;
     for (const row of rows) {
       const existing = await this.repo.findOne({
-        where: { business_id: business.id, name: row.name },
+        where: { businessId: business.id, name: row.name },
       });
       if (existing) continue;
       await this.repo.save(
-        this.repo.create({ ...row, business_id: business.id, tags: [] }),
+        this.repo.create({ ...row, businessId: business.id, tags: [] }),
       );
       inserted++;
     }

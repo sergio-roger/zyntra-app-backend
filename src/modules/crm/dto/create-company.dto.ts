@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
-  IsInt,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -9,7 +8,6 @@ import {
   IsUUID,
   IsUrl,
   MaxLength,
-  Min,
 } from 'class-validator';
 
 export class CreateCompanyDto {
@@ -34,11 +32,12 @@ export class CreateCompanyDto {
   @IsString()
   @IsOptional()
   @MaxLength(20)
-  tax_type?: string;
+  taxType?: string;
+
   @ApiPropertyOptional({ example: '1-50' })
   @IsString()
   @IsOptional()
-  employee_range?: string;
+  employeeRange?: string;
 
   @ApiPropertyOptional({ example: 'Empresa líder en distribución industrial' })
   @IsString()
@@ -49,17 +48,17 @@ export class CreateCompanyDto {
   @ApiPropertyOptional({ example: 'uuid-del-sector' })
   @IsUUID()
   @IsOptional()
-  industry_id?: string;
+  industryId?: string;
 
   @ApiPropertyOptional({ example: 'uuid-del-lifecycle-stage' })
   @IsUUID()
   @IsOptional()
-  lifecycle_stage_id?: string;
+  lifecycleStageId?: string;
 
   @ApiPropertyOptional({ example: 'uuid-del-owner' })
   @IsUUID()
   @IsOptional()
-  owner_id?: string;
+  ownerId?: string;
 
   @ApiPropertyOptional({
     type: [String],
@@ -68,12 +67,12 @@ export class CreateCompanyDto {
   @IsArray()
   @IsUUID('4', { each: true })
   @IsOptional()
-  tag_ids?: string[];
+  tagIds?: string[];
 
   @ApiPropertyOptional({
     example: { industria: 'manufactura', pais: 'Ecuador' },
   })
   @IsObject()
   @IsOptional()
-  custom_fields?: Record<string, any>;
+  customFields?: Record<string, any>;
 }
