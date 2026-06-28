@@ -13,9 +13,10 @@ import { PipelineStage } from '../../modules/crm/entities/pipeline-stage.entity'
 import { Pipeline } from '../../modules/crm/entities/pipeline.entity';
 import { Industry } from '../../modules/crm/entities/industry.entity';
 import { Tag } from '../../modules/crm/entities/tag.entity';
-import { CrmUser } from '../../modules/crm/entities/user.entity';
+import { User } from '../../modules/crm/entities/user.entity';
 import { DealStatus } from '../../modules/crm/enums/deal-status.enum';
 import { UserRole } from '../../modules/crm/enums/user-role.enum';
+import { UserStatus } from '../../modules/crm/enums/user-status.enum';
 import { CustomFieldType } from '../../modules/crm/enums/custom-field-type.enum';
 import { CustomField } from '../../modules/crm/entities/custom-field.entity';
 import { Team } from '../../modules/crm/entities/team.entity';
@@ -37,7 +38,7 @@ export class CrmSeeder implements Seeder {
   async run(ds: DataSource): Promise<void> {
     const planRepo = ds.getRepository(Plan);
     const businessRepo = ds.getRepository(Business);
-    const userRepo = ds.getRepository(CrmUser);
+    const userRepo = ds.getRepository(User);
     const stageRepo = ds.getRepository(LifecycleStage);
     const tagRepo = ds.getRepository(Tag);
     const contactRepo = ds.getRepository(Contact);
@@ -63,7 +64,7 @@ export class CrmSeeder implements Seeder {
 
     console.log('\n👥 [1/5] Seeding businesses and admin users...');
 
-    const agentUserMap: Record<string, CrmUser> = {};
+    const agentUserMap: Record<string, User> = {};
 
     for (const entry of BUSINESSES_DATA) {
       const plan = await planRepo.findOne({ where: { name: entry.planName } });
@@ -85,63 +86,79 @@ export class CrmSeeder implements Seeder {
             trial_ends_at: trialEndsAt,
           }),
         );
-        console.log(`  �o. Business created: ${business.name}`);
+        console.log(`  o. Business created: ${business.name}`);
       } else {
-        console.log(`  �"�️  Business already exists: ${business.name}`);
+        console.log(`  "️  Business already exists: ${business.name}`);
       }
 
       // Admin user
       const existingAdmin = await userRepo.findOne({
-        where: { business_id: business.id, email: entry.adminUser.email },
+        where: { businessId: business.id, email: entry.adminUser.email },
       });
 
       if (!existingAdmin) {
+        const parts = entry.adminUser.name.split(' ');
         await userRepo.save(
           userRepo.create({
-            business_id: business.id,
-            plan_id: plan.id,
+            businessId: business.id,
+            planId: plan.id,
+            firstName: parts[0] || '',
+            lastName: parts.slice(1).join(' ') || '',
             name: entry.adminUser.name,
             email: entry.adminUser.email,
-            password_hash: passwordHash,
+            jobTitle: 'Director de Operaciones',
+            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            passwordHash: passwordHash,
             role: entry.adminUser.role,
-            is_active: true,
+            status: UserStatus.ACTIVE,
+            isActive: true,
+            isAccountActivated: true,
+            activatedAt: new Date(),
           }),
         );
-        console.log(`  �o. Admin user created: ${entry.adminUser.email}`);
+        console.log(`  ✅ Admin user created: ${entry.adminUser.email}`);
       } else {
         console.log(
-          `  �"�️  Admin user already exists: ${entry.adminUser.email}`,
+          `  ℹ️  Admin user already exists: ${entry.adminUser.email}`,
         );
       }
 
       // Agent user
       let agentUser = await userRepo.findOne({
-        where: { business_id: business.id, email: entry.agentUser.email },
+        where: { businessId: business.id, email: entry.agentUser.email },
       });
 
       if (!agentUser) {
+        const parts = entry.agentUser.name.split(' ');
         agentUser = await userRepo.save(
           userRepo.create({
-            business_id: business.id,
-            plan_id: plan.id,
+            businessId: business.id,
+            planId: plan.id,
+            firstName: parts[0] || '',
+            lastName: parts.slice(1).join(' ') || '',
             name: entry.agentUser.name,
             email: entry.agentUser.email,
-            password_hash: passwordHash,
+            jobTitle: 'Ejecutivo Comercial Senior',
+            avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+            passwordHash: passwordHash,
             role: entry.agentUser.role,
-            is_active: true,
+            status: UserStatus.ACTIVE,
+            isActive: true,
+            isAccountActivated: true,
+            activatedAt: new Date(),
           }),
         );
-        console.log(`  �o. Agent user created: ${entry.agentUser.email}`);
+        console.log(`  ✅ Agent user created: ${entry.agentUser.email}`);
       } else {
         console.log(
-          `  �"�️  Agent user already exists: ${entry.agentUser.email}`,
+          `  ℹ️  Agent user already exists: ${entry.agentUser.email}`,
         );
       }
 
       agentUserMap[entry.business.email] = agentUser;
     }
 
-    // "?"? 2.1. Superadmin Business + Super Admin User "?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?
+    // ── 2.1. Superadmin Business + Super Admin User ─────────────────────────
     console.log('\n✅ [2.1] Seeding global superadmin business and user...');
     let superBusiness = await businessRepo.findOne({
       where: { email: 'superadmin@zyntra.com' },
@@ -156,10 +173,10 @@ export class CrmSeeder implements Seeder {
           trial_ends_at: trialEndsAt,
         }),
       );
-      console.log(`  �o. Superadmin Business created: ${superBusiness.name}`);
+      console.log(`  ✅ Superadmin Business created: ${superBusiness.name}`);
     } else {
       console.log(
-        `  �"�️  Superadmin Business already exists: ${superBusiness.name}`,
+        `  ℹ️  Superadmin Business already exists: ${superBusiness.name}`,
       );
     }
 
@@ -168,23 +185,30 @@ export class CrmSeeder implements Seeder {
     }
 
     const existingSuperUser = await userRepo.findOne({
-      where: { business_id: superBusiness.id, email: 'superuser@zyntra.com' },
+      where: { businessId: superBusiness.id, email: 'superuser@zyntra.com' },
     });
     if (!existingSuperUser) {
       await userRepo.save(
         userRepo.create({
-          business_id: superBusiness.id,
+          businessId: superBusiness.id,
+          firstName: 'Super',
+          lastName: 'Admin',
           name: 'Super Admin',
           email: 'superuser@zyntra.com',
-          password_hash: passwordHash,
+          jobTitle: 'Administrador Global',
+          avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+          passwordHash: passwordHash,
           role: UserRole.SUPER_ADMIN,
-          is_active: true,
+          status: UserStatus.ACTIVE,
+          isActive: true,
+          isAccountActivated: true,
+          activatedAt: new Date(),
         }),
       );
-      console.log(`  �o. Super Admin user created: superuser@zyntra.com`);
+      console.log(`  ✅ Super Admin user created: superuser@zyntra.com`);
     } else {
       console.log(
-        `  �"�️  Super Admin user already exists: superuser@zyntra.com`,
+        `  ℹ️  Super Admin user already exists: superuser@zyntra.com`,
       );
     }
 
@@ -337,29 +361,43 @@ export class CrmSeeder implements Seeder {
       const stageByName = Object.fromEntries(stages.map((s) => [s.name, s]));
 
       const adminUser = await userRepo.findOne({
-        where: { business_id: business.id, email: entry.adminUser.email },
+        where: { businessId: business.id, email: entry.adminUser.email },
       });
       const agentUser = agentUserMap[entry.business.email] ?? null;
 
       // 1. Create Extra Users
       const extraUser1 = await userRepo.save(
         userRepo.create({
-          business_id: business.id,
+          businessId: business.id,
+          firstName: 'Vendedor',
+          lastName: 'Especialista',
           name: 'Vendedor Especialista',
           email: `ventas1@${entry.business.email.split('@')[1]}`,
-          password_hash: passwordHash,
+          jobTitle: 'Consultor de Ventas Outbound',
+          avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+          passwordHash: passwordHash,
           role: UserRole.AGENT,
-          is_active: true,
+          status: UserStatus.ACTIVE,
+          isActive: true,
+          isAccountActivated: true,
+          activatedAt: new Date(),
         }),
       );
       const extraUser2 = await userRepo.save(
         userRepo.create({
-          business_id: business.id,
+          businessId: business.id,
+          firstName: 'Soporte',
+          lastName: 'Nivel 1',
           name: 'Soporte Nivel 1',
           email: `soporte1@${entry.business.email.split('@')[1]}`,
-          password_hash: passwordHash,
+          jobTitle: 'Especialista de Soporte Técnico',
+          avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+          passwordHash: passwordHash,
           role: UserRole.AGENT,
-          is_active: true,
+          status: UserStatus.ACTIVE,
+          isActive: true,
+          isAccountActivated: true,
+          activatedAt: new Date(),
         }),
       );
 
@@ -368,7 +406,7 @@ export class CrmSeeder implements Seeder {
         agentUser,
         extraUser1,
         extraUser2,
-      ].filter(Boolean) as CrmUser[];
+      ].filter(Boolean) as User[];
 
       // 2. Create Teams
       const existingTeams = await teamRepo.find({
@@ -383,7 +421,7 @@ export class CrmSeeder implements Seeder {
             color: '#10B981',
             members: [adminUser, agentUser, extraUser1].filter(
               Boolean,
-            ) as CrmUser[],
+            ) as User[],
           }),
         );
         await teamRepo.save(
@@ -392,7 +430,7 @@ export class CrmSeeder implements Seeder {
             name: 'Soporte',
             description: 'Equipo de Soporte',
             color: '#3B82F6',
-            members: [adminUser, extraUser2].filter(Boolean) as CrmUser[],
+            members: [adminUser, extraUser2].filter(Boolean) as User[],
           }),
         );
         console.log(`  ✅ Teams and extra users created for: ${business.name}`);

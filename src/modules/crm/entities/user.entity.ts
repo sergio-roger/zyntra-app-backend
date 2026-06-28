@@ -1,29 +1,29 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
-  ManyToOne,
-  ManyToMany,
-  JoinColumn,
-  Index,
-  BeforeInsert,
-  BeforeUpdate,
-} from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
 import { Plan } from '@auth/entities/plan.entity';
+import { Team } from '@crm/entities/team.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { UserStatus } from '@crm/enums/user-status.enum';
-import { Team } from './team.entity';
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity({ name: 'users', schema: 'security' })
 @Index('UQ_security_users_business_email', ['businessId', 'email'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })
-export class CrmUser {
+export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -104,7 +104,7 @@ export class CrmUser {
     if (full) {
       this.name = full;
     }
-    // Keep isActive synchronized with status for backward compatibility
+
     this.isActive = this.status === UserStatus.ACTIVE;
   }
 }

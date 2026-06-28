@@ -1,29 +1,29 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Param,
-  Body,
-  UseGuards,
-  ParseUUIDPipe,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiOkResponse,
-  ApiCreatedResponse,
-  ApiNoContentResponse,
-} from '@nestjs/swagger';
+import { Business } from '@auth/entities/business.entity';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
-import { Business } from '@auth/entities/business.entity';
+import { CrmUsersService } from '@crm/crm-users.service';
+import { CreateCrmUserDto, UpdateCrmUserDto } from '@crm/dto/crm-user.dto';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { CrmUsersService } from './crm-users.service';
-import { CreateCrmUserDto, UpdateCrmUserDto } from './dto/crm-user.dto';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('settings-users')
 @ApiBearerAuth()

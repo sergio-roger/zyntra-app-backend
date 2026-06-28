@@ -1,16 +1,16 @@
+import { Business } from '@auth/entities/business.entity';
+import { CreateCrmUserDto, UpdateCrmUserDto } from '@crm/dto/crm-user.dto';
+import { CrmUser } from '@crm/entities/user.entity';
+import { UserStatus } from '@crm/enums/user-status.enum';
 import {
-  Injectable,
-  NotFoundException,
   ConflictException,
   HttpException,
   HttpStatus,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrmUser } from './entities/user.entity';
-import { Business } from '@auth/entities/business.entity';
-import { CreateCrmUserDto, UpdateCrmUserDto } from './dto/crm-user.dto';
-import { UserStatus } from '@crm/enums/user-status.enum';
 
 @Injectable()
 export class CrmUsersService {
@@ -37,7 +37,9 @@ export class CrmUsersService {
   }
 
   async create(business: Business, dto: CreateCrmUserDto) {
-    const targetStatus = dto.status ?? (dto.is_active === false ? UserStatus.INACTIVE : UserStatus.ACTIVE);
+    const targetStatus =
+      dto.status ??
+      (dto.isActive === false ? UserStatus.INACTIVE : UserStatus.ACTIVE);
 
     if (targetStatus === UserStatus.ACTIVE) {
       const limit = business.plan_object?.user_limit;
@@ -66,20 +68,21 @@ export class CrmUsersService {
     if (existing)
       throw new ConflictException('Email already registered for this business');
 
-    const firstName = dto.first_name ?? (dto.name ? dto.name.split(' ')[0] : '');
-    const lastName = dto.last_name ?? (dto.name ? dto.name.split(' ').slice(1).join(' ') : '');
+    const firstName = dto.firstName ?? (dto.name ? dto.name.split(' ')[0] : '');
+    const lastName =
+      dto.lastName ?? (dto.name ? dto.name.split(' ').slice(1).join(' ') : '');
 
     const user = this.userRepo.create({
       firstName,
       lastName,
       name: dto.name ?? `${firstName} ${lastName}`.trim(),
       email: dto.email,
-      jobTitle: dto.job_title,
-      avatarUrl: dto.avatar_url,
+      jobTitle: dto.jobTitle,
+      avatarUrl: dto.avatarUrl,
       role: dto.role,
       status: targetStatus,
       isActive: targetStatus === UserStatus.ACTIVE,
-      isAccountActivated: dto.is_account_activated ?? false,
+      isAccountActivated: dto.isAccountActivated ?? false,
       businessId: business.id,
     });
     return this.userRepo.save(user);
@@ -88,11 +91,11 @@ export class CrmUsersService {
   async update(business: Business, id: string, dto: UpdateCrmUserDto) {
     const user = await this.findOne(business, id);
 
-    let isActive = dto.is_active;
+    let isActive = dto.isActive;
     if (dto.status !== undefined) {
       isActive = dto.status === UserStatus.ACTIVE;
-    } else if (dto.is_active !== undefined) {
-      dto.status = dto.is_active ? UserStatus.ACTIVE : UserStatus.INACTIVE;
+    } else if (dto.isActive !== undefined) {
+      dto.status = dto.isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE;
     }
 
     if (isActive === true && user.isActive === false) {
@@ -116,15 +119,16 @@ export class CrmUsersService {
       }
     }
 
-    if (dto.first_name !== undefined) user.firstName = dto.first_name;
-    if (dto.last_name !== undefined) user.lastName = dto.last_name;
+    if (dto.firstName !== undefined) user.firstName = dto.firstName;
+    if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.name !== undefined) user.name = dto.name;
-    if (dto.job_title !== undefined) user.jobTitle = dto.job_title;
-    if (dto.avatar_url !== undefined) user.avatarUrl = dto.avatar_url;
+    if (dto.jobTitle !== undefined) user.jobTitle = dto.jobTitle;
+    if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl;
     if (dto.role !== undefined) user.role = dto.role;
     if (dto.status !== undefined) user.status = dto.status;
     if (isActive !== undefined) user.isActive = isActive;
-    if (dto.is_account_activated !== undefined) user.isAccountActivated = dto.is_account_activated;
+    if (dto.isAccountActivated !== undefined)
+      user.isAccountActivated = dto.isAccountActivated;
 
     return this.userRepo.save(user);
   }

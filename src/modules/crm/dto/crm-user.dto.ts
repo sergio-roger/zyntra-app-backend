@@ -13,12 +13,12 @@ export class CreateCrmUserDto {
   @ApiPropertyOptional({ example: 'Juan' })
   @IsString()
   @IsOptional()
-  first_name?: string;
+  firstName?: string;
 
   @ApiPropertyOptional({ example: 'Pérez' })
   @IsString()
   @IsOptional()
-  last_name?: string;
+  lastName?: string;
 
   @ApiPropertyOptional({ example: 'Juan Pérez' })
   @IsString()
@@ -32,12 +32,12 @@ export class CreateCrmUserDto {
   @ApiPropertyOptional({ example: 'Gerente de Ventas' })
   @IsString()
   @IsOptional()
-  job_title?: string;
+  jobTitle?: string;
 
   @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg' })
   @IsString()
   @IsOptional()
-  avatar_url?: string;
+  avatarUrl?: string;
 
   @ApiProperty({ enum: UserRole, default: UserRole.AGENT })
   @IsEnum(UserRole)
@@ -51,22 +51,22 @@ export class CreateCrmUserDto {
   @ApiPropertyOptional({ default: true })
   @IsBoolean()
   @IsOptional()
-  is_active?: boolean;
+  isActive?: boolean;
 
   @ApiPropertyOptional({ default: false })
   @IsBoolean()
   @IsOptional()
-  is_account_activated?: boolean;
+  isAccountActivated?: boolean;
 }
 
 export class UpdateCrmUserDto {
   @IsString()
   @IsOptional()
-  first_name?: string;
+  firstName?: string;
 
   @IsString()
   @IsOptional()
-  last_name?: string;
+  lastName?: string;
 
   @IsString()
   @IsOptional()
@@ -74,11 +74,11 @@ export class UpdateCrmUserDto {
 
   @IsString()
   @IsOptional()
-  job_title?: string;
+  jobTitle?: string;
 
   @IsString()
   @IsOptional()
-  avatar_url?: string;
+  avatarUrl?: string;
 
   @IsEnum(UserRole)
   @IsOptional()
@@ -90,9 +90,9 @@ export class UpdateCrmUserDto {
 
   @IsBoolean()
   @IsOptional()
-  is_active?: boolean;
+  isActive?: boolean;
 
   @IsBoolean()
   @IsOptional()
-  is_account_activated?: boolean;
+  isAccountActivated?: boolean;
 }
