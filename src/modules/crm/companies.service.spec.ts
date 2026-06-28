@@ -132,6 +132,46 @@ describe('CompaniesService', () => {
       const result = await service.list(mockBusiness, {} as any);
       expect(result.totalPages).toBe(1);
     });
+
+    it('filters unassigned companies when ownerId is "unassigned"', async () => {
+      await service.list(mockBusiness, { ownerId: 'unassigned' } as any);
+      expect(qb.andWhere).toHaveBeenCalledWith('e.ownerId IS NULL');
+    });
+
+    it('filters by ownerId when provided', async () => {
+      await service.list(mockBusiness, { ownerId: 'user-123' } as any);
+      expect(qb.andWhere).toHaveBeenCalledWith('e.ownerId = :ownerId', {
+        ownerId: 'user-123',
+      });
+    });
+
+    it('filters by industryId when provided', async () => {
+      await service.list(mockBusiness, { industryId: 'ind-123' } as any);
+      expect(qb.andWhere).toHaveBeenCalledWith('e.industryId = :stId', {
+        stId: 'ind-123',
+      });
+    });
+
+    it('filters by lifecycleStageId when provided', async () => {
+      await service.list(mockBusiness, { lifecycleStageId: 'ls-123' } as any);
+      expect(qb.andWhere).toHaveBeenCalledWith('e.lifecycleStageId = :lsId', {
+        lsId: 'ls-123',
+      });
+    });
+
+    it('filters by createdAt date range when provided', async () => {
+      await service.list(mockBusiness, {
+        createdAtFrom: '2026-01-01',
+        createdAtTo: '2026-06-30',
+      } as any);
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'e.createdAt >= :createdAtFrom',
+        { createdAtFrom: '2026-01-01' },
+      );
+      expect(qb.andWhere).toHaveBeenCalledWith('e.createdAt <= :createdAtTo', {
+        createdAtTo: '2026-06-30',
+      });
+    });
   });
 
   // ── applyCustomFieldFilters() via list() ─────────────────────────────────────

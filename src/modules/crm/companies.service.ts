@@ -56,6 +56,12 @@ export class CompaniesService {
       });
     }
 
+    if (query.employeeRange) {
+      qb.andWhere('e.employeeRange = :empRange', {
+        empRange: query.employeeRange,
+      });
+    }
+
     if (query.ownerId === 'unassigned') {
       qb.andWhere('e.ownerId IS NULL');
     } else if (query.ownerId) {
@@ -302,6 +308,10 @@ export class CompaniesService {
     if (dto.lifecycleStageId)
       qb.andWhere('e.lifecycleStageId = :lsId', {
         lsId: dto.lifecycleStageId,
+      });
+    if (dto.employeeRange)
+      qb.andWhere('e.employeeRange = :empRange', {
+        empRange: dto.employeeRange,
       });
     if (dto.ownerId === 'unassigned') {
       qb.andWhere('e.ownerId IS NULL');
