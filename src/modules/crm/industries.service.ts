@@ -7,8 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Industry } from '@crm/entities/industry.entity';
 import { Business } from '@auth/entities/business.entity';
-import { CreateIndustryDto } from './dto/create-industry.dto';
-import { UpdateIndustryDto } from './dto/update-industry.dto';
+import { CreateIndustryDto } from '@crm/dto/create-industry.dto';
+import { UpdateIndustryDto } from '@crm/dto/update-industry.dto';
 
 @Injectable()
 export class IndustriesService {
