@@ -219,6 +219,168 @@ describe('ContactsService', () => {
     });
   });
 
+  // ── applyCustomFieldFilters() ─────────────────────────────────────────────────
+
+  describe('applyCustomFieldFilters() via list()', () => {
+    beforeEach(() => {
+      qb.getManyAndCount.mockResolvedValue([[], 0]);
+    });
+
+    it('equals operator — strips customFields. camelCase prefix and generates exact match', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.sector', operator: 'equals', value: 'Tech' },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "c.custom_fields->>'sector' = :cf_0",
+        { cf_0: 'Tech' },
+      );
+    });
+
+    it('equals operator — also strips custom_fields. snake_case prefix', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'custom_fields.sector', operator: 'equals', value: 'Tech' },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "c.custom_fields->>'sector' = :cf_0",
+        { cf_0: 'Tech' },
+      );
+    });
+
+    it('not_equals operator', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.status', operator: 'not_equals', value: 'inactive' },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "c.custom_fields->>'status' != :cf_0",
+        { cf_0: 'inactive' },
+      );
+    });
+
+    it('contains operator — wraps value with ILIKE wildcards', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.notes', operator: 'contains', value: 'vip' },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "c.custom_fields->>'notes' ILIKE :cf_0",
+        { cf_0: '%vip%' },
+      );
+    });
+
+    it('greater_than operator — casts to numeric', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.score', operator: 'greater_than', value: 80 },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "(c.custom_fields->>'score')::numeric > :cf_0",
+        { cf_0: 80 },
+      );
+    });
+
+    it('less_than operator — casts to numeric', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.age', operator: 'less_than', value: 30 },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "(c.custom_fields->>'age')::numeric < :cf_0",
+        { cf_0: 30 },
+      );
+    });
+
+    it('is_empty operator — checks null or empty string', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.linkedin', operator: 'is_empty', value: '' },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "(c.custom_fields->>'linkedin' IS NULL OR c.custom_fields->>'linkedin' = '')",
+      );
+    });
+
+    it('is_not_empty operator — checks not null and not empty string', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.linkedin', operator: 'is_not_empty', value: '' },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "(c.custom_fields->>'linkedin' IS NOT NULL AND c.custom_fields->>'linkedin' != '')",
+      );
+    });
+
+    it('applies multiple conditions independently with indexed param keys', async () => {
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.sector', operator: 'equals', value: 'Tech' },
+          { field: 'customFields.score', operator: 'greater_than', value: 50 },
+        ]),
+      } as any);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "c.custom_fields->>'sector' = :cf_0",
+        { cf_0: 'Tech' },
+      );
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        "(c.custom_fields->>'score')::numeric > :cf_1",
+        { cf_1: 50 },
+      );
+    });
+
+    it('silently ignores malformed JSON', async () => {
+      const callsBefore = qb.andWhere.mock.calls.length;
+
+      await service.list(mockBusiness, {
+        customFieldFilters: 'not-valid-json{{',
+      } as any);
+
+      expect(qb.andWhere.mock.calls.length).toBe(callsBefore);
+    });
+
+    it('skips condition when field name is empty after sanitization', async () => {
+      const callsBefore = qb.andWhere.mock.calls.length;
+
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.', operator: 'equals', value: 'x' },
+        ]),
+      } as any);
+
+      expect(qb.andWhere.mock.calls.length).toBe(callsBefore);
+    });
+
+    it('ignores unknown operators without adding a where clause', async () => {
+      const callsBefore = qb.andWhere.mock.calls.length;
+
+      await service.list(mockBusiness, {
+        customFieldFilters: JSON.stringify([
+          { field: 'customFields.sector', operator: 'between', value: 'a' },
+        ]),
+      } as any);
+
+      expect(qb.andWhere.mock.calls.length).toBe(callsBefore);
+    });
+  });
+
   // ── listMembers() ─────────────────────────────────────────────────────────────
 
   describe('listMembers()', () => {

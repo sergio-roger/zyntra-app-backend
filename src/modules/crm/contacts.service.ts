@@ -154,6 +154,7 @@ export class ContactsService {
       }>;
       conditions.forEach((cond, idx) => {
         const col = cond.field
+          .replace('customFields.', '')
           .replace('custom_fields.', '')
           .replace(/[^a-z0-9_]/gi, '');
         if (!col) return;
