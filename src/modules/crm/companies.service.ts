@@ -1,22 +1,22 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { stringify } from 'csv-stringify/sync';
-import { Company } from '@crm/entities/company.entity';
-import { Tag } from '@crm/entities/tag.entity';
 import { Business } from '@auth/entities/business.entity';
-import { CreateCompanyDto } from './dto/create-company.dto';
-import { UpdateCompanyDto } from './dto/update-company.dto';
-import { ListCompaniesDto } from './dto/list-companies.dto';
+import { CreateCompanyDto } from '@crm/dto/create-company.dto';
 import {
   ExportCompaniesDto,
   ExportCompanyColumnDto,
   ImportCompanyRowDto,
-} from './dto/export-companies.dto';
+} from '@crm/dto/export-companies.dto';
+import { ListCompaniesDto } from '@crm/dto/list-companies.dto';
+import { UpdateCompanyDto } from '@crm/dto/update-company.dto';
+import { Company } from '@crm/entities/company.entity';
+import { Tag } from '@crm/entities/tag.entity';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { stringify } from 'csv-stringify/sync';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class CompaniesService {
