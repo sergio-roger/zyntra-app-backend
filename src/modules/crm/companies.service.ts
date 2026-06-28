@@ -34,9 +34,9 @@ export class CompaniesService {
     const qb = this.repo
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.industry', 'st')
-      .leftJoinAndSelect('e.lifecycle_stage', 'ls')
+      .leftJoinAndSelect('e.lifecycleStage', 'ls')
       .leftJoinAndSelect('e.tags', 't')
-      .where('e.business_id = :bid', { bid: business.id });
+      .where('e.businessId = :bid', { bid: business.id });
 
     if (query.search) {
       qb.andWhere(

@@ -10,41 +10,14 @@ async function bootstrap() {
 
   console.log('\n🗑️  Resetting database (dropping all tables)...\n');
 
-  // Use CASCADE to handle all FK dependencies in one shot
-  const drops = [
-    'crm.deal_stage_history',
-    'crm.activities',
-    'crm.contact_tags',
-    'crm.company_tags',
-    'crm.contacts',
-    'crm.deals',
-    'crm.companies',
-    'crm.sector_types',
-    'crm.tasks',
-    'crm.custom_fields',
-    'crm.tags',
-    'crm.segments',
-    'crm.pipeline_stages',
-    'crm.pipelines',
-    '"security"."user_teams_team"',
-    '"security"."team_members"',
-    '"security"."users"',
-    '"security"."teams"',
-    '"security"."permissions"',
-    '"security"."menus"',
-    '"security"."roles"',
-    'public.lifecycle_history',
-    'public.lifecycle_stages',
-    'public.chatbot_configs',
-    'public.plan_descriptions',
-    'public.plan_modules',
-    'public.businesses',
-    'public.plans',
-  ];
+  // Drop and recreate schemas to ensure a completely clean slate
+  const schemas = ['crm', 'security', 'public'];
 
-  for (const table of drops) {
-    await client.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
-    console.log(`  🗑  Dropped: ${table}`);
+  for (const schema of schemas) {
+    await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+    console.log(`  🗑  Dropped schema: ${schema}`);
+    await client.query(`CREATE SCHEMA "${schema}"`);
+    console.log(`  ✨ Recreated schema: ${schema}`);
   }
 
   await client.end();
