@@ -55,7 +55,7 @@ export class CrmTasksService {
     qb.orderBy('t.due_date', 'ASC');
 
     const tasks = await qb.getMany();
-    return tasks.map(t => this.mapTask(t));
+    return tasks.map((t) => this.mapTask(t));
   }
 
   async findOne(business: Business, id: string): Promise<TaskResponse> {

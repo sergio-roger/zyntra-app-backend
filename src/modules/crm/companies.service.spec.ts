@@ -43,7 +43,7 @@ describe('CompaniesService', () => {
   const companiesRepo = {
     createQueryBuilder: jest.fn().mockReturnValue(qb),
     findOne: jest.fn(),
-    create: jest.fn().mockImplementation((x: any) => x),
+    create: jest.fn().mockImplementation((x: unknown) => x),
     save: jest.fn(),
     softRemove: jest.fn(),
   };
@@ -121,10 +121,10 @@ describe('CompaniesService', () => {
 
       const res = await service.update(mockBusiness, 'company-uuid', {
         name: 'Updated Name',
-        tax_type: 'NIF',
+        taxType: 'NIF',
       });
       expect(companiesRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Updated Name', tax_type: 'NIF' }),
+        expect.objectContaining({ name: 'Updated Name', taxType: 'NIF' }),
       );
       expect(res.name).toBe('Updated Name');
     });

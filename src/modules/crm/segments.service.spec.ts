@@ -23,6 +23,16 @@ const mockSegment = {
   deleted_at: null,
 } as Segment;
 
+const mockSegmentResponse = {
+  id: mockSegment.id,
+  name: mockSegment.name,
+  description: mockSegment.description,
+  conditions: mockSegment.conditions,
+  type: undefined,
+  createdAt: mockSegment.created_at,
+  updatedAt: mockSegment.updated_at,
+};
+
 describe('SegmentsService', () => {
   let service: SegmentsService;
   let repo: Repository<Segment>;
@@ -85,7 +95,7 @@ describe('SegmentsService', () => {
         where: { business_id: mockBusiness.id },
         order: { name: 'ASC' },
       });
-      expect(result).toEqual(segmentsList);
+      expect(result).toEqual([mockSegmentResponse]);
     });
   });
 
@@ -98,7 +108,7 @@ describe('SegmentsService', () => {
       expect(repo.findOne).toHaveBeenCalledWith({
         where: { id: 'segment-uuid-1', business_id: mockBusiness.id },
       });
-      expect(result).toEqual(mockSegment);
+      expect(result).toEqual(mockSegmentResponse);
     });
 
     it('should throw NotFoundException if segment does not exist', async () => {

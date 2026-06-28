@@ -55,7 +55,7 @@ export class SegmentsService {
     });
     const saved = await this.segmentRepo.save(segment);
 
-    return this.mapSegment(saved) as any;
+    return this.mapSegment(saved);
   }
 
   async update(
@@ -80,8 +80,11 @@ export class SegmentsService {
   }
 
   async remove(business: Business, id: string): Promise<void> {
-    const segment = await this.findOne(business, id);
-    await this.segmentRepo.softRemove(segment);
+    const existing = await this.segmentRepo.findOne({
+      where: { id, business_id: business.id },
+    });
+    if (!existing) throw new NotFoundException('Segmento no encontrado');
+    await this.segmentRepo.softRemove(existing);
   }
 
   private mapSegment(segment: Segment): SegmentResponse {
