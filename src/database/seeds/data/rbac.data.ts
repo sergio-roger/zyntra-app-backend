@@ -333,58 +333,86 @@ export const MENUS_DATA = [
     parent_key: 'analytics',
     description: 'Rendimiento y conversión de los agentes de atención.',
   },
-  // Settings subitems
+  // Settings nivel 1 (grupos)
+  {
+    key: 'settings_general',
+    label: 'Ajustes generales',
+    path: '/settings/ajustes-generales',
+    parent_key: 'settings',
+    description: 'Ajustes generales de la cuenta y plataforma.',
+  },
+  {
+    key: 'settings_team_access',
+    label: 'Equipo y accesos',
+    path: '/settings/equipo-accesos',
+    parent_key: 'settings',
+    description: 'Gestión de usuarios, equipos y permisos de acceso.',
+  },
+  {
+    key: 'settings_business',
+    label: 'Configuración del negocio',
+    path: '/settings/configuracion-negocio',
+    parent_key: 'settings',
+    description: 'Configuraciones específicas del negocio: ciclo de vida y canales.',
+  },
+  // Ajustes generales → hijos (tercer nivel, sin descripción)
   {
     key: 'settings_config',
     label: 'Configuración',
     path: '/settings/configuracion',
-    parent_key: 'settings',
-    description: 'Configuración general de la plataforma.',
-  },
-  {
-    key: 'billing',
-    label: 'Planes',
-    path: '/settings/plans',
-    parent_key: 'settings',
-    description: 'Visualiza y gestiona tu plan de suscripción.',
+    parent_key: 'settings_general',
+    description: null,
   },
   {
     key: 'settings_my_account',
     label: 'Mi cuenta',
     path: '/settings/my-account',
-    parent_key: 'settings',
-    description: 'Gestión de la cuenta de usuario, perfil y seguridad.',
+    parent_key: 'settings_general',
+    description: null,
   },
+  {
+    key: 'billing',
+    label: 'Planes',
+    path: '/settings/plans',
+    parent_key: 'settings_general',
+    description: null,
+  },
+  // Equipo y accesos → hijos (tercer nivel, sin descripción)
   {
     key: 'settings_users',
     label: 'Usuarios',
     path: '/settings/users',
-    parent_key: 'settings',
-    description:
-      'Invitar y administrar colaboradores y sus respectivos accesos.',
+    parent_key: 'settings_team_access',
+    description: null,
   },
   {
     key: 'settings_teams',
     label: 'Equipo',
     path: '/settings/teams',
-    parent_key: 'settings',
-    description:
-      'Definir departamentos o equipos de atención (Ventas, Soporte, etc.).',
+    parent_key: 'settings_team_access',
+    description: null,
   },
+  {
+    key: 'settings_roles',
+    label: 'Permisos',
+    path: '/settings/roles',
+    parent_key: 'settings_team_access',
+    description: null,
+  },
+  // Configuración del negocio → hijos (tercer nivel, sin descripción)
   {
     key: 'settings_lifecycle',
     label: 'Ciclo de vida',
     path: '/settings/lifecycle',
-    parent_key: 'settings',
-    description:
-      'Configurar estados del embudo de ventas (Ej: Nuevo, Contactado).',
+    parent_key: 'settings_business',
+    description: null,
   },
   {
     key: 'settings_channels',
     label: 'Canales',
     path: '/settings/channels',
-    parent_key: 'settings',
-    description: 'Vinculación técnica del origen de canales de comunicación.',
+    parent_key: 'settings_business',
+    description: null,
   },
 ];
 
@@ -411,6 +439,7 @@ export const AGENT_MENUS = [
   'funnels',
   'funnels_leads',
   'settings',
+  'settings_general',
   'settings_config',
   'settings_my_account',
 ];

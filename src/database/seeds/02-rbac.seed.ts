@@ -28,18 +28,33 @@ export class RbacSeeder implements Seeder {
       }
     }
 
-    // 2️⃣ Seed Menus
+    // 2️⃣ Seed Menus (upsert: crea o actualiza parent_key/label/path)
     console.log('\n📋 [2/3] Seeding menus...');
-    let menusProcessed = 0;
+    let menusCreated = 0;
+    let menusUpdated = 0;
     for (const m of MENUS_DATA) {
       const existing = await menuRepo.findOne({ where: { key: m.key } });
       if (!existing) {
         await menuRepo.save(menuRepo.create(m));
         console.log(`  ✅ Menu created: ${m.key}`);
+        menusCreated++;
+      } else {
+        await menuRepo.update(
+          { key: m.key },
+          {
+            label: m.label,
+            path: m.path,
+            parent_key: m.parent_key,
+            description: m.description,
+          },
+        );
+        console.log(`  🔄 Menu updated: ${m.key}`);
+        menusUpdated++;
       }
-      menusProcessed++;
     }
-    console.log(`  ✅ ${menusProcessed} menus processed`);
+    console.log(
+      `  ✅ ${menusCreated} created, ${menusUpdated} updated (${MENUS_DATA.length} total)`,
+    );
 
     // 3️⃣ Seed Permissions
     console.log('\n🔑 [3/3] Seeding permissions...');

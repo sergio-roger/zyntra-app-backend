@@ -1,10 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { DataSource } from 'typeorm';
-import { SeedModule } from './seed.module';
 import { PlansSeeder } from '../src/database/seeds/01-plans.seed';
 import { RbacSeeder } from '../src/database/seeds/02-rbac.seed';
 import { CrmSeeder } from '../src/database/seeds/03-crm.seed';
 import { Seeder } from '../src/database/seeds/seeder.interface';
+import { SeedModule } from './seed.module';
 
 async function bootstrap() {
   console.log('\n🚀 Starting Seed Process...\n');
@@ -34,4 +34,4 @@ async function bootstrap() {
   console.log('\n🎉 All seeders executed successfully!\n');
 }
 
-bootstrap();
+void bootstrap();

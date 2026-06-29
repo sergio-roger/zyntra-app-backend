@@ -385,26 +385,20 @@ export class AuthService {
         return 'full';
       };
 
-      const roots = rows.filter((m) => m.parent_key === null);
-      return roots.map((root) => ({
-        id: root.id,
-        key: root.key,
-        label: root.label,
-        path: root.path,
-        parent_key: root.parent_key,
-        access_level: resolveAccess(root.key, root.parent_key),
-        children: rows
-          .filter((m) => m.parent_key === root.key)
-          .map((child) => ({
-            id: child.id,
-            key: child.key,
-            label: child.label,
-            path: child.path,
-            parent_key: child.parent_key,
-            access_level: resolveAccess(child.key, child.parent_key),
-            children: [],
-          })),
-      }));
+      const buildTree = (parentKey: string | null): MenuNode[] =>
+        rows
+          .filter((m) => m.parent_key === parentKey)
+          .map((m) => ({
+            id: m.id,
+            key: m.key,
+            label: m.label,
+            path: m.path,
+            parent_key: m.parent_key,
+            access_level: resolveAccess(m.key, m.parent_key),
+            children: buildTree(m.key),
+          }));
+
+      return buildTree(null);
     } catch {
       return [];
     }
