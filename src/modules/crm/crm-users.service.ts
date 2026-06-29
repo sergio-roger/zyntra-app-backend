@@ -1,6 +1,6 @@
 import { Business } from '@auth/entities/business.entity';
 import { CreateCrmUserDto, UpdateCrmUserDto } from '@crm/dto/crm-user.dto';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from '@crm/entities/user.entity';
 import { UserStatus } from '@crm/enums/user-status.enum';
 import {
   ConflictException,
@@ -15,8 +15,8 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class CrmUsersService {
   constructor(
-    @InjectRepository(CrmUser)
-    private readonly userRepo: Repository<CrmUser>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
   async list(business: Business) {
@@ -119,6 +119,7 @@ export class CrmUsersService {
       }
     }
 
+    if (dto.email !== undefined) user.email = dto.email;
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.name !== undefined) user.name = dto.name;

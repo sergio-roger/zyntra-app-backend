@@ -2,7 +2,7 @@ import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.ent
 import { Business } from '@auth/entities/business.entity';
 import { Industry } from '@crm/entities/industry.entity';
 import { Tag } from '@crm/entities/tag.entity';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from '@crm/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
@@ -77,13 +77,13 @@ export class Company {
   @Column('uuid', { name: 'owner_id', nullable: true })
   ownerId: string | null;
 
-  @ManyToOne(() => CrmUser, {
+  @ManyToOne(() => User, {
     nullable: true,
     onDelete: 'SET NULL',
     eager: false,
   })
   @JoinColumn({ name: 'owner_id' })
-  owner: CrmUser | null;
+  owner: User | null;
 
   @ManyToMany(() => Tag, { eager: false })
   @JoinTable({

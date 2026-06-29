@@ -12,7 +12,7 @@ import { ContactActivity } from '@crm/entities/contact-activity.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { Deal } from '@crm/entities/deal.entity';
 import { Tag } from '@crm/entities/tag.entity';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from '@crm/entities/user.entity';
 import { ActivityCreatedBy } from '@crm/enums/activity-created-by.enum';
 import { ActivityType } from '@crm/enums/activity-type.enum';
 import {
@@ -37,8 +37,8 @@ export class ContactsService {
     private readonly activitiesRepo: Repository<ContactActivity>,
     @InjectRepository(Deal)
     private readonly dealsRepo: Repository<Deal>,
-    @InjectRepository(CrmUser)
-    private readonly crmUsersRepo: Repository<CrmUser>,
+    @InjectRepository(User)
+    private readonly crmUsersRepo: Repository<User>,
   ) {}
 
   async listMembers(

@@ -666,10 +666,10 @@ export class CrmSeeder implements Seeder {
         where: { business_id: business.id },
       });
       const admin = await userRepo.findOne({
-        where: { business_id: business.id, email: 'admin@zyntra.com' },
+        where: { businessId: business.id, email: 'admin@zyntra.com' },
       });
       const fallbackUser = await userRepo.findOne({
-        where: { business_id: business.id },
+        where: { businessId: business.id },
       });
       const assignedUserId = admin
         ? admin.id

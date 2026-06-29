@@ -60,6 +60,10 @@ export class CreateCrmUserDto {
 }
 
 export class UpdateCrmUserDto {
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
   @IsString()
   @IsOptional()
   firstName?: string;

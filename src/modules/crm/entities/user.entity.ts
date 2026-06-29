@@ -108,3 +108,5 @@ export class User {
     this.isActive = this.status === UserStatus.ACTIVE;
   }
 }
+
+export { User as CrmUser };

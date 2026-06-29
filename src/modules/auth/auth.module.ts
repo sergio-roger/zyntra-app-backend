@@ -15,7 +15,7 @@ import { Permission } from './entities/permission.entity';
 import { PlanModule } from './entities/plan-module.entity';
 import { UserPreference } from './entities/user-preference.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from '@crm/entities/user.entity';
 import { UserPreferencesService } from './user-preferences.service';
 import { UserPreferencesController } from './user-preferences.controller';
 
@@ -25,7 +25,7 @@ import { UserPreferencesController } from './user-preferences.controller';
       Business,
       Plan,
       PlanDescription,
-      CrmUser,
+      User,
       Role,
       Menu,
       Permission,

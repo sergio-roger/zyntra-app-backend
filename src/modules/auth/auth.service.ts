@@ -14,7 +14,7 @@ import { Business, PlanStatus } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from '@crm/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { Role } from './entities/role.entity';
@@ -46,8 +46,8 @@ export class AuthService {
     private businessRepository: Repository<Business>,
     @InjectRepository(Plan)
     private planRepository: Repository<Plan>,
-    @InjectRepository(CrmUser)
-    private crmUserRepository: Repository<CrmUser>,
+    @InjectRepository(User)
+    private crmUserRepository: Repository<User>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
     @InjectRepository(Menu)
@@ -226,7 +226,7 @@ export class AuthService {
         id: user.crm_user_id,
         role: user.role ?? UserRole.ADMIN,
         businessId: user.id,
-      } as CrmUser;
+      } as User;
       return this.generateCrmUserToken(user, crmUserPartial);
     }
     return this.generateBusinessToken(user);
@@ -257,7 +257,7 @@ export class AuthService {
 
   private generateCrmUserToken(
     business: Business,
-    crmUser: Pick<CrmUser, 'id' | 'role' | 'businessId'>,
+    crmUser: Pick<User, 'id' | 'role' | 'businessId'>,
   ) {
     const payload: JwtPayload = {
       sub: business.id,
