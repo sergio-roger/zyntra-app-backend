@@ -48,6 +48,7 @@ export const PLANS_DATA = [
       settings_teams: ModuleAccessLevel.LOCKED,
       settings_lifecycle: ModuleAccessLevel.READ_ONLY,
       settings_channels: ModuleAccessLevel.LOCKED,
+      settings_agents: ModuleAccessLevel.LOCKED,
     },
   },
   {

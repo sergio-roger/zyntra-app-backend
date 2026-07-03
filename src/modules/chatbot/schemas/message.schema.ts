@@ -25,6 +25,10 @@ export class Message {
 
   @Prop()
   channel: string;
+
+  // Idempotency key — set by agent-service callback to prevent duplicate assistant messages
+  @Prop({ index: true, sparse: true, unique: false })
+  job_id: string;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

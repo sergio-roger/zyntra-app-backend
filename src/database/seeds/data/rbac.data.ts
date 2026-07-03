@@ -414,6 +414,13 @@ export const MENUS_DATA = [
     parent_key: 'settings_business',
     description: null,
   },
+  {
+    key: 'settings_agents',
+    label: 'Agentes',
+    path: '/settings/agents',
+    parent_key: 'settings_business',
+    description: null,
+  },
 ];
 
 // ─── Permission sets by role ──────────────────────────────────────────────────

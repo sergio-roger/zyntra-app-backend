@@ -98,6 +98,7 @@
       "^@auth/(.*)$": "<rootDir>/modules/auth/$1",
       "^@crm/(.*)$": "<rootDir>/modules/crm/$1",
       "^@ai/(.*)$": "<rootDir>/modules/ai/$1",
+      "^@chatbot/(.*)$": "<rootDir>/modules/chatbot/$1",
       "^@common/(.*)$": "<rootDir>/common/$1",
       "^@/(.*)$": "<rootDir>/$1"
     },

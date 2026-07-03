@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+
 export class ChatRequestDto {
   @ApiProperty()
   @IsString()
@@ -53,6 +54,9 @@ export class ChatResponseDto {
 
   @ApiProperty()
   message: string;
+
+  @ApiPropertyOptional({ description: 'true cuando el reply llegará vía WebSocket (agente asignado)' })
+  pending?: boolean;
 
   @ApiProperty()
   created_at: string;

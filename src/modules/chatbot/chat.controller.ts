@@ -12,6 +12,7 @@ import {
   HttpException,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -44,27 +45,42 @@ export class ChatController {
   @Get('conversations')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'List conversations' })
+  @ApiOperation({ summary: 'List conversations (inbox)' })
   @ApiOkResponse({ description: 'List of conversations' })
-  async listConversations(@Req() req: RequestWithUser) {
+  async listConversations(
+    @Req() req: RequestWithUser,
+    @Query('channelId') channelId?: string,
+    @Query('status') status?: string,
+  ) {
     const businessId = (req.user as { id?: string }).id;
-    if (!businessId) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-    return this.chatService.getConversations(businessId);
+    if (!businessId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.chatService.getConversations(businessId, { channelId, status });
   }
 
   @Get('conversations/:id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get conversation details' })
+  @ApiOperation({ summary: 'Get conversation detail with messages' })
   @ApiOkResponse({ description: 'Conversation with messages' })
   async getConversation(@Req() req: RequestWithUser, @Param('id') id: string) {
     const businessId = (req.user as { id?: string }).id;
-    if (!businessId) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
+    if (!businessId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.chatService.getConversationDetail(businessId, id);
+  }
+
+  @Patch('conversations/:id/status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update conversation status (open/closed/bot/human)' })
+  async updateConversationStatus(
+    @Req() req: RequestWithUser,
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    const businessId = (req.user as { id?: string }).id;
+    if (!businessId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.chatService.updateConversationStatus(businessId, id, status);
   }
 
   @Get('embed-snippet')
