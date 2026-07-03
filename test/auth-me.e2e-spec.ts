@@ -183,10 +183,15 @@ describe('Self-service "My Account" (e2e)', () => {
       await request(app.getHttpServer())
         .post('/api/auth/change-password')
         .set('Authorization', `Bearer ${ownerToken}`)
-        .send({ currentPassword: 'WrongPassword1', newPassword: 'Whatever2Valid' })
+        .send({
+          currentPassword: 'WrongPassword1',
+          newPassword: 'Whatever2Valid',
+        })
         .expect(401);
 
-      const stillOwner = await businessRepo.findOne({ where: { id: owner.id } });
+      const stillOwner = await businessRepo.findOne({
+        where: { id: owner.id },
+      });
       expect(
         await argon2.verify(
           stillOwner!.password_hash,
@@ -200,10 +205,15 @@ describe('Self-service "My Account" (e2e)', () => {
       await request(app.getHttpServer())
         .post('/api/auth/change-password')
         .set('Authorization', `Bearer ${ownerToken}`)
-        .send({ currentPassword: OWNER_OLD_PASSWORD, newPassword: 'BrandNewPass1' })
+        .send({
+          currentPassword: OWNER_OLD_PASSWORD,
+          newPassword: 'BrandNewPass1',
+        })
         .expect(201);
 
-      const updatedOwner = await businessRepo.findOne({ where: { id: owner.id } });
+      const updatedOwner = await businessRepo.findOne({
+        where: { id: owner.id },
+      });
       expect(
         await argon2.verify(
           updatedOwner!.password_hash,
@@ -250,7 +260,9 @@ describe('Self-service "My Account" (e2e)', () => {
 
       expect(res.body.data.avatarUrl).toBeTruthy();
 
-      const updatedAgent = await crmUserRepo.findOne({ where: { id: agent.id } });
+      const updatedAgent = await crmUserRepo.findOne({
+        where: { id: agent.id },
+      });
       expect(updatedAgent?.avatarUrl).toBe(res.body.data.avatarUrl);
     });
   });

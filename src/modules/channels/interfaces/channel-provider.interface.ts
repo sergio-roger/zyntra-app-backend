@@ -15,7 +15,11 @@ export interface ChannelProvider {
   validateConfig(config: Record<string, unknown>): void;
 
   /** Run any external setup (register webhook, generate snippet, etc.) and return persisted metadata. */
-  setup(channelId: string, businessId: string, config: Record<string, unknown>): Promise<ChannelSetupResult>;
+  setup(
+    channelId: string,
+    businessId: string,
+    config: Record<string, unknown>,
+  ): Promise<ChannelSetupResult>;
 
   /** Map an incoming raw webhook payload to a normalised IncomingMessage. */
   parseIncoming(payload: Record<string, unknown>): IncomingMessage;

@@ -25,7 +25,7 @@ const mockRepo = <T extends ObjectLiteral>() =>
     findOne: jest.fn(),
     find: jest.fn(),
     save: jest.fn(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     create: jest.fn((v: any) => v),
     delete: jest.fn(),
   }) as unknown as Repository<T>;
@@ -93,13 +93,18 @@ describe('ChannelsModule wiring', () => {
       providers: [
         { provide: getRepositoryToken(ChannelType), useValue: channelTypeRepo },
         { provide: getRepositoryToken(Channel), useValue: channelRepo },
-        { provide: getRepositoryToken(ChannelCredential), useValue: credentialRepo },
+        {
+          provide: getRepositoryToken(ChannelCredential),
+          useValue: credentialRepo,
+        },
       ],
     }).compile();
   });
 
   it('resolves ChannelType repository', () => {
-    const repo = module.get<Repository<ChannelType>>(getRepositoryToken(ChannelType));
+    const repo = module.get<Repository<ChannelType>>(
+      getRepositoryToken(ChannelType),
+    );
     expect(repo).toBeDefined();
   });
 
@@ -109,7 +114,9 @@ describe('ChannelsModule wiring', () => {
   });
 
   it('resolves ChannelCredential repository', () => {
-    const repo = module.get<Repository<ChannelCredential>>(getRepositoryToken(ChannelCredential));
+    const repo = module.get<Repository<ChannelCredential>>(
+      getRepositoryToken(ChannelCredential),
+    );
     expect(repo).toBeDefined();
   });
 });
@@ -125,9 +132,13 @@ describe('Channel constraint: FK on channel_type_id', () => {
   });
 
   it('rejects insert with non-existent channel_type_id (FK violation)', async () => {
-    const fkError = new QueryFailedError('', [], new Error(
-      'insert or update on table "channels" violates foreign key constraint',
-    ));
+    const fkError = new QueryFailedError(
+      '',
+      [],
+      new Error(
+        'insert or update on table "channels" violates foreign key constraint',
+      ),
+    );
     (channelRepo.save as jest.Mock).mockRejectedValueOnce(fkError);
 
     await expect(
@@ -151,9 +162,13 @@ describe('Channel constraint: uq_channel_per_business_type_name', () => {
   });
 
   it('rejects duplicate (business_id, channel_type_id, name)', async () => {
-    const uniqueError = new QueryFailedError('', [], new Error(
-      'duplicate key value violates unique constraint "uq_channel_per_business_type_name"',
-    ));
+    const uniqueError = new QueryFailedError(
+      '',
+      [],
+      new Error(
+        'duplicate key value violates unique constraint "uq_channel_per_business_type_name"',
+      ),
+    );
     (channelRepo.save as jest.Mock)
       .mockResolvedValueOnce({ id: 'first' })
       .mockRejectedValueOnce(uniqueError);
@@ -182,19 +197,27 @@ describe('ChannelCredential constraint: unique channel_id', () => {
   });
 
   it('rejects duplicate channel_id', async () => {
-    const uniqueError = new QueryFailedError('', [], new Error(
-      'duplicate key value violates unique constraint',
-    ));
+    const uniqueError = new QueryFailedError(
+      '',
+      [],
+      new Error('duplicate key value violates unique constraint'),
+    );
     (credRepo.save as jest.Mock)
       .mockResolvedValueOnce({ id: 'cred-1' })
       .mockRejectedValueOnce(uniqueError);
 
     const channelId = 'chan-uuid';
     await expect(
-      credRepo.save({ channel_id: channelId, data: 'enc1' } as ChannelCredential),
+      credRepo.save({
+        channel_id: channelId,
+        data: 'enc1',
+      } as ChannelCredential),
     ).resolves.toBeDefined();
     await expect(
-      credRepo.save({ channel_id: channelId, data: 'enc2' } as ChannelCredential),
+      credRepo.save({
+        channel_id: channelId,
+        data: 'enc2',
+      } as ChannelCredential),
     ).rejects.toThrow('unique constraint');
   });
 });

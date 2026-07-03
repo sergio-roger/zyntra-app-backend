@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsMongoId, IsNumber, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class AgentCallbackDto {
   @ApiProperty()
@@ -10,7 +17,9 @@ export class AgentCallbackDto {
   @IsString()
   businessId: string;
 
-  @ApiProperty({ description: 'Idempotency key — must be unique per assistant message' })
+  @ApiProperty({
+    description: 'Idempotency key — must be unique per assistant message',
+  })
   @IsString()
   @MinLength(1)
   @MaxLength(255)

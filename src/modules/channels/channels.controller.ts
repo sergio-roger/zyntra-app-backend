@@ -36,8 +36,12 @@ export class ChannelsController {
   // Channel Store — public-ish (any authenticated user can browse)
   // ---------------------------------------------------------------------------
   @Get('channels/store')
-  @ApiOperation({ summary: 'Lista todos los tipos de canal disponibles (Channel Store)' })
-  @ApiOkResponse({ description: 'Array de channel_types ordenados por sort_order' })
+  @ApiOperation({
+    summary: 'Lista todos los tipos de canal disponibles (Channel Store)',
+  })
+  @ApiOkResponse({
+    description: 'Array de channel_types ordenados por sort_order',
+  })
   getStore() {
     return this.channelsService.getStore();
   }

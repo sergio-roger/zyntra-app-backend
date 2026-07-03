@@ -116,7 +116,9 @@ describe('AgentsService', () => {
 
     it('throws NotFoundException when not found', async () => {
       (agentRepo.findOne as jest.Mock).mockResolvedValue(null);
-      await expect(service.findOne('biz-1', 'missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('biz-1', 'missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -127,7 +129,11 @@ describe('AgentsService', () => {
     it('updates name and temperature', async () => {
       const agent = makeAgent();
       (agentRepo.findOne as jest.Mock).mockResolvedValue(agent);
-      (agentRepo.save as jest.Mock).mockResolvedValue({ ...agent, name: 'Nuevo', temperature: 0.3 });
+      (agentRepo.save as jest.Mock).mockResolvedValue({
+        ...agent,
+        name: 'Nuevo',
+        temperature: 0.3,
+      });
 
       const result = await service.update('biz-1', 'agent-1', {
         name: 'Nuevo',
@@ -154,9 +160,14 @@ describe('AgentsService', () => {
 
     it('throws ConflictException when agent is assigned to an active channel', async () => {
       (agentRepo.findOne as jest.Mock).mockResolvedValue(makeAgent());
-      (channelRepo.findOne as jest.Mock).mockResolvedValue({ id: 'chan-1', agent_id: 'agent-1' }); // assigned!
+      (channelRepo.findOne as jest.Mock).mockResolvedValue({
+        id: 'chan-1',
+        agent_id: 'agent-1',
+      }); // assigned!
 
-      await expect(service.remove('biz-1', 'agent-1')).rejects.toThrow(ConflictException);
+      await expect(service.remove('biz-1', 'agent-1')).rejects.toThrow(
+        ConflictException,
+      );
       expect(agentRepo.remove).not.toHaveBeenCalled();
     });
   });
@@ -201,7 +212,9 @@ describe('AgentsService', () => {
 
     it('throws NotFoundException when agent not found', async () => {
       (agentRepo.findOne as jest.Mock).mockResolvedValue(null);
-      await expect(service.sandboxTest('biz-1', 'missing', 'hi')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.sandboxTest('biz-1', 'missing', 'hi'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -210,7 +223,9 @@ describe('AgentsService', () => {
   // -------------------------------------------------------------------------
   describe('assertOwnership()', () => {
     it('throws ForbiddenException when businessIds differ', () => {
-      expect(() => service.assertOwnership('biz-A', 'biz-B')).toThrow(ForbiddenException);
+      expect(() => service.assertOwnership('biz-A', 'biz-B')).toThrow(
+        ForbiddenException,
+      );
     });
 
     it('passes when businessIds match', () => {
@@ -226,12 +241,16 @@ describe('AgentsService', () => {
       // Simulate DB returning null because business_id filter excludes the row
       (agentRepo.findOne as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.findOne('biz-B', 'agent-of-biz-A')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('biz-B', 'agent-of-biz-A')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('assertOwnership blocks cross-business requests at controller boundary', () => {
       // User logged in as biz-A tries to reach biz-B route param
-      expect(() => service.assertOwnership('biz-A', 'biz-B')).toThrow(ForbiddenException);
+      expect(() => service.assertOwnership('biz-A', 'biz-B')).toThrow(
+        ForbiddenException,
+      );
     });
   });
 });

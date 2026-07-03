@@ -111,7 +111,8 @@ export class CrmSeeder implements Seeder {
             name: entry.adminUser.name,
             email: entry.adminUser.email,
             jobTitle: 'Director de Operaciones',
-            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            avatarUrl:
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
             passwordHash: passwordHash,
             role: entry.adminUser.role,
             status: UserStatus.ACTIVE,
@@ -143,7 +144,8 @@ export class CrmSeeder implements Seeder {
             name: entry.agentUser.name,
             email: entry.agentUser.email,
             jobTitle: 'Ejecutivo Comercial Senior',
-            avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+            avatarUrl:
+              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
             passwordHash: passwordHash,
             role: entry.agentUser.role,
             status: UserStatus.ACTIVE,
@@ -204,7 +206,8 @@ export class CrmSeeder implements Seeder {
           name: 'Super Admin',
           email: 'superuser@zyntra.com',
           jobTitle: 'Administrador Global',
-          avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
           passwordHash: passwordHash,
           role: UserRole.SUPER_ADMIN,
           status: UserStatus.ACTIVE,
@@ -382,7 +385,8 @@ export class CrmSeeder implements Seeder {
           name: 'Vendedor Especialista',
           email: `ventas1@${entry.business.email.split('@')[1]}`,
           jobTitle: 'Consultor de Ventas Outbound',
-          avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
           passwordHash: passwordHash,
           role: UserRole.AGENT,
           status: UserStatus.ACTIVE,
@@ -399,7 +403,8 @@ export class CrmSeeder implements Seeder {
           name: 'Soporte Nivel 1',
           email: `soporte1@${entry.business.email.split('@')[1]}`,
           jobTitle: 'Especialista de Soporte Técnico',
-          avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
           passwordHash: passwordHash,
           role: UserRole.AGENT,
           status: UserStatus.ACTIVE,

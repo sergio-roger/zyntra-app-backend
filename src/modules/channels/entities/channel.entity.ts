@@ -19,7 +19,11 @@ export enum ChannelStatus {
 }
 
 @Entity({ name: 'channels', schema: 'public' })
-@Unique('uq_channel_per_business_type_name', ['business_id', 'channel_type_id', 'name'])
+@Unique('uq_channel_per_business_type_name', [
+  'business_id',
+  'channel_type_id',
+  'name',
+])
 export class Channel {
   @PrimaryGeneratedColumn('uuid')
   id: string;

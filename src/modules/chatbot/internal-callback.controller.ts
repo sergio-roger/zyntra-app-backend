@@ -21,7 +21,8 @@ export class InternalCallbackController {
   @Post('agent-callback')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Callback interno desde agent-service — persiste el reply del agente',
+    summary:
+      'Callback interno desde agent-service — persiste el reply del agente',
   })
   async agentCallback(
     @Headers('x-service-token') serviceToken: string,

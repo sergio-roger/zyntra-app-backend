@@ -104,7 +104,11 @@ describe('AuthController', () => {
     });
 
     it('uploadAvatar scopes to the caller from the token', async () => {
-      const file = { buffer: Buffer.from('x'), mimetype: 'image/png', size: 10 } as any;
+      const file = {
+        buffer: Buffer.from('x'),
+        mimetype: 'image/png',
+        size: 10,
+      } as any;
       mockAuthService.uploadAvatar.mockResolvedValueOnce({
         avatarUrl: 'http://localhost:3000/uploads/avatars/x.png',
       });

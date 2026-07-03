@@ -353,7 +353,8 @@ export const MENUS_DATA = [
     label: 'Configuración del negocio',
     path: '/settings/configuracion-negocio',
     parent_key: 'settings',
-    description: 'Configuraciones específicas del negocio: ciclo de vida y canales.',
+    description:
+      'Configuraciones específicas del negocio: ciclo de vida y canales.',
   },
   // Ajustes generales → hijos (tercer nivel, sin descripción)
   {

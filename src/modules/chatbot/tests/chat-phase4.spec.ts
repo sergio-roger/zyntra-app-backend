@@ -25,7 +25,10 @@ import { Message } from '../schemas/message.schema';
 import { ChatbotConfig } from '../entities/chatbot-config.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
-import { Channel, ChannelStatus } from '@/modules/channels/entities/channel.entity';
+import {
+  Channel,
+  ChannelStatus,
+} from '@/modules/channels/entities/channel.entity';
 import { ChatGateway } from '../chat.gateway';
 
 // ---------------------------------------------------------------------------
@@ -43,7 +46,13 @@ const makeRepo = <T extends ObjectLiteral>() =>
 const makeMongoModel = () => ({
   findById: jest.fn(),
   findOne: jest.fn(),
-  find: jest.fn().mockReturnValue({ sort: jest.fn().mockReturnValue({ limit: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }) }) }),
+  find: jest.fn().mockReturnValue({
+    sort: jest.fn().mockReturnValue({
+      limit: jest
+        .fn()
+        .mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }),
+    }),
+  }),
   create: jest.fn(),
   updateOne: jest.fn().mockResolvedValue({}),
   lean: jest.fn(),
@@ -91,17 +100,29 @@ async function buildModule() {
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       ChatService,
-      { provide: getModelToken(Conversation.name), useValue: conversationModel },
+      {
+        provide: getModelToken(Conversation.name),
+        useValue: conversationModel,
+      },
       { provide: getModelToken(Message.name), useValue: messageModel },
-      { provide: getRepositoryToken(ChatbotConfig), useValue: makeRepo<ChatbotConfig>() },
+      {
+        provide: getRepositoryToken(ChatbotConfig),
+        useValue: makeRepo<ChatbotConfig>(),
+      },
       { provide: getRepositoryToken(Contact), useValue: makeRepo<Contact>() },
-      { provide: getRepositoryToken(LifecycleStage), useValue: makeRepo<LifecycleStage>() },
+      {
+        provide: getRepositoryToken(LifecycleStage),
+        useValue: makeRepo<LifecycleStage>(),
+      },
       { provide: getRepositoryToken(Channel), useValue: channelRepo },
       { provide: getQueueToken(AGENT_RESPONSE_QUEUE), useValue: agentQueue },
       { provide: ChatGateway, useValue: gateway },
       {
         provide: ConfigService,
-        useValue: { get: (key: string, fallback = '') => (key === 'SERVICE_TOKEN' ? 'test-token' : fallback) },
+        useValue: {
+          get: (key: string, fallback = '') =>
+            key === 'SERVICE_TOKEN' ? 'test-token' : fallback,
+        },
       },
     ],
   }).compile();
@@ -116,10 +137,15 @@ describe('ChatService.processChat() — channel WITH agent', () => {
   beforeEach(async () => {
     await buildModule();
 
-    (channelRepo.findOne as jest.Mock).mockResolvedValue(WEB_CHAT_CHANNEL_WITH_AGENT);
+    (channelRepo.findOne as jest.Mock).mockResolvedValue(
+      WEB_CHAT_CHANNEL_WITH_AGENT,
+    );
     // Simulate no existing conversation → create new one
     (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
-    const fakeConv = { _id: { toString: () => 'conv-123' }, business_id: 'biz-1' };
+    const fakeConv = {
+      _id: { toString: () => 'conv-123' },
+      business_id: 'biz-1',
+    };
     (conversationModel.create as jest.Mock).mockResolvedValue(fakeConv);
     (messageModel.create as jest.Mock).mockResolvedValue({});
   });
@@ -168,7 +194,10 @@ describe('ChatService.processChat() — channel WITHOUT agent', () => {
 
     (channelRepo.findOne as jest.Mock).mockResolvedValue(WEB_CHAT_CHANNEL); // no agent_id
     (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
-    const fakeConv = { _id: { toString: () => 'conv-456' }, business_id: 'biz-1' };
+    const fakeConv = {
+      _id: { toString: () => 'conv-456' },
+      business_id: 'biz-1',
+    };
     (conversationModel.create as jest.Mock).mockResolvedValue(fakeConv);
     (messageModel.create as jest.Mock).mockResolvedValue({});
   });
@@ -176,7 +205,10 @@ describe('ChatService.processChat() — channel WITHOUT agent', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('returns fallback message without pending flag', async () => {
-    const result = await service.processChat({ business_id: 'biz-1', message: 'Hola' });
+    const result = await service.processChat({
+      business_id: 'biz-1',
+      message: 'Hola',
+    });
     expect(result.message).toBeTruthy();
     expect(result.pending).toBe(false);
   });
@@ -216,7 +248,10 @@ describe('ChatService: findOrCreate conversation', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('reuses an existing open conversation with same fingerprint', async () => {
-    const existingConv = { _id: { toString: () => 'conv-existing' }, business_id: 'biz-1' };
+    const existingConv = {
+      _id: { toString: () => 'conv-existing' },
+      business_id: 'biz-1',
+    };
     (conversationModel.findOne as jest.Mock).mockResolvedValue(existingConv);
 
     const r1 = await service.processChat({
@@ -291,7 +326,9 @@ describe('ChatService.handleAgentCallback()', () => {
 
   it('is idempotent: duplicate job_id does not create a second message', async () => {
     // Simulates an existing message with the same job_id
-    (messageModel.findOne as jest.Mock).mockResolvedValue({ job_id: 'job-dup' });
+    (messageModel.findOne as jest.Mock).mockResolvedValue({
+      job_id: 'job-dup',
+    });
 
     const result = await service.handleAgentCallback({
       conversationId: '507f1f77bcf86cd799439011',
@@ -338,9 +375,17 @@ describe('ChatService.updateConversationStatus()', () => {
     const conv = { _id: { toString: () => 'conv-1' }, business_id: 'biz-1' };
     (conversationModel.findById as jest.Mock).mockResolvedValue(conv);
 
-    const result = await service.updateConversationStatus('biz-1', 'conv-1', 'closed');
+    const result = await service.updateConversationStatus(
+      'biz-1',
+      'conv-1',
+      'closed',
+    );
 
     expect(result).toEqual({ success: true, status: 'closed' });
-    expect(gateway.emitConversationStatusChanged).toHaveBeenCalledWith('biz-1', 'conv-1', 'closed');
+    expect(gateway.emitConversationStatusChanged).toHaveBeenCalledWith(
+      'biz-1',
+      'conv-1',
+      'closed',
+    );
   });
 });

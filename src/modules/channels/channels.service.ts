@@ -21,7 +21,8 @@ function getKey(): Buffer {
   const raw = process.env.CHANNEL_CREDENTIALS_KEY;
   if (!raw) throw new Error('CHANNEL_CREDENTIALS_KEY env var not set');
   const key = Buffer.from(raw, 'hex');
-  if (key.length !== 32) throw new Error('CHANNEL_CREDENTIALS_KEY must be 32 bytes (64 hex chars)');
+  if (key.length !== 32)
+    throw new Error('CHANNEL_CREDENTIALS_KEY must be 32 bytes (64 hex chars)');
   return key;
 }
 
@@ -30,7 +31,10 @@ export function encryptCredentials(data: Record<string, unknown>): string {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv(ALGO, key, iv);
   const plain = JSON.stringify(data);
-  const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  const encrypted = Buffer.concat([
+    cipher.update(plain, 'utf8'),
+    cipher.final(),
+  ]);
   const tag = cipher.getAuthTag();
   return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`;
 }
@@ -39,7 +43,11 @@ export function decryptCredentials(encoded: string): Record<string, unknown> {
   const key = getKey();
   const [ivHex, tagHex, ctHex] = encoded.split(':');
   if (!ivHex || !tagHex || !ctHex) throw new Error('Invalid credential format');
-  const decipher = crypto.createDecipheriv(ALGO, key, Buffer.from(ivHex, 'hex'));
+  const decipher = crypto.createDecipheriv(
+    ALGO,
+    key,
+    Buffer.from(ivHex, 'hex'),
+  );
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
   const decrypted = Buffer.concat([
     decipher.update(Buffer.from(ctHex, 'hex')),
@@ -71,7 +79,16 @@ export class ChannelsService {
   async getStore() {
     return this.channelTypeRepo.find({
       order: { sort_order: 'ASC' },
-      select: ['id', 'key', 'label', 'description', 'icon_url', 'is_available', 'config_schema', 'sort_order'],
+      select: [
+        'id',
+        'key',
+        'label',
+        'description',
+        'icon_url',
+        'is_available',
+        'config_schema',
+        'sort_order',
+      ],
     });
   }
 
@@ -147,7 +164,9 @@ export class ChannelsService {
     if (dto.name !== undefined) channel.name = dto.name;
     if (dto.status !== undefined) channel.status = dto.status;
     if (dto.config !== undefined) {
-      const provider = this.providerFactory.getProvider(channel.channelType.key);
+      const provider = this.providerFactory.getProvider(
+        channel.channelType.key,
+      );
       provider.validateConfig(dto.config);
       channel.config = dto.config;
     }
@@ -183,7 +202,10 @@ export class ChannelsService {
     return this.channelRepo.save(channel);
   }
 
-  async findByBusinessAndType(businessId: string, typeKey: string): Promise<Channel | null> {
+  async findByBusinessAndType(
+    businessId: string,
+    typeKey: string,
+  ): Promise<Channel | null> {
     return this.channelRepo.findOne({
       where: { business_id: businessId, channelType: { key: typeKey } },
       relations: ['channelType'],

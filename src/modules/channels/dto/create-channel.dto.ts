@@ -13,13 +13,19 @@ export class CreateChannelDto {
   @IsUUID()
   channelTypeId: string;
 
-  @ApiProperty({ description: 'Nombre descriptivo del canal', example: 'Chat Principal' })
+  @ApiProperty({
+    description: 'Nombre descriptivo del canal',
+    example: 'Chat Principal',
+  })
   @IsString()
   @MinLength(1)
   @MaxLength(100)
   name: string;
 
-  @ApiPropertyOptional({ description: 'Configuración específica del canal (validada por el provider)' })
+  @ApiPropertyOptional({
+    description:
+      'Configuración específica del canal (validada por el provider)',
+  })
   @IsOptional()
   @IsObject()
   config?: Record<string, unknown>;

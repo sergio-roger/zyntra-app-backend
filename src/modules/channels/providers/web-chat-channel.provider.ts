@@ -7,7 +7,8 @@ import {
 
 const VALID_POSITIONS = ['bottom-left', 'bottom-right'] as const;
 const HEX_COLOR_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
-const DOMAIN_RE = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+const DOMAIN_RE =
+  /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 
 @Injectable()
 export class WebChatChannelProvider implements ChannelProvider {
@@ -20,12 +21,17 @@ export class WebChatChannelProvider implements ChannelProvider {
       allowedDomains?: unknown;
     };
 
-    if (position !== undefined && !VALID_POSITIONS.includes(position as typeof VALID_POSITIONS[number])) {
+    if (
+      position !== undefined &&
+      !VALID_POSITIONS.includes(position as (typeof VALID_POSITIONS)[number])
+    ) {
       errors.push(`position debe ser uno de: ${VALID_POSITIONS.join(', ')}`);
     }
 
     if (primaryColor !== undefined && !HEX_COLOR_RE.test(primaryColor)) {
-      errors.push('primaryColor debe ser un color hex válido (ej. #6366f1 o #fff)');
+      errors.push(
+        'primaryColor debe ser un color hex válido (ej. #6366f1 o #fff)',
+      );
     }
 
     if (allowedDomains !== undefined) {
@@ -36,7 +42,9 @@ export class WebChatChannelProvider implements ChannelProvider {
           (d) => typeof d !== 'string' || !DOMAIN_RE.test(d as string),
         );
         if (invalid.length > 0) {
-          errors.push(`allowedDomains contiene dominios inválidos: ${invalid.join(', ')}`);
+          errors.push(
+            `allowedDomains contiene dominios inválidos: ${invalid.join(', ')}`,
+          );
         }
       }
     }
@@ -52,7 +60,8 @@ export class WebChatChannelProvider implements ChannelProvider {
     config: Record<string, unknown>,
   ): Promise<ChannelSetupResult> {
     const position = (config.position as string | undefined) ?? 'bottom-right';
-    const primaryColor = (config.primaryColor as string | undefined) ?? '#6366f1';
+    const primaryColor =
+      (config.primaryColor as string | undefined) ?? '#6366f1';
     const name = (config.name as string | undefined) ?? 'Asistente';
     const greeting = (config.greeting as string | undefined) ?? '';
 
@@ -74,7 +83,9 @@ export class WebChatChannelProvider implements ChannelProvider {
 
   parseIncoming(payload: Record<string, unknown>): IncomingMessage {
     return {
-      externalRef: (payload['visitor'] as { fingerprint?: string })?.fingerprint ?? 'anonymous',
+      externalRef:
+        (payload['visitor'] as { fingerprint?: string })?.fingerprint ??
+        'anonymous',
       text: (payload['message'] as string) ?? '',
       channel: 'web_chat',
       rawPayload: payload,

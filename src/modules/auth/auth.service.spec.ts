@@ -96,7 +96,9 @@ describe('AuthService — unified login', () => {
   const jwtService = { sign: jest.fn().mockReturnValue('mock-token') };
 
   const avatarStorage = {
-    save: jest.fn().mockResolvedValue('http://localhost:3000/uploads/avatars/new.png'),
+    save: jest
+      .fn()
+      .mockResolvedValue('http://localhost:3000/uploads/avatars/new.png'),
     delete: jest.fn().mockResolvedValue(undefined),
   };
 

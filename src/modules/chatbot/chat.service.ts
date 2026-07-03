@@ -201,7 +201,8 @@ export class ChatService {
       throw new UnauthorizedException('Invalid service token');
     }
 
-    const { conversationId, businessId, jobId, reply, model, tokensUsed } = payload;
+    const { conversationId, businessId, jobId, reply, model, tokensUsed } =
+      payload;
 
     // Idempotency: skip if a message with this job_id already exists
     const existing = await this.messageModel.findOne({ job_id: jobId });
@@ -222,7 +223,12 @@ export class ChatService {
       { last_message_at: new Date() },
     );
 
-    this.chatGateway.emitNewMessage(businessId, conversationId, reply, 'assistant');
+    this.chatGateway.emitNewMessage(
+      businessId,
+      conversationId,
+      reply,
+      'assistant',
+    );
 
     return { ok: true };
   }
@@ -299,10 +305,15 @@ export class ChatService {
 
     const allowed = ['open', 'closed', 'bot', 'human'];
     if (!allowed.includes(status)) {
-      throw new BadRequestException(`Estado inválido. Opciones: ${allowed.join(', ')}`);
+      throw new BadRequestException(
+        `Estado inválido. Opciones: ${allowed.join(', ')}`,
+      );
     }
 
-    await this.conversationModel.updateOne({ _id: conversation._id }, { status });
+    await this.conversationModel.updateOne(
+      { _id: conversation._id },
+      { status },
+    );
     this.chatGateway.emitConversationStatusChanged(
       businessId,
       conversationId,
@@ -367,7 +378,9 @@ export class ChatService {
 
     // Lazy import to avoid circular dependency if AiModule not available in this path
     const { AiService } = await import('../ai/ai.service');
-    const aiSvc: InstanceType<typeof AiService> = (this as unknown as { aiService?: unknown }).aiService as InstanceType<typeof AiService>;
+    const aiSvc: InstanceType<typeof AiService> = (
+      this as unknown as { aiService?: unknown }
+    ).aiService as InstanceType<typeof AiService>;
 
     const aiResponse = await aiSvc.chat({
       messages: [
@@ -377,10 +390,17 @@ export class ChatService {
       ],
     });
 
-    const reply = aiResponse.choices[0]?.message?.content ?? 'Lo siento, no pude procesar tu solicitud.';
+    const reply =
+      aiResponse.choices[0]?.message?.content ??
+      'Lo siento, no pude procesar tu solicitud.';
     const latencyMs = 0;
 
-    await this.messageModel.create({ conversation_id: conversationIdStr, role: 'user', content: message, channel: 'web' });
+    await this.messageModel.create({
+      conversation_id: conversationIdStr,
+      role: 'user',
+      content: message,
+      channel: 'web',
+    });
     await this.messageModel.create({
       conversation_id: conversationIdStr,
       role: 'assistant',
@@ -390,7 +410,10 @@ export class ChatService {
       model: aiResponse.model,
       channel: 'web',
     });
-    await this.conversationModel.updateOne({ _id: conversation._id }, { last_message_at: new Date() });
+    await this.conversationModel.updateOne(
+      { _id: conversation._id },
+      { last_message_at: new Date() },
+    );
 
     return {
       id: crypto.randomUUID(),
@@ -407,7 +430,14 @@ export class ChatService {
   async getPublicConfig(businessId: string) {
     const config = await this.configRepo.findOne({
       where: { business_id: businessId },
-      select: ['name', 'welcome_message', 'tone', 'locale', 'theme', 'is_active'],
+      select: [
+        'name',
+        'welcome_message',
+        'tone',
+        'locale',
+        'theme',
+        'is_active',
+      ],
     });
     if (!config) throw new NotFoundException('Chatbot no encontrado');
     return config;
@@ -434,7 +464,11 @@ export class ChatService {
       if (phone) existing.phone = phone;
       existing.lastActivityAt = new Date();
       await this.contactsRepo.save(existing);
-      return { success: true, contact_id: existing.id, message: 'Lead actualizado' };
+      return {
+        success: true,
+        contact_id: existing.id,
+        message: 'Lead actualizado',
+      };
     }
 
     const defaultStage = await this.stageRepo.findOne({

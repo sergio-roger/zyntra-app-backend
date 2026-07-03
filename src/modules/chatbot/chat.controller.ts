@@ -53,7 +53,8 @@ export class ChatController {
     @Query('status') status?: string,
   ) {
     const businessId = (req.user as { id?: string }).id;
-    if (!businessId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    if (!businessId)
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.chatService.getConversations(businessId, { channelId, status });
   }
 
@@ -64,7 +65,8 @@ export class ChatController {
   @ApiOkResponse({ description: 'Conversation with messages' })
   async getConversation(@Req() req: RequestWithUser, @Param('id') id: string) {
     const businessId = (req.user as { id?: string }).id;
-    if (!businessId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    if (!businessId)
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.chatService.getConversationDetail(businessId, id);
   }
 
@@ -72,14 +74,17 @@ export class ChatController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Update conversation status (open/closed/bot/human)' })
+  @ApiOperation({
+    summary: 'Update conversation status (open/closed/bot/human)',
+  })
   async updateConversationStatus(
     @Req() req: RequestWithUser,
     @Param('id') id: string,
     @Body('status') status: string,
   ) {
     const businessId = (req.user as { id?: string }).id;
-    if (!businessId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    if (!businessId)
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.chatService.updateConversationStatus(businessId, id, status);
   }
 

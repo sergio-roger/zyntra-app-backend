@@ -5,13 +5,21 @@
  * Run: npx jest channels-phase2
  */
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ObjectLiteral, Repository } from 'typeorm';
 
 import { ChannelProviderFactory } from '../providers/channel-provider.factory';
 import { WebChatChannelProvider } from '../providers/web-chat-channel.provider';
-import { ChannelsService, encryptCredentials, decryptCredentials } from '../channels.service';
+import {
+  ChannelsService,
+  encryptCredentials,
+  decryptCredentials,
+} from '../channels.service';
 import { ChannelType } from '../entities/channel-type.entity';
 import { Channel, ChannelStatus } from '../entities/channel.entity';
 import { ChannelCredential } from '../entities/channel-credential.entity';
@@ -102,27 +110,39 @@ describe('WebChatChannelProvider.validateConfig()', () => {
   });
 
   it('rejects invalid position', () => {
-    expect(() => provider.validateConfig({ position: 'top-left' })).toThrow(BadRequestException);
+    expect(() => provider.validateConfig({ position: 'top-left' })).toThrow(
+      BadRequestException,
+    );
   });
 
   it('rejects malformed primaryColor (no hash)', () => {
-    expect(() => provider.validateConfig({ primaryColor: '6366f1' })).toThrow(BadRequestException);
+    expect(() => provider.validateConfig({ primaryColor: '6366f1' })).toThrow(
+      BadRequestException,
+    );
   });
 
   it('rejects primaryColor with invalid chars', () => {
-    expect(() => provider.validateConfig({ primaryColor: '#GGGGGG' })).toThrow(BadRequestException);
+    expect(() => provider.validateConfig({ primaryColor: '#GGGGGG' })).toThrow(
+      BadRequestException,
+    );
   });
 
   it('accepts 3-char hex color', () => {
-    expect(() => provider.validateConfig({ primaryColor: '#fff' })).not.toThrow();
+    expect(() =>
+      provider.validateConfig({ primaryColor: '#fff' }),
+    ).not.toThrow();
   });
 
   it('rejects allowedDomains that is not an array', () => {
-    expect(() => provider.validateConfig({ allowedDomains: 'example.com' })).toThrow(BadRequestException);
+    expect(() =>
+      provider.validateConfig({ allowedDomains: 'example.com' }),
+    ).toThrow(BadRequestException);
   });
 
   it('rejects allowedDomains with malformed domain', () => {
-    expect(() => provider.validateConfig({ allowedDomains: ['not_a_domain!'] })).toThrow(BadRequestException);
+    expect(() =>
+      provider.validateConfig({ allowedDomains: ['not_a_domain!'] }),
+    ).toThrow(BadRequestException);
   });
 });
 
@@ -138,7 +158,9 @@ describe('WebChatChannelProvider.setup()', () => {
 
   it('returns embedCode containing the businessId', async () => {
     const bizId = 'biz-abc-123';
-    const result = await provider.setup('chan-1', bizId, { position: 'bottom-right' });
+    const result = await provider.setup('chan-1', bizId, {
+      position: 'bottom-right',
+    });
     expect(result.embedCode).toContain(`data-business-id="${bizId}"`);
   });
 
@@ -223,7 +245,10 @@ describe('ChannelsService', () => {
         ChannelsService,
         { provide: getRepositoryToken(ChannelType), useValue: channelTypeRepo },
         { provide: getRepositoryToken(Channel), useValue: channelRepo },
-        { provide: getRepositoryToken(ChannelCredential), useValue: credentialRepo },
+        {
+          provide: getRepositoryToken(ChannelCredential),
+          useValue: credentialRepo,
+        },
         { provide: ChannelProviderFactory, useValue: factory },
       ],
     }).compile();
@@ -239,7 +264,12 @@ describe('ChannelsService', () => {
   describe('create()', () => {
     it('creates a web_chat channel and returns embedCode', async () => {
       (channelTypeRepo.findOne as jest.Mock).mockResolvedValue(WEB_CHAT_TYPE);
-      const savedChannel = { id: 'new-chan', business_id: 'biz-1', config: {}, channelType: WEB_CHAT_TYPE };
+      const savedChannel = {
+        id: 'new-chan',
+        business_id: 'biz-1',
+        config: {},
+        channelType: WEB_CHAT_TYPE,
+      };
       (channelRepo.save as jest.Mock).mockResolvedValue(savedChannel);
       (credentialRepo.save as jest.Mock).mockResolvedValue({});
 
@@ -286,13 +316,17 @@ describe('ChannelsService', () => {
     it('throws NotFoundException when channel not found', async () => {
       (channelRepo.findOne as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.findOne('biz-1', 'chan-missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('biz-1', 'chan-missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('assertOwnership()', () => {
     it('throws ForbiddenException when businessIds differ', () => {
-      expect(() => service.assertOwnership('biz-A', 'biz-B')).toThrow(ForbiddenException);
+      expect(() => service.assertOwnership('biz-A', 'biz-B')).toThrow(
+        ForbiddenException,
+      );
     });
 
     it('does not throw when businessIds match', () => {
@@ -302,7 +336,11 @@ describe('ChannelsService', () => {
 
   describe('remove()', () => {
     it('removes the channel and returns success', async () => {
-      const channel = { id: 'c1', business_id: 'biz-1', channelType: WEB_CHAT_TYPE } as Channel;
+      const channel = {
+        id: 'c1',
+        business_id: 'biz-1',
+        channelType: WEB_CHAT_TYPE,
+      } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
       (channelRepo.remove as jest.Mock).mockResolvedValue(undefined);
 
