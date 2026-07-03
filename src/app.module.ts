@@ -10,12 +10,14 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { ChatbotModule } from '@chatbot/chatbot.module';
 import { PlanModuleGuard } from '@common/guards/plan-module.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
+import { LoggingContextInterceptor } from '@common/interceptors/logging-context.interceptor';
+import { LoggerModule } from '@common/logging/logger.module';
 import { CrmModule } from '@crm/crm.module';
 import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -24,6 +26,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    LoggerModule,
 
     HttpModule.register({
       timeout: 30000,
@@ -75,6 +79,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PlanModuleGuard },
+    { provide: APP_INTERCEPTOR, useClass: LoggingContextInterceptor },
   ],
 })
 export class AppModule {}

@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
+  Logger,
   Param,
   Patch,
   Post,
@@ -32,6 +33,8 @@ import { LeadCaptureDto } from './dto/lead-capture.dto';
 @ApiTags('Chat')
 @Controller('chat')
 export class ChatController {
+  private readonly logger = new Logger(ChatController.name);
+
   constructor(private readonly chatService: ChatService) {}
 
   @Public()
@@ -111,7 +114,9 @@ export class ChatController {
     @Body() request: ChatRequestDto,
     @Headers('x-forwarded-for') ip?: string,
   ): Promise<ChatResponseDto> {
-    console.log(request);
+    this.logger.debug(
+      `chat message received: business_id=${request.business_id ?? 'unknown'} conversation_id=${request.conversation_id ?? 'new'} channel=${request.channel ?? 'web'} length=${request.message.length} ip=${ip ?? 'unknown'}`,
+    );
     return this.chatService.processChat(request, ip);
   }
 
