@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Plan } from './plan.entity';
+import { Plan } from '@auth/entities/plan.entity';
 
 export enum PlanStatus {
   TRIAL = 'trial',
@@ -23,6 +23,21 @@ export class Business {
 
   @Column()
   name: string;
+
+  @Column({ name: 'first_name', nullable: true })
+  firstName: string;
+
+  @Column({ name: 'last_name', nullable: true })
+  lastName: string;
+
+  @Column({ name: 'job_title', nullable: true })
+  jobTitle: string;
+
+  @Column({ name: 'avatar_url', type: 'text', nullable: true })
+  avatarUrl: string;
+
+  @Column({ name: 'is_account_activated', default: true })
+  isAccountActivated: boolean;
 
   @Column({ unique: true })
   email: string;

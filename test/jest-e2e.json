@@ -5,5 +5,13 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@auth/(.*)$": "<rootDir>/../src/modules/auth/$1",
+    "^@crm/(.*)$": "<rootDir>/../src/modules/crm/$1",
+    "^@ai/(.*)$": "<rootDir>/../src/modules/ai/$1",
+    "^@chatbot/(.*)$": "<rootDir>/../src/modules/chatbot/$1",
+    "^@common/(.*)$": "<rootDir>/../src/common/$1",
+    "^@/(.*)$": "<rootDir>/../src/$1"
   }
 }

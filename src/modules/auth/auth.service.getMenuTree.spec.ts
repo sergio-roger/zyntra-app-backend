@@ -18,6 +18,7 @@ import { Plan } from './entities/plan.entity';
 import { CrmUser } from '@crm/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { Role } from './entities/role.entity';
+import { AvatarStorageService } from './avatar-storage.service';
 import { Menu } from './entities/menu.entity';
 import { Permission } from './entities/permission.entity';
 
@@ -342,6 +343,10 @@ async function buildService(
       { provide: getRepositoryToken(Menu), useValue: { find: jest.fn() } },
       { provide: getRepositoryToken(Permission), useValue: permissionRepo },
       { provide: JwtService, useValue: { sign: jest.fn() } },
+      {
+        provide: AvatarStorageService,
+        useValue: { save: jest.fn(), delete: jest.fn() },
+      },
     ],
   }).compile();
 

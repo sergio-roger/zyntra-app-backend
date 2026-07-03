@@ -17,6 +17,9 @@ export const BUSINESSES_DATA = [
     business: {
       name: 'Zyntra BrandStart Demo',
       email: 'brandstart@demo.zyntra.com',
+      ownerFirstName: 'Camila',
+      ownerLastName: 'Torres',
+      ownerJobTitle: 'Fundadora',
     },
     adminUser: {
       name: 'Admin BrandStart',
@@ -108,6 +111,9 @@ export const BUSINESSES_DATA = [
     business: {
       name: 'Zyntra Impulse Pro Demo',
       email: 'impulsepro@demo.zyntra.com',
+      ownerFirstName: 'Andrés',
+      ownerLastName: 'Ramírez',
+      ownerJobTitle: 'Director General',
     },
     adminUser: {
       name: 'Admin Impulse Pro',
@@ -199,6 +205,9 @@ export const BUSINESSES_DATA = [
     business: {
       name: 'Zyntra Core Digital Demo',
       email: 'coredigital@demo.zyntra.com',
+      ownerFirstName: 'Valentina',
+      ownerLastName: 'Rojas',
+      ownerJobTitle: 'CEO',
     },
     adminUser: {
       name: 'Admin Core Digital',

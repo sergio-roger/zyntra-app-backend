@@ -10,16 +10,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
-import { Business, PlanStatus } from './entities/business.entity';
-import { Plan } from './entities/plan.entity';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { Business, PlanStatus } from '@auth/entities/business.entity';
+import { Plan } from '@auth/entities/plan.entity';
+import { RegisterDto } from '@auth/dto/register.dto';
+import { LoginDto } from '@auth/dto/login.dto';
 import { User } from '@crm/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { Role } from './entities/role.entity';
-import { Menu } from './entities/menu.entity';
-import { Permission } from './entities/permission.entity';
+import { JwtPayload } from '@auth/interfaces/jwt-payload.interface';
+import { Role } from '@auth/entities/role.entity';
+import { Menu } from '@auth/entities/menu.entity';
+import { Permission } from '@auth/entities/permission.entity';
+import { UpdateProfileDto } from '@auth/dto/update-profile.dto';
+import { ChangePasswordDto } from '@auth/dto/change-password.dto';
+import {
+  AvatarStorageService,
+  ALLOWED_AVATAR_MIME_TYPES,
+  MAX_AVATAR_SIZE_BYTES,
+  UploadableFile,
+} from '@auth/avatar-storage.service';
 
 // TODO: Replace with persisted PasswordResetToken entity + email delivery (SMTP/Resend).
 // In-memory store is fine for dev / single-instance only.
@@ -35,6 +43,24 @@ export interface MenuNode {
   parent_key: string | null;
   access_level?: string;
   children: MenuNode[];
+}
+
+export interface SelfProfile {
+  id: string;
+  businessId: string;
+  name: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  role: UserRole;
+  plan: Plan | null;
+  plan_status: string;
+  crm_user_id: string | null;
+  avatarUrl: string | null;
+  jobTitle: string | null;
+  isAccountActivated: boolean;
+  status: string;
+  createdAt: Date;
 }
 
 @Injectable()
@@ -55,6 +81,7 @@ export class AuthService {
     @InjectRepository(Permission)
     private permissionRepository: Repository<Permission>,
     private jwtService: JwtService,
+    private avatarStorage: AvatarStorageService,
   ) {}
 
   private getArgonOptions() {
@@ -330,6 +357,229 @@ export class AuthService {
     );
     await this.businessRepository.save(business);
     resetTokens.delete(token);
+  }
+
+  private async loadSelfContext(
+    businessId: string,
+    crmUserId: string | null,
+  ): Promise<{ business: Business; crmUser: User | null }> {
+    const business = await this.businessRepository.findOne({
+      where: { id: businessId },
+      relations: ['plan_object'],
+    });
+    if (!business) {
+      throw new UnauthorizedException();
+    }
+
+    if (!crmUserId) {
+      return { business, crmUser: null };
+    }
+
+    const crmUser = await this.crmUserRepository.findOne({
+      where: { id: crmUserId, businessId },
+    });
+    if (!crmUser) {
+      throw new UnauthorizedException();
+    }
+
+    return { business, crmUser };
+  }
+
+  private toSelfProfile(
+    business: Business,
+    crmUser: User | null,
+    role: UserRole,
+  ): SelfProfile {
+    if (crmUser) {
+      return {
+        id: business.id,
+        businessId: business.id,
+        name: crmUser.name,
+        firstName: crmUser.firstName ?? null,
+        lastName: crmUser.lastName ?? null,
+        email: crmUser.email,
+        role,
+        plan: business.plan_object ?? null,
+        plan_status: business.plan_status,
+        crm_user_id: crmUser.id,
+        avatarUrl: crmUser.avatarUrl ?? null,
+        jobTitle: crmUser.jobTitle ?? null,
+        isAccountActivated: crmUser.isAccountActivated,
+        status: crmUser.status,
+        createdAt: crmUser.createdAt,
+      };
+    }
+
+    return {
+      id: business.id,
+      businessId: business.id,
+      name: business.name,
+      firstName: business.firstName ?? null,
+      lastName: business.lastName ?? null,
+      email: business.email,
+      role,
+      plan: business.plan_object ?? null,
+      plan_status: business.plan_status,
+      crm_user_id: null,
+      avatarUrl: business.avatarUrl ?? null,
+      jobTitle: business.jobTitle ?? null,
+      isAccountActivated: business.isAccountActivated,
+      status: 'active',
+      createdAt: business.created_at,
+    };
+  }
+
+  async getSelfProfile(
+    businessId: string,
+    crmUserId: string | null,
+    role: UserRole,
+  ): Promise<SelfProfile> {
+    const { business, crmUser } = await this.loadSelfContext(
+      businessId,
+      crmUserId,
+    );
+    return this.toSelfProfile(business, crmUser, role);
+  }
+
+  async updateProfile(
+    businessId: string,
+    crmUserId: string | null,
+    dto: UpdateProfileDto,
+    role: UserRole,
+  ): Promise<SelfProfile> {
+    const { business, crmUser } = await this.loadSelfContext(
+      businessId,
+      crmUserId,
+    );
+
+    if (crmUser) {
+      if (dto.firstName !== undefined) crmUser.firstName = dto.firstName;
+      if (dto.lastName !== undefined) crmUser.lastName = dto.lastName;
+      if (dto.jobTitle !== undefined) crmUser.jobTitle = dto.jobTitle;
+      await this.crmUserRepository.save(crmUser);
+      return this.toSelfProfile(business, crmUser, role);
+    }
+
+    if (dto.firstName !== undefined) business.firstName = dto.firstName;
+    if (dto.lastName !== undefined) business.lastName = dto.lastName;
+    if (dto.jobTitle !== undefined) business.jobTitle = dto.jobTitle;
+    await this.businessRepository.save(business);
+    return this.toSelfProfile(business, null, role);
+  }
+
+  async changePassword(
+    businessId: string,
+    crmUserId: string | null,
+    dto: ChangePasswordDto,
+  ): Promise<void> {
+    if (dto.newPassword === dto.currentPassword) {
+      throw new BadRequestException(
+        'La nueva contraseña debe ser diferente a la actual',
+      );
+    }
+
+    const { business, crmUser } = await this.loadSelfContext(
+      businessId,
+      crmUserId,
+    );
+
+    if (crmUser) {
+      const isValid =
+        !!crmUser.passwordHash &&
+        (await argon2.verify(
+          crmUser.passwordHash,
+          dto.currentPassword,
+          this.getArgonOptions(),
+        ));
+      if (!isValid) {
+        throw new UnauthorizedException('Credenciales incorrectas');
+      }
+      crmUser.passwordHash = await argon2.hash(
+        dto.newPassword,
+        this.getArgonOptions(),
+      );
+      await this.crmUserRepository.save(crmUser);
+      return;
+    }
+
+    const isValid = await argon2.verify(
+      business.password_hash,
+      dto.currentPassword,
+      this.getArgonOptions(),
+    );
+    if (!isValid) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+    business.password_hash = await argon2.hash(
+      dto.newPassword,
+      this.getArgonOptions(),
+    );
+    await this.businessRepository.save(business);
+  }
+
+  async uploadAvatar(
+    businessId: string,
+    crmUserId: string | null,
+    file: UploadableFile | undefined,
+  ): Promise<{ avatarUrl: string }> {
+    if (!file) {
+      throw new BadRequestException('No se recibió ningún archivo');
+    }
+    if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Formato de archivo no permitido. Usa PNG, JPEG o WEBP.',
+      );
+    }
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      throw new BadRequestException(
+        'El archivo excede el tamaño máximo permitido (2MB).',
+      );
+    }
+
+    const { business, crmUser } = await this.loadSelfContext(
+      businessId,
+      crmUserId,
+    );
+    const previousUrl = crmUser ? crmUser.avatarUrl : business.avatarUrl;
+
+    const avatarUrl = await this.avatarStorage.save(file);
+
+    if (crmUser) {
+      crmUser.avatarUrl = avatarUrl;
+      await this.crmUserRepository.save(crmUser);
+    } else {
+      business.avatarUrl = avatarUrl;
+      await this.businessRepository.save(business);
+    }
+
+    if (previousUrl) {
+      await this.avatarStorage.delete(previousUrl);
+    }
+
+    return { avatarUrl };
+  }
+
+  async removeAvatar(
+    businessId: string,
+    crmUserId: string | null,
+  ): Promise<void> {
+    const { business, crmUser } = await this.loadSelfContext(
+      businessId,
+      crmUserId,
+    );
+    const currentUrl = crmUser ? crmUser.avatarUrl : business.avatarUrl;
+
+    if (crmUser) {
+      crmUser.avatarUrl = null as unknown as string;
+      await this.crmUserRepository.save(crmUser);
+    } else {
+      business.avatarUrl = null as unknown as string;
+      await this.businessRepository.save(business);
+    }
+
+    if (currentUrl) {
+      await this.avatarStorage.delete(currentUrl);
+    }
   }
 
   async getMenuTree(

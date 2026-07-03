@@ -6,12 +6,17 @@ import { UserRole } from '@crm/enums/user-role.enum';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
+  Patch,
   Post,
   Request,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -19,14 +24,19 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { AuthResponseDto, LogoutResponseDto } from './dto/auth-response.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { Business } from './entities/business.entity';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthService } from '@auth/auth.service';
+import {
+  AuthResponseDto,
+  LogoutResponseDto,
+} from '@auth/dto/auth-response.dto';
+import { ChangePasswordDto } from '@auth/dto/change-password.dto';
+import { ForgotPasswordDto } from '@auth/dto/forgot-password.dto';
+import { LoginDto } from '@auth/dto/login.dto';
+import { RegisterDto } from '@auth/dto/register.dto';
+import { ResetPasswordDto } from '@auth/dto/reset-password.dto';
+import { UpdateProfileDto } from '@auth/dto/update-profile.dto';
+import { Business } from '@auth/entities/business.entity';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -125,21 +135,78 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: AuthResponseDto })
-  getProfile(@Request() req: RequestWithUser) {
-    const user = req.user as Business & {
-      crm_user_id?: string | null;
-      role?: string;
-      plan?: any;
-    };
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      plan_status: user.plan_status,
-      crm_user_id: user.crm_user_id,
-      plan: user.plan_object || user.plan,
-    };
+  async getProfile(
+    @Request() req: RequestWithUser,
+    @CurrentCrmUser() caller: { id: string | null; role: UserRole },
+  ) {
+    const user = req.user as Business & { crm_user_id?: string | null };
+    return this.authService.getSelfProfile(
+      user.id,
+      user.crm_user_id ?? null,
+      caller.role,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update own profile' })
+  async updateProfile(
+    @Body() dto: UpdateProfileDto,
+    @Request() req: RequestWithUser,
+    @CurrentCrmUser() caller: { id: string | null; role: UserRole },
+  ) {
+    const user = req.user as Business & { crm_user_id?: string | null };
+    return this.authService.updateProfile(
+      user.id,
+      user.crm_user_id ?? null,
+      dto,
+      caller.role,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/avatar')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upload or replace own avatar' })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: RequestWithUser,
+  ) {
+    const user = req.user as Business & { crm_user_id?: string | null };
+    return this.authService.uploadAvatar(
+      user.id,
+      user.crm_user_id ?? null,
+      file,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('me/avatar')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remove own avatar' })
+  async removeAvatar(@Request() req: RequestWithUser) {
+    const user = req.user as Business & { crm_user_id?: string | null };
+    await this.authService.removeAvatar(user.id, user.crm_user_id ?? null);
+    return { message: 'Avatar eliminado correctamente' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change own password' })
+  async changePassword(
+    @Body() dto: ChangePasswordDto,
+    @Request() req: RequestWithUser,
+  ) {
+    const user = req.user as Business & { crm_user_id?: string | null };
+    await this.authService.changePassword(
+      user.id,
+      user.crm_user_id ?? null,
+      dto,
+    );
+    return { message: 'Contraseña actualizada correctamente' };
   }
 
   @UseGuards(JwtAuthGuard)

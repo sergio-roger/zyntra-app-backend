@@ -84,6 +84,10 @@ export class CrmSeeder implements Seeder {
             plan_id: plan.id,
             plan_status: PlanStatus.ACTIVE,
             trial_ends_at: trialEndsAt,
+            firstName: entry.business.ownerFirstName,
+            lastName: entry.business.ownerLastName,
+            jobTitle: entry.business.ownerJobTitle,
+            isAccountActivated: true,
           }),
         );
         console.log(`  o. Business created: ${business.name}`);
@@ -171,6 +175,10 @@ export class CrmSeeder implements Seeder {
           password_hash: passwordHash,
           plan_status: PlanStatus.ACTIVE,
           trial_ends_at: trialEndsAt,
+          firstName: 'Zyntra',
+          lastName: 'Admin',
+          jobTitle: 'Administrador de Plataforma',
+          isAccountActivated: true,
         }),
       );
       console.log(`  ✅ Superadmin Business created: ${superBusiness.name}`);

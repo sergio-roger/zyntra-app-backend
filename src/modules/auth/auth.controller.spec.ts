@@ -16,6 +16,11 @@ describe('AuthController', () => {
     resetPassword: jest.fn(),
     refresh: jest.fn(),
     getMenuTree: jest.fn(),
+    getSelfProfile: jest.fn(),
+    updateProfile: jest.fn(),
+    uploadAvatar: jest.fn(),
+    removeAvatar: jest.fn(),
+    changePassword: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -75,6 +80,85 @@ describe('AuthController', () => {
         mockBusiness.plan_id,
       );
       expect(result).toBe(mockMenuTree);
+    });
+  });
+
+  describe('Self-service profile endpoints (IDOR safety)', () => {
+    const req = {
+      user: { id: 'biz-123', crm_user_id: 'crm-user-1' },
+    } as any;
+    const caller = { id: 'crm-user-1', role: UserRole.AGENT };
+
+    it('updateProfile always scopes to the caller from the token, never a body-supplied id', async () => {
+      const dto = { firstName: 'Nuevo' } as any;
+      mockAuthService.updateProfile.mockResolvedValueOnce({ id: 'biz-123' });
+
+      await controller.updateProfile(dto, req, caller);
+
+      expect(authService.updateProfile).toHaveBeenCalledWith(
+        'biz-123',
+        'crm-user-1',
+        dto,
+        UserRole.AGENT,
+      );
+    });
+
+    it('uploadAvatar scopes to the caller from the token', async () => {
+      const file = { buffer: Buffer.from('x'), mimetype: 'image/png', size: 10 } as any;
+      mockAuthService.uploadAvatar.mockResolvedValueOnce({
+        avatarUrl: 'http://localhost:3000/uploads/avatars/x.png',
+      });
+
+      await controller.uploadAvatar(file, req);
+
+      expect(authService.uploadAvatar).toHaveBeenCalledWith(
+        'biz-123',
+        'crm-user-1',
+        file,
+      );
+    });
+
+    it('removeAvatar scopes to the caller from the token', async () => {
+      mockAuthService.removeAvatar.mockResolvedValueOnce(undefined);
+
+      await controller.removeAvatar(req);
+
+      expect(authService.removeAvatar).toHaveBeenCalledWith(
+        'biz-123',
+        'crm-user-1',
+      );
+    });
+
+    it('changePassword scopes to the caller from the token', async () => {
+      const dto = {
+        currentPassword: 'Password123!',
+        newPassword: 'NewPassword2',
+      };
+      mockAuthService.changePassword.mockResolvedValueOnce(undefined);
+
+      await controller.changePassword(dto, req);
+
+      expect(authService.changePassword).toHaveBeenCalledWith(
+        'biz-123',
+        'crm-user-1',
+        dto,
+      );
+    });
+
+    it('falls back to the business id when crm_user_id is absent (business-direct login)', async () => {
+      const businessReq = { user: { id: 'biz-999' } } as any;
+      mockAuthService.getSelfProfile.mockResolvedValueOnce({ id: 'biz-999' });
+
+      await controller.getProfile(businessReq, {
+        id: 'biz-999',
+        role: UserRole.ADMIN,
+      });
+
+      expect(authService.getSelfProfile).toHaveBeenCalledWith(
+        'biz-999',
+        null,
+        UserRole.ADMIN,
+      );
     });
   });
 });

@@ -31,6 +31,7 @@ async function run() {
   await runMigration(c, '20260626_drop_company_name_from_contacts.sql');
   await runMigration(c, '20260626_add_empresas.sql');
   await runMigration(c, '20260627_create_user_preferences.sql');
+  await runMigration(c, '20260702_add_profile_fields_to_businesses.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();
