@@ -25,6 +25,24 @@ export class Business {
   name: string;
 
   @Column({ nullable: true })
+  email: string;
+
+  @Column({ nullable: true })
+  phone: string;
+
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true })
+  tax_id: string;
+
+  @Column({ nullable: true })
+  website: string;
+
+  @Column({ nullable: true })
+  logo_url: string;
+
+  @Column({ nullable: true })
   plan_id: string;
 
   @ManyToOne(() => Plan, (plan) => plan.businesses)

@@ -19,6 +19,9 @@ import { User } from '@auth/entities/user.entity';
 import { UserPreferencesService } from '@auth/user-preferences.service';
 import { UserPreferencesController } from '@auth/user-preferences.controller';
 import { AvatarStorageService } from '@auth/avatar-storage.service';
+import { LogoStorageService } from '@auth/logo-storage.service';
+import { CompanyService } from '@auth/company.service';
+import { CompanyController } from '@auth/company.controller';
 
 @Module({
   imports: [
@@ -48,11 +51,14 @@ import { AvatarStorageService } from '@auth/avatar-storage.service';
     JwtStrategy,
     UserPreferencesService,
     AvatarStorageService,
+    LogoStorageService,
+    CompanyService,
   ],
   controllers: [
     AuthController,
     SettingsPermissionsController,
     UserPreferencesController,
+    CompanyController,
   ],
   exports: [AuthService],
 })
