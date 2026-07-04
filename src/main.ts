@@ -25,7 +25,10 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter(logger));
 
-  app.useGlobalInterceptors(new LoggerErrorInterceptor(), new TransformInterceptor());
+  app.useGlobalInterceptors(
+    new LoggerErrorInterceptor(),
+    new TransformInterceptor(),
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -77,7 +80,10 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  logger.log(`Application is running on: http://localhost:${port}`, 'Bootstrap');
+  logger.log(
+    `Application is running on: http://localhost:${port}`,
+    'Bootstrap',
+  );
   logger.log(
     `Swagger documentation: http://localhost:${port}/api/docs`,
     'Bootstrap',

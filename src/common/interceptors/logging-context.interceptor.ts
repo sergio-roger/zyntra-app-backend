@@ -12,10 +12,7 @@ import type { RequestWithUser } from '@common/interfaces/request-with-user.inter
 export class LoggingContextInterceptor implements NestInterceptor {
   constructor(private readonly logger: PinoLogger) {}
 
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() === 'http') {
       const req = context.switchToHttp().getRequest<RequestWithUser>();
       const user = req.user as
