@@ -372,6 +372,13 @@ export const MENUS_DATA = [
     description: null,
   },
   {
+    key: 'settings_my_company',
+    label: 'Mi empresa',
+    path: '/settings/my-company',
+    parent_key: 'settings_general',
+    description: null,
+  },
+  {
     key: 'billing',
     label: 'Planes',
     path: '/settings/plans',
@@ -429,7 +436,7 @@ export const MENUS_DATA = [
 export const ADMIN_MENUS = MENUS_DATA.map((m) => m.key);
 
 export const MANAGER_MENUS = MENUS_DATA.filter(
-  (m) => !['billing', 'settings_users'].includes(m.key),
+  (m) => !['billing', 'settings_users', 'settings_my_company'].includes(m.key),
 ).map((m) => m.key);
 
 export const AGENT_MENUS = [
