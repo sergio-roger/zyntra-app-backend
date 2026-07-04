@@ -31,7 +31,12 @@ async function run() {
   await runMigration(c, '20260626_drop_company_name_from_contacts.sql');
   await runMigration(c, '20260626_add_empresas.sql');
   await runMigration(c, '20260627_create_user_preferences.sql');
+  await runMigration(c, '20260627_update_companies.sql');
+  await runMigration(c, '20260629_update_users_schema.sql');
+  await runMigration(c, '20260701_create_channels.sql');
   await runMigration(c, '20260702_add_profile_fields_to_businesses.sql');
+  await runMigration(c, '20260703_add_company_fields_to_businesses.sql');
+  await runMigration(c, '20260704_add_profile_fields_to_users.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

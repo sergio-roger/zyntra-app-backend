@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /**
  * Phase 3 unit tests — AgentsService.
  * Run: npx jest agents-phase3

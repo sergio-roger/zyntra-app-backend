@@ -1,12 +1,4 @@
-/**
- * Phase 4 unit tests — ChatService refactor (BullMQ, callback, fallback).
- * Run: npx jest chat-phase4
- *
- * NOTE: Integration tests against a real DB / real BullMQ are tagged below
- * with @integration and require:
- *   DATABASE_URL=<test-db>  REDIS_HOST=localhost  SERVICE_TOKEN=test-token
- *   npx jest chat-phase4 --testNamePattern="@integration"
- */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,

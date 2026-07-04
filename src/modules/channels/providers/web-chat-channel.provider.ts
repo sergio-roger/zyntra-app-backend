@@ -59,6 +59,7 @@ export class WebChatChannelProvider implements ChannelProvider {
     businessId: string,
     config: Record<string, unknown>,
   ): Promise<ChannelSetupResult> {
+    await Promise.resolve();
     const position = (config.position as string | undefined) ?? 'bottom-right';
     const primaryColor =
       (config.primaryColor as string | undefined) ?? '#6366f1';

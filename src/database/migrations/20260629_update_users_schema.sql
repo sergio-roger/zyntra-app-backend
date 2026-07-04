@@ -27,7 +27,22 @@ UPDATE security.users
 SET last_name = ''
 WHERE last_name IS NULL;
 
--- Migrate is_active boolean to status enum
-UPDATE security.users
-SET status = CASE WHEN is_active = true THEN 'active'::security.user_status_enum ELSE 'inactive'::security.user_status_enum END
-WHERE status IS NULL;
+-- Migrate is_active boolean to status enum using dynamic type casting
+DO $$
+DECLARE
+  col_type text;
+BEGIN
+  SELECT udt_name INTO col_type 
+  FROM information_schema.columns 
+  WHERE table_schema = 'security' AND table_name = 'users' AND column_name = 'status';
+  
+  IF col_type = 'users_status_enum' THEN
+    UPDATE security.users
+    SET status = CASE WHEN is_active = true THEN 'active'::security.users_status_enum ELSE 'inactive'::security.users_status_enum END
+    WHERE status IS NULL;
+  ELSE
+    UPDATE security.users
+    SET status = CASE WHEN is_active = true THEN 'active'::security.user_status_enum ELSE 'inactive'::security.user_status_enum END
+    WHERE status IS NULL;
+  END IF;
+END $$;

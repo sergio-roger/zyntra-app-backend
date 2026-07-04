@@ -4,7 +4,11 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import type { UploadableFile } from '@auth/avatar-storage.service';
 
-export const ALLOWED_LOGO_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+export const ALLOWED_LOGO_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+];
 export const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
 const MIME_EXTENSIONS: Record<string, string> = {

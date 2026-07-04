@@ -61,7 +61,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const formattedMessage = messages.join(', ');
     const requestLine = `${request?.method} ${request?.url} -> ${status}`;
 
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (status >= (HttpStatus.INTERNAL_SERVER_ERROR as number)) {
       this.logger?.error(
         exception instanceof Error ? exception.stack : exception,
         requestLine,

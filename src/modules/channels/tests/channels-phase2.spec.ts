@@ -1,9 +1,4 @@
-/**
- * Phase 2 unit tests — ChannelProviderFactory + WebChatChannelProvider + ChannelsService.
- *
- * E2E tests (Supertest) require a running Postgres + seeded DB.
- * Run: npx jest channels-phase2
- */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,

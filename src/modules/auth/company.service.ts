@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
@@ -19,7 +23,9 @@ export class CompanyService {
   ) {}
 
   async findOne(businessId: string): Promise<Business> {
-    const business = await this.businessRepository.findOneBy({ id: businessId });
+    const business = await this.businessRepository.findOneBy({
+      id: businessId,
+    });
     if (!business) {
       throw new NotFoundException('Empresa no encontrada');
     }
@@ -45,7 +51,9 @@ export class CompanyService {
       );
     }
     if (file.size > MAX_LOGO_SIZE_BYTES) {
-      throw new BadRequestException('El archivo supera el tamaño máximo de 2MB.');
+      throw new BadRequestException(
+        'El archivo supera el tamaño máximo de 2MB.',
+      );
     }
 
     const business = await this.findOne(businessId);

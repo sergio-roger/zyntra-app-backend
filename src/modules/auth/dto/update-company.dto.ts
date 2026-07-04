@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateCompanyDto {
   @ApiPropertyOptional({ example: 'My Business Name', maxLength: 150 })
@@ -19,7 +25,10 @@ export class UpdateCompanyDto {
   @MaxLength(30)
   phone?: string;
 
-  @ApiPropertyOptional({ example: 'Av. Siempre Viva 123, Quito', maxLength: 255 })
+  @ApiPropertyOptional({
+    example: 'Av. Siempre Viva 123, Quito',
+    maxLength: 255,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(255)

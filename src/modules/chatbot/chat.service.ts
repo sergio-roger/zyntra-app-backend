@@ -23,6 +23,7 @@ import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
 import { Channel } from '@/modules/channels/entities/channel.entity';
 import { ChatGateway } from './chat.gateway';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
+import type { AiService } from '../ai/ai.service';
 
 export const AGENT_RESPONSE_QUEUE = 'agent-response';
 
@@ -376,11 +377,9 @@ export class ChatService {
 
     const systemPrompt = `${config.system_prompt_extra ?? ''}\n\n${toneMap[config.tone as string] ?? toneMap.friendly}\n\nNombre: ${config.name}\nIdioma: ${config.locale}${faqs}`;
 
-    // Lazy import to avoid circular dependency if AiModule not available in this path
-    const { AiService } = await import('../ai/ai.service');
-    const aiSvc: InstanceType<typeof AiService> = (
-      this as unknown as { aiService?: unknown }
-    ).aiService as InstanceType<typeof AiService>;
+    await import('../ai/ai.service');
+    const aiSvc = (this as unknown as { aiService?: unknown })
+      .aiService as AiService;
 
     const aiResponse = await aiSvc.chat({
       messages: [
