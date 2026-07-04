@@ -106,6 +106,7 @@ export class CrmSeeder implements Seeder {
             jobTitle: 'Director de Operaciones',
             avatarUrl:
               'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            avatarFileId: null,
             passwordHash: passwordHash,
             role: entry.adminUser.role,
             status: UserStatus.ACTIVE,
@@ -138,6 +139,7 @@ export class CrmSeeder implements Seeder {
             jobTitle: 'Ejecutivo Comercial Senior',
             avatarUrl:
               'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+            avatarFileId: null,
             passwordHash: passwordHash,
             role: entry.agentUser.role,
             status: UserStatus.ACTIVE,
@@ -194,6 +196,7 @@ export class CrmSeeder implements Seeder {
           jobTitle: 'Administrador Global',
           avatarUrl:
             'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+          avatarFileId: null,
           passwordHash: passwordHash,
           role: UserRole.SUPER_ADMIN,
           status: UserStatus.ACTIVE,
@@ -374,6 +377,7 @@ export class CrmSeeder implements Seeder {
           jobTitle: 'Consultor de Ventas Outbound',
           avatarUrl:
             'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+          avatarFileId: null,
           passwordHash: passwordHash,
           role: UserRole.AGENT,
           status: UserStatus.ACTIVE,
@@ -392,6 +396,7 @@ export class CrmSeeder implements Seeder {
           jobTitle: 'Especialista de Soporte Técnico',
           avatarUrl:
             'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+          avatarFileId: null,
           passwordHash: passwordHash,
           role: UserRole.AGENT,
           status: UserStatus.ACTIVE,
