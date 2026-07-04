@@ -25,7 +25,7 @@ import { Segment } from '@crm/entities/segment.entity';
 import { Tag } from '@crm/entities/tag.entity';
 import { CrmTask } from '@crm/entities/task.entity';
 import { Team } from '@crm/entities/team.entity';
-import { User } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { PipelinesController } from '@crm/pipelines.controller';
 import { PipelinesService } from '@crm/pipelines.service';
 import { IndustriesController } from '@crm/industries.controller';

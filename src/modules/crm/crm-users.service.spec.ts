@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrmUsersService } from './crm-users.service';
-import { CrmUser } from './entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { Business } from '@auth/entities/business.entity';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { UserRole } from '@crm/enums/user-role.enum';
@@ -19,11 +19,11 @@ const mockCrmUser = {
   name: 'John Doe',
   email: 'john@example.com',
   teams: [],
-} as unknown as CrmUser;
+} as unknown as User;
 
 describe('CrmUsersService', () => {
   let service: CrmUsersService;
-  let repo: Repository<CrmUser>;
+  let repo: Repository<User>;
 
   const mockRepository = {
     find: jest.fn(),
@@ -38,14 +38,14 @@ describe('CrmUsersService', () => {
       providers: [
         CrmUsersService,
         {
-          provide: getRepositoryToken(CrmUser),
+          provide: getRepositoryToken(User),
           useValue: mockRepository,
         },
       ],
     }).compile();
 
     service = module.get<CrmUsersService>(CrmUsersService);
-    repo = module.get<Repository<CrmUser>>(getRepositoryToken(CrmUser));
+    repo = module.get<Repository<User>>(getRepositoryToken(User));
   });
 
   afterEach(() => {

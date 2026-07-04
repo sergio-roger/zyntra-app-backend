@@ -10,7 +10,7 @@ import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
 import { Business, PlanStatus } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from './entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { UserStatus } from '@crm/enums/user-status.enum';
 import { Role } from './entities/role.entity';
@@ -23,23 +23,19 @@ let HASHED = '';
 const mockBusiness: Partial<Business> = {
   id: 'biz-uuid',
   name: 'Test Biz',
-  email: 'biz@test.com',
-  password_hash: '',
+  plan_id: 'plan-id',
   plan_status: PlanStatus.ACTIVE,
-  firstName: 'Owner',
-  lastName: 'Boss',
-  jobTitle: 'CEO',
-  avatarUrl: null as unknown as string,
-  isAccountActivated: true,
+  trial_ends_at: new Date('2026-01-01'),
   created_at: new Date('2026-01-01'),
 };
 
-const mockCrmUser: Partial<CrmUser> = {
+const mockUser: Partial<User> = {
   id: 'user-uuid',
   email: 'agent@test.com',
   role: UserRole.AGENT,
   passwordHash: '',
   businessId: 'biz-uuid',
+  business: mockBusiness as Business,
   isActive: true,
   firstName: 'Ana',
   lastName: 'Gomez',
@@ -58,20 +54,25 @@ describe('AuthService — unified login', () => {
         process.env.ARGON2_PEPPER || 'default-pepper-key-for-fallback-planchat',
       ),
     });
-    mockBusiness.password_hash = HASHED;
-    mockCrmUser.passwordHash = HASHED;
+    mockUser.passwordHash = HASHED;
   });
   let service: AuthService;
+
+  const txManager = {
+    create: jest.fn((_entity: unknown, data: unknown) => data),
+    save: jest.fn(),
+  };
 
   const businessRepo = {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    manager: { transaction: jest.fn() },
   };
 
   const planRepo = { findOne: jest.fn() };
 
-  const crmUserRepo = { findOne: jest.fn(), save: jest.fn() };
+  const userRepo = { findOne: jest.fn(), save: jest.fn() };
 
   const mockQueryBuilder = {
     where: jest.fn().mockReturnThis(),
@@ -108,7 +109,7 @@ describe('AuthService — unified login', () => {
         AuthService,
         { provide: getRepositoryToken(Business), useValue: businessRepo },
         { provide: getRepositoryToken(Plan), useValue: planRepo },
-        { provide: getRepositoryToken(CrmUser), useValue: crmUserRepo },
+        { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: getRepositoryToken(Role), useValue: roleRepo },
         { provide: getRepositoryToken(Menu), useValue: menuRepo },
         { provide: getRepositoryToken(Permission), useValue: permissionRepo },
@@ -122,53 +123,9 @@ describe('AuthService — unified login', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('login() as Business', () => {
-    it('returns access_token without crm_user_id when Business credentials match', async () => {
-      businessRepo.findOne
-        .mockResolvedValueOnce(mockBusiness) // password check
-        .mockResolvedValueOnce(mockBusiness); // validateBusiness reload
-
-      const result = await service.login({
-        email: 'biz@test.com',
-        password: 'Password123!',
-      });
-
-      expect(result.access_token).toBe('mock-token');
-      expect(result.user.crm_user_id).toBeNull();
-      expect(result.user.role).toBe(UserRole.ADMIN);
-    });
-
-    it('throws UnauthorizedException when Business password is wrong', async () => {
-      businessRepo.findOne.mockResolvedValueOnce(mockBusiness);
-      crmUserRepo.findOne.mockResolvedValueOnce(null);
-
-      await expect(
-        service.login({ email: 'biz@test.com', password: 'WrongPass!' }),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('throws UnauthorizedException when Business has plan_id null', async () => {
-      businessRepo.findOne.mockResolvedValueOnce({
-        ...mockBusiness,
-        plan_id: null,
-      });
-
-      await expect(
-        service.login({ email: 'biz@test.com', password: 'Password123!' }),
-      ).rejects.toThrow(
-        new UnauthorizedException(
-          'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
-        ),
-      );
-    });
-  });
-
-  describe('login() as CrmUser', () => {
-    it('returns access_token with crm_user_id and role when CrmUser credentials match', async () => {
-      businessRepo.findOne
-        .mockResolvedValueOnce(null) // no Business with this email
-        .mockResolvedValueOnce(mockBusiness); // validateBusiness reload
-      crmUserRepo.findOne.mockResolvedValueOnce(mockCrmUser);
+  describe('login()', () => {
+    it('returns access_token and role when credentials match', async () => {
+      userRepo.findOne.mockResolvedValueOnce(mockUser);
 
       const result = await service.login({
         email: 'agent@test.com',
@@ -176,69 +133,64 @@ describe('AuthService — unified login', () => {
       });
 
       expect(result.access_token).toBe('mock-token');
-      expect(result.user.crm_user_id).toBe(mockCrmUser.id);
       expect(result.user.role).toBe(UserRole.AGENT);
+      expect(result.user.businessId).toBe(mockBusiness.id);
     });
 
-    it('throws UnauthorizedException when CrmUser credentials are wrong', async () => {
-      businessRepo.findOne.mockResolvedValueOnce(null);
-      crmUserRepo.findOne.mockResolvedValueOnce(mockCrmUser);
+    it('throws UnauthorizedException when password is wrong', async () => {
+      userRepo.findOne.mockResolvedValueOnce(mockUser);
 
       await expect(
-        service.login({ email: 'agent@test.com', password: 'BadPass!' }),
+        service.login({ email: 'agent@test.com', password: 'WrongPass!' }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('throws UnauthorizedException when CrmUser is inactive (is_active = false filtered by repo)', async () => {
-      businessRepo.findOne.mockResolvedValueOnce(null);
-      // is_active: false → repo returns null because we filter by is_active: true
-      crmUserRepo.findOne.mockResolvedValueOnce(null);
+    it('throws UnauthorizedException when no active user is found', async () => {
+      userRepo.findOne.mockResolvedValueOnce(null);
 
       await expect(
-        service.login({ email: 'inactive@test.com', password: 'Password123!' }),
+        service.login({ email: 'nobody@test.com', password: 'whatever' }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('throws UnauthorizedException when CrmUser belongs to a business with plan_id null', async () => {
-      businessRepo.findOne.mockResolvedValueOnce(null);
-      crmUserRepo.findOne.mockResolvedValueOnce(mockCrmUser);
-      businessRepo.findOne.mockResolvedValueOnce({
-        ...mockBusiness,
-        plan_id: null,
+    it('throws UnauthorizedException when the business has plan_id null (global admin)', async () => {
+      userRepo.findOne.mockResolvedValueOnce({
+        ...mockUser,
+        business: { ...mockBusiness, plan_id: null },
       });
 
       await expect(
         service.login({ email: 'agent@test.com', password: 'Password123!' }),
       ).rejects.toThrow(
         new UnauthorizedException(
-          'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
+          'Los administradores globales no pueden iniciar sesión por el login tradicional.',
         ),
       );
     });
   });
 
-  describe('login() — no credentials match', () => {
-    it('throws UnauthorizedException when neither Business nor CrmUser found', async () => {
-      businessRepo.findOne.mockResolvedValueOnce(null);
-      crmUserRepo.findOne.mockResolvedValueOnce(null);
-
-      await expect(
-        service.login({ email: 'nobody@test.com', password: 'whatever' }),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-  });
-
   describe('register()', () => {
     const mockPlan = { id: 'plan-impulse-id', name: 'Impulse Pro' };
-    const savedBusiness = {
-      id: 'biz-new-uuid',
-      name: 'Nueva Empresa',
-      email: 'nueva@test.com',
-      plan_status: PlanStatus.TRIAL,
+
+    const runTransaction = (savedUserId = 'new-user-uuid') => {
+      businessRepo.manager.transaction.mockImplementationOnce(
+        async (cb: (manager: typeof txManager) => Promise<unknown>) => {
+          txManager.save
+            .mockImplementationOnce(async (data: Record<string, unknown>) => ({
+              ...data,
+              id: 'new-biz-uuid',
+            }))
+            .mockImplementationOnce(async (data: Record<string, unknown>) => ({
+              ...data,
+              id: savedUserId,
+            }));
+          return cb(txManager);
+        },
+      );
     };
 
     it('throws BadRequestException when Impulse Pro plan is not seeded', async () => {
-      businessRepo.findOne.mockResolvedValueOnce(null); // no conflict
+      userRepo.findOne.mockResolvedValueOnce(null); // no conflict
       planRepo.findOne.mockResolvedValueOnce(null); // plan not found
 
       await expect(
@@ -251,24 +203,27 @@ describe('AuthService — unified login', () => {
     });
 
     it('throws ConflictException when email is already registered', async () => {
-      businessRepo.findOne.mockResolvedValueOnce(mockBusiness); // email exists
+      userRepo.findOne.mockResolvedValueOnce(mockUser); // email exists
 
       await expect(
         service.register({
           name: 'Dup',
-          email: 'biz@test.com',
+          email: 'agent@test.com',
           password: 'Pass123!',
         }),
       ).rejects.toThrow(ConflictException);
     });
 
-    it('creates business with plan_id from Impulse Pro when plan is seeded', async () => {
-      businessRepo.findOne
-        .mockResolvedValueOnce(null) // no conflict
-        .mockResolvedValueOnce(savedBusiness); // validateBusiness reload
+    it('creates the business and its first admin user in a single transaction', async () => {
+      userRepo.findOne.mockResolvedValueOnce(null); // no conflict
       planRepo.findOne.mockResolvedValueOnce(mockPlan);
-      businessRepo.create.mockReturnValueOnce(savedBusiness);
-      businessRepo.save.mockResolvedValueOnce(savedBusiness);
+      runTransaction('new-user-uuid');
+      userRepo.findOne.mockResolvedValueOnce({
+        ...mockUser,
+        id: 'new-user-uuid',
+        role: UserRole.ADMIN,
+        business: { ...mockBusiness, id: 'new-biz-uuid' },
+      });
 
       const result = await service.register({
         name: 'Nueva Empresa',
@@ -276,26 +231,35 @@ describe('AuthService — unified login', () => {
         password: 'Pass123!',
       });
 
-      expect(businessRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ plan_id: mockPlan.id }),
+      expect(txManager.create).toHaveBeenCalledWith(
+        Business,
+        expect.objectContaining({ name: 'Nueva Empresa', plan_id: mockPlan.id }),
       );
-      expect(result.user.crm_user_id).toBeNull();
+      expect(txManager.create).toHaveBeenCalledWith(
+        User,
+        expect.objectContaining({
+          businessId: 'new-biz-uuid',
+          email: 'nueva@test.com',
+          role: UserRole.ADMIN,
+        }),
+      );
+      expect(result.user.role).toBe(UserRole.ADMIN);
     });
   });
 
   describe('Role Management', () => {
     describe('getAllRoles()', () => {
-      it('returns filtered roles ordered by name', async () => {
+      it('returns roles ordered by name, filtering superAdmin unless caller is superAdmin', async () => {
         const mockRoles = [
           { id: '1', name: 'admin', label: 'Administrador' },
           { id: '2', name: 'agent', label: 'Agente' },
         ];
         mockQueryBuilder.getMany.mockResolvedValueOnce(mockRoles);
 
-        const result = await service.getAllRoles({
-          id: 'biz-id',
-          email: 'test@biz.com',
-        } as Business);
+        const result = await service.getAllRoles(
+          { id: 'biz-id' } as Business,
+          UserRole.ADMIN,
+        );
         expect(result).toEqual(mockRoles);
         expect(roleRepo.createQueryBuilder).toHaveBeenCalledWith('role');
         expect(mockQueryBuilder.where).toHaveBeenCalledWith(
@@ -413,38 +377,27 @@ describe('AuthService — unified login', () => {
 
   describe('Self-service profile (My Account)', () => {
     describe('updateProfile()', () => {
-      it('updates only the fields sent for a CRM user and leaves the rest untouched', async () => {
-        const existingCrmUser = { ...mockCrmUser } as CrmUser;
-        businessRepo.findOne.mockResolvedValueOnce(mockBusiness);
-        crmUserRepo.findOne.mockResolvedValueOnce(existingCrmUser);
-        crmUserRepo.save.mockImplementationOnce((u: CrmUser) =>
-          Promise.resolve(u),
-        );
+      it('updates only the fields sent and leaves the rest untouched', async () => {
+        const existingUser = { ...mockUser } as User;
+        userRepo.findOne.mockResolvedValueOnce(existingUser);
+        userRepo.save.mockImplementationOnce((u: User) => Promise.resolve(u));
 
-        await service.updateProfile(
-          'biz-uuid',
-          'user-uuid',
-          { firstName: 'Nuevo' },
-          UserRole.AGENT,
-        );
+        await service.updateProfile('user-uuid', { firstName: 'Nuevo' });
 
-        expect(crmUserRepo.save).toHaveBeenCalledWith(
+        expect(userRepo.save).toHaveBeenCalledWith(
           expect.objectContaining({
             firstName: 'Nuevo',
-            lastName: mockCrmUser.lastName,
-            jobTitle: mockCrmUser.jobTitle,
-            email: mockCrmUser.email,
+            lastName: mockUser.lastName,
+            jobTitle: mockUser.jobTitle,
+            email: mockUser.email,
           }),
         );
       });
 
       it('never allows changing email, role or businessId even if present on the payload', async () => {
-        const existingCrmUser = { ...mockCrmUser } as CrmUser;
-        businessRepo.findOne.mockResolvedValueOnce(mockBusiness);
-        crmUserRepo.findOne.mockResolvedValueOnce(existingCrmUser);
-        crmUserRepo.save.mockImplementationOnce((u: CrmUser) =>
-          Promise.resolve(u),
-        );
+        const existingUser = { ...mockUser } as User;
+        userRepo.findOne.mockResolvedValueOnce(existingUser);
+        userRepo.save.mockImplementationOnce((u: User) => Promise.resolve(u));
 
         const maliciousPayload = {
           firstName: 'Nuevo',
@@ -453,18 +406,13 @@ describe('AuthService — unified login', () => {
           businessId: 'another-biz-id',
         } as any;
 
-        await service.updateProfile(
-          'biz-uuid',
-          'user-uuid',
-          maliciousPayload,
-          UserRole.AGENT,
-        );
+        await service.updateProfile('user-uuid', maliciousPayload);
 
-        expect(crmUserRepo.save).toHaveBeenCalledWith(
+        expect(userRepo.save).toHaveBeenCalledWith(
           expect.objectContaining({
-            email: mockCrmUser.email,
-            role: mockCrmUser.role,
-            businessId: mockCrmUser.businessId,
+            email: mockUser.email,
+            role: mockUser.role,
+            businessId: mockUser.businessId,
           }),
         );
       });
@@ -472,14 +420,13 @@ describe('AuthService — unified login', () => {
 
     describe('changePassword()', () => {
       it('throws UnauthorizedException when currentPassword is incorrect', async () => {
-        businessRepo.findOne.mockResolvedValueOnce(mockBusiness);
-        crmUserRepo.findOne.mockResolvedValueOnce({
-          ...mockCrmUser,
+        userRepo.findOne.mockResolvedValueOnce({
+          ...mockUser,
           passwordHash: HASHED,
         });
 
         await expect(
-          service.changePassword('biz-uuid', 'user-uuid', {
+          service.changePassword('user-uuid', {
             currentPassword: 'WrongPassword1',
             newPassword: 'NewPassword2',
           }),
@@ -488,7 +435,7 @@ describe('AuthService — unified login', () => {
 
       it('throws BadRequestException when newPassword equals currentPassword', async () => {
         await expect(
-          service.changePassword('biz-uuid', 'user-uuid', {
+          service.changePassword('user-uuid', {
             currentPassword: 'Password123!',
             newPassword: 'Password123!',
           }),
@@ -496,21 +443,18 @@ describe('AuthService — unified login', () => {
       });
 
       it('hashes the new password before saving', async () => {
-        businessRepo.findOne.mockResolvedValueOnce(mockBusiness);
-        crmUserRepo.findOne.mockResolvedValueOnce({
-          ...mockCrmUser,
+        userRepo.findOne.mockResolvedValueOnce({
+          ...mockUser,
           passwordHash: HASHED,
         });
-        crmUserRepo.save.mockImplementationOnce((u: CrmUser) =>
-          Promise.resolve(u),
-        );
+        userRepo.save.mockImplementationOnce((u: User) => Promise.resolve(u));
 
-        await service.changePassword('biz-uuid', 'user-uuid', {
+        await service.changePassword('user-uuid', {
           currentPassword: 'Password123!',
           newPassword: 'NewPassword2',
         });
 
-        const saved = crmUserRepo.save.mock.calls[0][0] as CrmUser;
+        const saved = userRepo.save.mock.calls[0][0] as User;
         expect(saved.passwordHash).not.toBe('NewPassword2');
         expect(
           await argon2.verify(saved.passwordHash!, 'NewPassword2', {
@@ -526,7 +470,7 @@ describe('AuthService — unified login', () => {
     describe('uploadAvatar()', () => {
       it('rejects files with a disallowed MIME type', async () => {
         await expect(
-          service.uploadAvatar('biz-uuid', 'user-uuid', {
+          service.uploadAvatar('user-uuid', {
             buffer: Buffer.from('fake'),
             mimetype: 'application/pdf',
             size: 100,
@@ -538,7 +482,7 @@ describe('AuthService — unified login', () => {
 
       it('rejects files that exceed the maximum size', async () => {
         await expect(
-          service.uploadAvatar('biz-uuid', 'user-uuid', {
+          service.uploadAvatar('user-uuid', {
             buffer: Buffer.from('fake'),
             mimetype: 'image/png',
             size: 3 * 1024 * 1024,
@@ -549,11 +493,10 @@ describe('AuthService — unified login', () => {
       });
 
       it('saves a valid file and returns the new avatarUrl', async () => {
-        businessRepo.findOne.mockResolvedValueOnce(mockBusiness);
-        crmUserRepo.findOne.mockResolvedValueOnce({ ...mockCrmUser });
-        crmUserRepo.save.mockResolvedValueOnce(undefined);
+        userRepo.findOne.mockResolvedValueOnce({ ...mockUser });
+        userRepo.save.mockResolvedValueOnce(undefined);
 
-        const result = await service.uploadAvatar('biz-uuid', 'user-uuid', {
+        const result = await service.uploadAvatar('user-uuid', {
           buffer: Buffer.from('fake'),
           mimetype: 'image/png',
           size: 100,

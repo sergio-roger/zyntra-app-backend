@@ -2,7 +2,7 @@ import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.ent
 import { Business } from '@auth/entities/business.entity';
 import { Industry } from '@crm/entities/industry.entity';
 import { Tag } from '@crm/entities/tag.entity';
-import { User } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import {
   Column,
   CreateDateColumn,

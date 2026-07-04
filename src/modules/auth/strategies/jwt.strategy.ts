@@ -27,13 +27,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    const business = await this.authService.validateBusiness(payload.sub);
-    if (!business) {
+    const user = await this.authService.validateUser(payload.sub);
+    if (!user) {
       throw new UnauthorizedException();
     }
     return {
-      ...business,
-      crm_user_id: payload.crm_user_id ?? null,
+      ...user,
+      business: user.business,
+      plan_id: user.business.plan_id,
+      plan_status: user.business.plan_status,
       role: payload.role ?? UserRole.ADMIN,
     };
   }

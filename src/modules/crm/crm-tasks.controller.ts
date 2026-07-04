@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
-import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
@@ -43,7 +43,7 @@ export class CrmTasksController {
   @ApiOkResponse({ description: 'List of tasks' })
   list(
     @CurrentBusiness() business: Business,
-    @CurrentCrmUser() caller: { id: string | null; role: UserRole },
+    @CurrentUser() caller: { id: string | null; role: UserRole },
     @Query('status') status?: TaskStatus,
     @Query('contactId') contactId?: string,
     @Query('dealId') dealId?: string,
@@ -69,7 +69,7 @@ export class CrmTasksController {
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTaskDto,
-    @CurrentCrmUser() caller: { id: string | null; role: UserRole },
+    @CurrentUser() caller: { id: string | null; role: UserRole },
   ) {
     return this.tasksService.update(business, id, dto, caller);
   }

@@ -15,7 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { Business } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { Role } from './entities/role.entity';
 import { AvatarStorageService } from './avatar-storage.service';
@@ -333,7 +333,7 @@ async function buildService(
       { provide: getRepositoryToken(Business), useValue: businessRepo },
       { provide: getRepositoryToken(Plan), useValue: { findOne: jest.fn() } },
       {
-        provide: getRepositoryToken(CrmUser),
+        provide: getRepositoryToken(User),
         useValue: { findOne: jest.fn() },
       },
       {

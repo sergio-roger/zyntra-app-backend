@@ -1,6 +1,6 @@
 import { Business } from '@auth/entities/business.entity';
 import { CreateCrmUserDto, UpdateCrmUserDto } from '@crm/dto/crm-user.dto';
-import { User } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { UserStatus } from '@crm/enums/user-status.enum';
 import {
   ConflictException,

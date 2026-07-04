@@ -6,7 +6,7 @@ import { ContactsService } from './contacts.service';
 import { Contact } from '@crm/entities/contact.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
 import { Deal } from '@crm/entities/deal.entity';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { Business } from '@auth/entities/business.entity';
 import { ListContactsDto } from '@crm/dto/list-contacts.dto';
 
@@ -69,7 +69,7 @@ describe('ContactsService', () => {
           useValue: activitiesRepo,
         },
         { provide: getRepositoryToken(Deal), useValue: dealsRepo },
-        { provide: getRepositoryToken(CrmUser), useValue: crmUsersRepo },
+        { provide: getRepositoryToken(User), useValue: crmUsersRepo },
       ],
     }).compile();
 

@@ -4,7 +4,7 @@ import { CrmUsersService } from './crm-users.service';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Reflector } from '@nestjs/core';
 import { Business } from '@auth/entities/business.entity';
-import { CrmUser } from './entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 
 const mockBusiness = {
@@ -17,7 +17,7 @@ const mockCrmUser = {
   businessId: 'business-uuid-1234',
   name: 'John Doe',
   email: 'john@example.com',
-} as unknown as CrmUser;
+} as unknown as User;
 
 describe('CrmUsersController', () => {
   let controller: CrmUsersController;

@@ -15,7 +15,7 @@ import { Permission } from '@auth/entities/permission.entity';
 import { PlanModule } from '@auth/entities/plan-module.entity';
 import { UserPreference } from '@auth/entities/user-preference.entity';
 import { JwtStrategy } from '@auth/strategies/jwt.strategy';
-import { User } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { UserPreferencesService } from '@auth/user-preferences.service';
 import { UserPreferencesController } from '@auth/user-preferences.controller';
 import { AvatarStorageService } from '@auth/avatar-storage.service';

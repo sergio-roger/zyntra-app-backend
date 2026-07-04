@@ -24,29 +24,27 @@ async function verify() {
 
   // 2. Businesses in public schema with plan relation
   const businesses = await client.query(`
-    SELECT b.name, b.email, p.name as plan_name, b.plan_status
+    SELECT b.name, p.name as plan_name, b.plan_status
     FROM public.businesses b
     LEFT JOIN public.plans p ON p.id = b.plan_id
     ORDER BY b.name
   `);
   console.log('\n🏢 public.businesses (with plan relation):');
   businesses.rows.forEach((b) =>
-    console.log(
-      `  • ${b.name} [${b.email}] → plan: ${b.plan_name} (${b.plan_status})`,
-    ),
+    console.log(`  • ${b.name} → plan: ${b.plan_name} (${b.plan_status})`),
   );
 
-  // 3. Users in security schema with plan relation
+  // 3. Users in security schema, with their business
   const users = await client.query(`
-    SELECT u.name, u.email, u.role, p.name as plan_name
+    SELECT u.name, u.email, u.role, b.name as business_name
     FROM security.users u
-    LEFT JOIN public.plans p ON p.id = u.plan_id
+    LEFT JOIN public.businesses b ON b.id = u.business_id
     ORDER BY u.name
   `);
-  console.log('\n👤 security.users (with plan relation):');
+  console.log('\n👤 security.users (with business relation):');
   users.rows.forEach((u) =>
     console.log(
-      `  • ${u.name} [${u.email}] role: ${u.role} → plan: ${u.plan_name ?? 'none'}`,
+      `  • ${u.name} [${u.email}] role: ${u.role} → business: ${u.business_name}`,
     ),
   );
 

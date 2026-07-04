@@ -1,5 +1,5 @@
 import { Business } from '@auth/entities/business.entity';
-import { User } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import {
   Column,
   CreateDateColumn,

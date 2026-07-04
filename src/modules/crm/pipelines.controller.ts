@@ -21,9 +21,9 @@ import {
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import {
-  CurrentCrmUser,
-  CrmUserContext,
-} from '@common/decorators/current-crm-user.decorator';
+  CurrentUser,
+  UserContext,
+} from '@common/decorators/current-user.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
@@ -52,9 +52,9 @@ export class PipelinesController {
   @ApiOkResponse({ description: 'List of pipelines with their stages' })
   list(
     @CurrentBusiness() business: Business,
-    @CurrentCrmUser() crmUser: CrmUserContext,
+    @CurrentUser() user: UserContext,
   ) {
-    return this.pipelines.list(business, crmUser);
+    return this.pipelines.list(business, user);
   }
 
   @Post()

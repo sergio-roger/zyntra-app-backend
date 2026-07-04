@@ -19,21 +19,6 @@ async function run() {
   const newHash = await argon2.hash(SEED_PASSWORD, { secret: pepper });
   console.log(`\n🔑 New argon2 hash length: ${newHash.length}`);
 
-  // Fix businesses with bcrypt hashes (length < 90)
-  console.log('\n🏢 Fixing businesses with bcrypt hashes...');
-  const bizResult = await c.query(
-    `SELECT id, email, length(password_hash) as hash_len FROM public.businesses WHERE length(password_hash) < $1`,
-    [ARGON2_HASH_LEN],
-  );
-  console.log(`  Found ${bizResult.rows.length} business(es) to fix`);
-  for (const row of bizResult.rows) {
-    await c.query(
-      `UPDATE public.businesses SET password_hash = $1 WHERE id = $2`,
-      [newHash, row.id],
-    );
-    console.log(`  ✅ Fixed: ${row.email} (was ${row.hash_len} chars)`);
-  }
-
   // Fix security.users with bcrypt hashes (length < 90)
   console.log('\n👥 Fixing security.users with bcrypt hashes...');
   const usersResult = await c.query(
@@ -51,13 +36,6 @@ async function run() {
 
   // Verify
   console.log('\n🔍 Verification (all hash lengths should be > 90):');
-  const bizCheck = await c.query(
-    `SELECT email, length(password_hash) as hash_len FROM public.businesses`,
-  );
-  bizCheck.rows.forEach((r) =>
-    console.log(`  businesses: ${r.email} → ${r.hash_len} chars`),
-  );
-
   const userCheck = await c.query(
     `SELECT email, length(password_hash) as hash_len FROM security.users`,
   );

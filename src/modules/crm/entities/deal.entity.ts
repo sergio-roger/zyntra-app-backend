@@ -15,7 +15,7 @@ import {
 import { Business } from '@auth/entities/business.entity';
 import { Company } from './company.entity';
 import { Contact } from './contact.entity';
-import { CrmUser } from './user.entity';
+import { User } from '@auth/entities/user.entity';
 import { Team } from './team.entity';
 import { CrmTask } from './task.entity';
 import { Pipeline } from './pipeline.entity';
@@ -90,9 +90,9 @@ export class Deal {
   @Column('uuid', { nullable: true })
   assigned_to_id: string | null;
 
-  @ManyToOne(() => CrmUser, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => User, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'assigned_to_id' })
-  assigned_to: CrmUser | null;
+  assigned_to: User | null;
 
   @Column('uuid', { nullable: true })
   team_id: string | null;

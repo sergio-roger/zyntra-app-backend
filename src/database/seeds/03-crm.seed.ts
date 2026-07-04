@@ -13,7 +13,7 @@ import { PipelineStage } from '../../modules/crm/entities/pipeline-stage.entity'
 import { Pipeline } from '../../modules/crm/entities/pipeline.entity';
 import { Industry } from '../../modules/crm/entities/industry.entity';
 import { Tag } from '../../modules/crm/entities/tag.entity';
-import { User } from '../../modules/crm/entities/user.entity';
+import { User } from '../../modules/auth/entities/user.entity';
 import { DealStatus } from '../../modules/crm/enums/deal-status.enum';
 import { UserRole } from '../../modules/crm/enums/user-role.enum';
 import { UserStatus } from '../../modules/crm/enums/user-status.enum';
@@ -72,22 +72,16 @@ export class CrmSeeder implements Seeder {
 
       // Business
       let business = await businessRepo.findOne({
-        where: { email: entry.business.email },
+        where: { name: entry.business.name },
       });
 
       if (!business) {
         business = await businessRepo.save(
           businessRepo.create({
             name: entry.business.name,
-            email: entry.business.email,
-            password_hash: passwordHash,
             plan_id: plan.id,
             plan_status: PlanStatus.ACTIVE,
             trial_ends_at: trialEndsAt,
-            firstName: entry.business.ownerFirstName,
-            lastName: entry.business.ownerLastName,
-            jobTitle: entry.business.ownerJobTitle,
-            isAccountActivated: true,
           }),
         );
         console.log(`  o. Business created: ${business.name}`);
@@ -105,7 +99,6 @@ export class CrmSeeder implements Seeder {
         await userRepo.save(
           userRepo.create({
             businessId: business.id,
-            planId: plan.id,
             firstName: parts[0] || '',
             lastName: parts.slice(1).join(' ') || '',
             name: entry.adminUser.name,
@@ -138,7 +131,6 @@ export class CrmSeeder implements Seeder {
         agentUser = await userRepo.save(
           userRepo.create({
             businessId: business.id,
-            planId: plan.id,
             firstName: parts[0] || '',
             lastName: parts.slice(1).join(' ') || '',
             name: entry.agentUser.name,
@@ -161,26 +153,20 @@ export class CrmSeeder implements Seeder {
         );
       }
 
-      agentUserMap[entry.business.email] = agentUser;
+      agentUserMap[entry.business.name] = agentUser;
     }
 
     // ── 2.1. Superadmin Business + Super Admin User ─────────────────────────
     console.log('\n✅ [2.1] Seeding global superadmin business and user...');
     let superBusiness = await businessRepo.findOne({
-      where: { email: 'superadmin@zyntra.com' },
+      where: { name: 'Zyntra Global Admin' },
     });
     if (!superBusiness) {
       superBusiness = await businessRepo.save(
         businessRepo.create({
           name: 'Zyntra Global Admin',
-          email: 'superadmin@zyntra.com',
-          password_hash: passwordHash,
           plan_status: PlanStatus.ACTIVE,
           trial_ends_at: trialEndsAt,
-          firstName: 'Zyntra',
-          lastName: 'Admin',
-          jobTitle: 'Administrador de Plataforma',
-          isAccountActivated: true,
         }),
       );
       console.log(`  ✅ Superadmin Business created: ${superBusiness.name}`);
@@ -255,7 +241,7 @@ export class CrmSeeder implements Seeder {
 
     for (const entry of BUSINESSES_DATA) {
       const business = await businessRepo.findOne({
-        where: { email: entry.business.email },
+        where: { name: entry.business.name },
       });
       if (!business) continue;
 
@@ -303,7 +289,7 @@ export class CrmSeeder implements Seeder {
 
     for (const entry of BUSINESSES_DATA) {
       const business = await businessRepo.findOne({
-        where: { email: entry.business.email },
+        where: { name: entry.business.name },
       });
       if (!business) continue;
       console.log(`\n  --- 3. Seeding Industries for: ${business.name} ---`);
@@ -362,7 +348,7 @@ export class CrmSeeder implements Seeder {
 
     for (const entry of BUSINESSES_DATA) {
       const business = await businessRepo.findOne({
-        where: { email: entry.business.email },
+        where: { name: entry.business.name },
       });
       if (!business) continue;
 
@@ -374,7 +360,8 @@ export class CrmSeeder implements Seeder {
       const adminUser = await userRepo.findOne({
         where: { businessId: business.id, email: entry.adminUser.email },
       });
-      const agentUser = agentUserMap[entry.business.email] ?? null;
+      const agentUser = agentUserMap[entry.business.name] ?? null;
+      const usersDomain = entry.adminUser.email.split('@')[1];
 
       // 1. Create Extra Users
       const extraUser1 = await userRepo.save(
@@ -383,7 +370,7 @@ export class CrmSeeder implements Seeder {
           firstName: 'Vendedor',
           lastName: 'Especialista',
           name: 'Vendedor Especialista',
-          email: `ventas1@${entry.business.email.split('@')[1]}`,
+          email: `ventas1@${usersDomain}`,
           jobTitle: 'Consultor de Ventas Outbound',
           avatarUrl:
             'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
@@ -401,7 +388,7 @@ export class CrmSeeder implements Seeder {
           firstName: 'Soporte',
           lastName: 'Nivel 1',
           name: 'Soporte Nivel 1',
-          email: `soporte1@${entry.business.email.split('@')[1]}`,
+          email: `soporte1@${usersDomain}`,
           jobTitle: 'Especialista de Soporte Técnico',
           avatarUrl:
             'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
@@ -522,11 +509,11 @@ export class CrmSeeder implements Seeder {
 
     console.log('\n�Y"? [5/5] Seeding pipelines, stages and deals...');
 
-    const allBusinessEmails = BUSINESSES_DATA.map((e) => e.business.email);
-    allBusinessEmails.push('superadmin@zyntra.com');
+    const allBusinessNames = BUSINESSES_DATA.map((e) => e.business.name);
+    allBusinessNames.push('Zyntra Global Admin');
 
-    for (const email of allBusinessEmails) {
-      const business = await businessRepo.findOne({ where: { email } });
+    for (const name of allBusinessNames) {
+      const business = await businessRepo.findOne({ where: { name } });
       if (!business) continue;
 
       const existingPipelines = await pipelineRepo.find({
@@ -718,15 +705,13 @@ export class CrmSeeder implements Seeder {
 
     console.log('\no Seed finished successfully!\n');
     console.log(
-      '  Y" Business/Company login credentials (all plans use password: Zyntra2025!):',
+      '  Y" User login credentials (all plans use password: Zyntra2025!):',
     );
     for (const entry of BUSINESSES_DATA) {
-      console.log(`     �?� ${entry.business.email} (Company)`);
-      console.log(`     �?� ${entry.adminUser.email} (CRM Admin)`);
-      console.log(`     �?� ${entry.agentUser.email} (CRM Agente)`);
+      console.log(`     - ${entry.adminUser.email} (Admin, ${entry.business.name})`);
+      console.log(`     - ${entry.agentUser.email} (Agente, ${entry.business.name})`);
     }
-    console.log(`     �?� superadmin@zyntra.com (Company - Global Admin)`);
-    console.log(`     �?� superuser@zyntra.com (Super Admin CRM)`);
+    console.log(`     - superuser@zyntra.com (Super Admin, Zyntra Global Admin)`);
     console.log('');
   }
 }

@@ -14,7 +14,7 @@ import {
   Business,
   PlanStatus,
 } from './../src/modules/auth/entities/business.entity';
-import { User as CrmUser } from './../src/modules/crm/entities/user.entity';
+import { User } from './../src/modules/auth/entities/user.entity';
 import { UserRole } from './../src/modules/crm/enums/user-role.enum';
 import { UserStatus } from './../src/modules/crm/enums/user-status.enum';
 import { Repository } from 'typeorm';
@@ -28,14 +28,16 @@ const argonOptions = {
 describe('Self-service "My Account" (e2e)', () => {
   let app: INestApplication<App>;
   let businessRepo: Repository<Business>;
-  let crmUserRepo: Repository<CrmUser>;
+  let userRepo: Repository<User>;
   let jwtService: JwtService;
 
-  let owner: Business;
+  let ownerBusiness: Business;
+  let owner: User;
   let ownerToken: string;
 
   let victimBusiness: Business;
-  let agent: CrmUser;
+  let victimUser: User;
+  let agent: User;
   let agentToken: string;
 
   const OWNER_OLD_PASSWORD = 'OldPassword1';
@@ -59,21 +61,28 @@ describe('Self-service "My Account" (e2e)', () => {
     await app.init();
 
     businessRepo = moduleFixture.get(getRepositoryToken(Business));
-    crmUserRepo = moduleFixture.get(getRepositoryToken(CrmUser));
+    userRepo = moduleFixture.get(getRepositoryToken(User));
     jwtService = moduleFixture.get(JwtService);
 
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
-    owner = await businessRepo.save(
+    ownerBusiness = await businessRepo.save(
       businessRepo.create({
-        name: 'E2E My Account Owner',
-        email: `myaccount-owner-${Date.now()}@zyntra.test`,
-        password_hash: await argon2.hash(OWNER_OLD_PASSWORD, argonOptions),
+        name: 'E2E My Account Owner Business',
         plan_status: PlanStatus.TRIAL,
         trial_ends_at: trialEndsAt,
+      }),
+    );
+    owner = await userRepo.save(
+      userRepo.create({
+        businessId: ownerBusiness.id,
         firstName: 'Owner',
         lastName: 'Original',
+        email: `myaccount-owner-${Date.now()}@zyntra.test`,
+        passwordHash: await argon2.hash(OWNER_OLD_PASSWORD, argonOptions),
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
         isAccountActivated: true,
       }),
     );
@@ -81,24 +90,32 @@ describe('Self-service "My Account" (e2e)', () => {
       sub: owner.id,
       email: owner.email,
       plan: 'none',
-      plan_status: owner.plan_status,
-      business_id: owner.id,
+      plan_status: ownerBusiness.plan_status,
+      business_id: ownerBusiness.id,
+      role: owner.role,
     });
 
     victimBusiness = await businessRepo.save(
       businessRepo.create({
-        name: 'E2E My Account Victim',
-        email: `myaccount-victim-${Date.now()}@zyntra.test`,
-        password_hash: await argon2.hash('VictimPassword1', argonOptions),
+        name: 'E2E My Account Victim Business',
         plan_status: PlanStatus.TRIAL,
         trial_ends_at: trialEndsAt,
+      }),
+    );
+    victimUser = await userRepo.save(
+      userRepo.create({
+        businessId: victimBusiness.id,
         firstName: 'Victim',
         lastName: 'Untouched',
+        email: `myaccount-victim-${Date.now()}@zyntra.test`,
+        passwordHash: await argon2.hash('VictimPassword1', argonOptions),
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
       }),
     );
 
-    agent = await crmUserRepo.save(
-      crmUserRepo.create({
+    agent = await userRepo.save(
+      userRepo.create({
         businessId: victimBusiness.id,
         firstName: 'Ana',
         lastName: 'Gomez',
@@ -109,18 +126,20 @@ describe('Self-service "My Account" (e2e)', () => {
       }),
     );
     agentToken = jwtService.sign({
-      sub: victimBusiness.id,
-      email: victimBusiness.email,
+      sub: agent.id,
+      email: agent.email,
       plan: 'none',
       plan_status: victimBusiness.plan_status,
       business_id: victimBusiness.id,
-      crm_user_id: agent.id,
       role: agent.role,
     });
   });
 
   afterAll(async () => {
-    await businessRepo.delete({ id: owner.id });
+    await userRepo.delete({ id: owner.id });
+    await userRepo.delete({ id: victimUser.id });
+    await userRepo.delete({ id: agent.id });
+    await businessRepo.delete({ id: ownerBusiness.id });
     await businessRepo.delete({ id: victimBusiness.id });
     await fs
       .rm(process.cwd() + '/uploads/avatars', { recursive: true, force: true })
@@ -136,7 +155,7 @@ describe('Self-service "My Account" (e2e)', () => {
         .expect(401);
     });
 
-    it('updates the profile of the authenticated business and reflects the change', async () => {
+    it('updates the profile of the authenticated admin user and reflects the change', async () => {
       const res = await request(app.getHttpServer())
         .patch('/api/auth/me')
         .set('Authorization', `Bearer ${ownerToken}`)
@@ -148,20 +167,20 @@ describe('Self-service "My Account" (e2e)', () => {
       expect(res.body.data.jobTitle).toBe('CEO');
     });
 
-    it('does not affect another business when an unrelated id is included in the payload', async () => {
+    it('does not affect another user when an unrelated id is included in the payload', async () => {
       await request(app.getHttpServer())
         .patch('/api/auth/me')
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ firstName: 'Attacker', businessId: victimBusiness.id })
         .expect(400);
 
-      const untouchedVictim = await businessRepo.findOne({
-        where: { id: victimBusiness.id },
+      const untouchedVictim = await userRepo.findOne({
+        where: { id: victimUser.id },
       });
       expect(untouchedVictim?.firstName).toBe('Victim');
     });
 
-    it('updates the CRM user profile scoped to the caller only', async () => {
+    it('updates the agent profile scoped to the caller only', async () => {
       const res = await request(app.getHttpServer())
         .patch('/api/auth/me')
         .set('Authorization', `Bearer ${agentToken}`)
@@ -169,9 +188,9 @@ describe('Self-service "My Account" (e2e)', () => {
         .expect(200);
 
       expect(res.body.data.firstName).toBe('Ana Updated');
-      expect(res.body.data.crm_user_id).toBe(agent.id);
+      expect(res.body.data.id).toBe(agent.id);
 
-      const reloadedOwner = await businessRepo.findOne({
+      const reloadedOwner = await userRepo.findOne({
         where: { id: owner.id },
       });
       expect(reloadedOwner?.firstName).not.toBe('Ana Updated');
@@ -189,12 +208,12 @@ describe('Self-service "My Account" (e2e)', () => {
         })
         .expect(401);
 
-      const stillOwner = await businessRepo.findOne({
+      const stillOwner = await userRepo.findOne({
         where: { id: owner.id },
       });
       expect(
         await argon2.verify(
-          stillOwner!.password_hash,
+          stillOwner!.passwordHash,
           OWNER_OLD_PASSWORD,
           argonOptions,
         ),
@@ -211,19 +230,19 @@ describe('Self-service "My Account" (e2e)', () => {
         })
         .expect(201);
 
-      const updatedOwner = await businessRepo.findOne({
+      const updatedOwner = await userRepo.findOne({
         where: { id: owner.id },
       });
       expect(
         await argon2.verify(
-          updatedOwner!.password_hash,
+          updatedOwner!.passwordHash,
           OWNER_OLD_PASSWORD,
           argonOptions,
         ),
       ).toBe(false);
       expect(
         await argon2.verify(
-          updatedOwner!.password_hash,
+          updatedOwner!.passwordHash,
           'BrandNewPass1',
           argonOptions,
         ),
@@ -260,7 +279,7 @@ describe('Self-service "My Account" (e2e)', () => {
 
       expect(res.body.data.avatarUrl).toBeTruthy();
 
-      const updatedAgent = await crmUserRepo.findOne({
+      const updatedAgent = await userRepo.findOne({
         where: { id: agent.id },
       });
       expect(updatedAgent?.avatarUrl).toBe(res.body.data.avatarUrl);

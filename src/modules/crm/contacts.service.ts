@@ -12,7 +12,7 @@ import { ContactActivity } from '@crm/entities/contact-activity.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { Deal } from '@crm/entities/deal.entity';
 import { Tag } from '@crm/entities/tag.entity';
-import { User } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { ActivityCreatedBy } from '@crm/enums/activity-created-by.enum';
 import { ActivityType } from '@crm/enums/activity-type.enum';
 import {

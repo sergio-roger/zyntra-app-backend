@@ -24,27 +24,6 @@ export class Business {
   @Column()
   name: string;
 
-  @Column({ name: 'first_name', nullable: true })
-  firstName: string;
-
-  @Column({ name: 'last_name', nullable: true })
-  lastName: string;
-
-  @Column({ name: 'job_title', nullable: true })
-  jobTitle: string;
-
-  @Column({ name: 'avatar_url', type: 'text', nullable: true })
-  avatarUrl: string;
-
-  @Column({ name: 'is_account_activated', default: true })
-  isAccountActivated: boolean;
-
-  @Column({ unique: true })
-  email: string;
-
-  @Column()
-  password_hash: string;
-
   @Column({ nullable: true })
   plan_id: string;
 

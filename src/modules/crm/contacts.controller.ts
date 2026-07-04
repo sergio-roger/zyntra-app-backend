@@ -24,12 +24,12 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
-import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import { Business } from '@auth/entities/business.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
-import type { CrmUserContext } from '@common/decorators/current-crm-user.decorator';
+import type { UserContext } from '@common/decorators/current-user.decorator';
 import { ContactsService } from '@crm/contacts.service';
 import { CreateContactDto } from '@crm/dto/create-contact.dto';
 import { UpdateContactDto } from '@crm/dto/update-contact.dto';
@@ -66,10 +66,10 @@ export class ContactsController {
   @ApiCreatedResponse()
   create(
     @CurrentBusiness() business: Business,
-    @CurrentCrmUser() crmUser: CrmUserContext,
+    @CurrentUser() user: UserContext,
     @Body() dto: CreateContactDto,
   ) {
-    return this.contacts.create(business, dto, crmUser.id);
+    return this.contacts.create(business, dto, user.id);
   }
 
   @Get('contacts/:id')

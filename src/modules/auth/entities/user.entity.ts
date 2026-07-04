@@ -1,5 +1,4 @@
 import { Business } from '@auth/entities/business.entity';
-import { Plan } from '@auth/entities/plan.entity';
 import { Team } from '@crm/entities/team.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { UserStatus } from '@crm/enums/user-status.enum';
@@ -33,13 +32,6 @@ export class User {
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
   business: Business;
-
-  @Column({ name: 'plan_id', type: 'uuid', nullable: true })
-  planId: string;
-
-  @ManyToOne(() => Plan, { nullable: true, eager: false })
-  @JoinColumn({ name: 'plan_id' })
-  plan: Plan;
 
   @Column({ name: 'first_name', nullable: true })
   firstName: string;
@@ -108,5 +100,3 @@ export class User {
     this.isActive = this.status === UserStatus.ACTIVE;
   }
 }
-
-export { User as CrmUser };

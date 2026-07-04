@@ -5,6 +5,6 @@ import type { RequestWithUser } from '@common/interfaces/request-with-user.inter
 export const CurrentBusiness = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): Business => {
     const req = ctx.switchToHttp().getRequest<RequestWithUser>();
-    return req.user;
+    return req.user.business;
   },
 );

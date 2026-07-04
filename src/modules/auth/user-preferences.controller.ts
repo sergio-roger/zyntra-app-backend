@@ -10,9 +10,9 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import {
-  CurrentCrmUser,
-  CrmUserContext,
-} from '@common/decorators/current-crm-user.decorator';
+  CurrentUser,
+  UserContext,
+} from '@common/decorators/current-user.decorator';
 import { UserPreferencesService } from './user-preferences.service';
 
 @ApiTags('user-preferences')
@@ -25,7 +25,7 @@ export class UserPreferencesController {
   @Get(':key')
   @ApiOperation({ summary: 'Get a user preference' })
   async findOne(
-    @CurrentCrmUser() user: CrmUserContext,
+    @CurrentUser() user: UserContext,
     @Param('key') key: string,
   ) {
     if (!user.id) {
@@ -38,7 +38,7 @@ export class UserPreferencesController {
   @Put(':key')
   @ApiOperation({ summary: 'Create or update a user preference' })
   async upsert(
-    @CurrentCrmUser() user: CrmUserContext,
+    @CurrentUser() user: UserContext,
     @Param('key') key: string,
     @Body() body: { value: unknown },
   ) {

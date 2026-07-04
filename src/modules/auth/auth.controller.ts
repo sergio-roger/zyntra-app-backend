@@ -1,5 +1,4 @@
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
-import { CurrentCrmUser } from '@common/decorators/current-crm-user.decorator';
 import { Public } from '@common/decorators/public.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 import { UserRole } from '@crm/enums/user-role.enum';
@@ -47,7 +46,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  @ApiOperation({ summary: 'Register a new business' })
+  @ApiOperation({ summary: 'Register a new business and its first admin user' })
   @ApiCreatedResponse({ type: AuthResponseDto })
   async register(
     @Body() registerDto: RegisterDto,
@@ -62,7 +61,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Login as a business or CRM user' })
+  @ApiOperation({ summary: 'Login as a user' })
   @ApiOkResponse({ type: AuthResponseDto })
   async login(@Body() loginDto: LoginDto, @Request() req: RequestWithUser) {
     const ip = req.ip ?? req.socket?.remoteAddress ?? 'unknown';
@@ -122,8 +121,10 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Refresh session token' })
   @ApiOkResponse({ type: AuthResponseDto })
-  refresh(@Request() req: RequestWithUser) {
-    const { access_token, user } = this.authService.refresh(req.user);
+  async refresh(@Request() req: RequestWithUser) {
+    const { access_token, user } = await this.authService.refresh(
+      req.user.id,
+    );
     if (req.session) {
       req.session.jwt = access_token;
     }
@@ -135,16 +136,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: AuthResponseDto })
-  async getProfile(
-    @Request() req: RequestWithUser,
-    @CurrentCrmUser() caller: { id: string | null; role: UserRole },
-  ) {
-    const user = req.user as Business & { crm_user_id?: string | null };
-    return this.authService.getSelfProfile(
-      user.id,
-      user.crm_user_id ?? null,
-      caller.role,
-    );
+  async getProfile(@Request() req: RequestWithUser) {
+    return this.authService.getSelfProfile(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -154,15 +147,8 @@ export class AuthController {
   async updateProfile(
     @Body() dto: UpdateProfileDto,
     @Request() req: RequestWithUser,
-    @CurrentCrmUser() caller: { id: string | null; role: UserRole },
   ) {
-    const user = req.user as Business & { crm_user_id?: string | null };
-    return this.authService.updateProfile(
-      user.id,
-      user.crm_user_id ?? null,
-      dto,
-      caller.role,
-    );
+    return this.authService.updateProfile(req.user.id, dto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -174,12 +160,7 @@ export class AuthController {
     @UploadedFile() file: Express.Multer.File,
     @Request() req: RequestWithUser,
   ) {
-    const user = req.user as Business & { crm_user_id?: string | null };
-    return this.authService.uploadAvatar(
-      user.id,
-      user.crm_user_id ?? null,
-      file,
-    );
+    return this.authService.uploadAvatar(req.user.id, file);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -187,8 +168,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove own avatar' })
   async removeAvatar(@Request() req: RequestWithUser) {
-    const user = req.user as Business & { crm_user_id?: string | null };
-    await this.authService.removeAvatar(user.id, user.crm_user_id ?? null);
+    await this.authService.removeAvatar(req.user.id);
     return { message: 'Avatar eliminado correctamente' };
   }
 
@@ -200,12 +180,7 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
     @Request() req: RequestWithUser,
   ) {
-    const user = req.user as Business & { crm_user_id?: string | null };
-    await this.authService.changePassword(
-      user.id,
-      user.crm_user_id ?? null,
-      dto,
-    );
+    await this.authService.changePassword(req.user.id, dto);
     return { message: 'Contraseña actualizada correctamente' };
   }
 
@@ -215,11 +190,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Get menu tree filtered by role and plan' })
   @ApiOkResponse({ description: 'Menu tree for the authenticated user' })
   async getMenus(
-    @CurrentCrmUser() caller: { id: string | null; role: string },
+    @Request() req: RequestWithUser,
     @CurrentBusiness() business: Business,
   ) {
     return this.authService.getMenuTree(
-      caller.role as UserRole,
+      req.user.role as UserRole,
       business.id,
       business.plan_id,
     );

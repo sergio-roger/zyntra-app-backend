@@ -12,10 +12,11 @@ import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { Business, PlanStatus } from '@auth/entities/business.entity';
 import { Plan } from '@auth/entities/plan.entity';
+import { User } from '@auth/entities/user.entity';
 import { RegisterDto } from '@auth/dto/register.dto';
 import { LoginDto } from '@auth/dto/login.dto';
-import { User } from '@crm/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
+import { UserStatus } from '@crm/enums/user-status.enum';
 import { JwtPayload } from '@auth/interfaces/jwt-payload.interface';
 import { Role } from '@auth/entities/role.entity';
 import { Menu } from '@auth/entities/menu.entity';
@@ -31,7 +32,7 @@ import {
 
 // TODO: Replace with persisted PasswordResetToken entity + email delivery (SMTP/Resend).
 // In-memory store is fine for dev / single-instance only.
-type ResetEntry = { businessId: string; expiresAt: number };
+type ResetEntry = { userId: string; expiresAt: number };
 const resetTokens = new Map<string, ResetEntry>();
 const RESET_TTL_MS = 30 * 60 * 1000; // 30 min
 
@@ -55,7 +56,6 @@ export interface SelfProfile {
   role: UserRole;
   plan: Plan | null;
   plan_status: string;
-  crm_user_id: string | null;
   avatarUrl: string | null;
   jobTitle: string | null;
   isAccountActivated: boolean;
@@ -73,7 +73,7 @@ export class AuthService {
     @InjectRepository(Plan)
     private planRepository: Repository<Plan>,
     @InjectRepository(User)
-    private crmUserRepository: Repository<User>,
+    private userRepository: Repository<User>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
     @InjectRepository(Menu)
@@ -96,10 +96,10 @@ export class AuthService {
     const { name, email, password } = registerDto;
     const normalizedEmail = email.toLowerCase();
 
-    const existingBusiness = await this.businessRepository.findOne({
+    const existingUser = await this.userRepository.findOne({
       where: { email: normalizedEmail },
     });
-    if (existingBusiness) {
+    if (existingUser) {
       throw new ConflictException('Email already registered');
     }
 
@@ -112,22 +112,38 @@ export class AuthService {
       );
     }
 
-    const password_hash = await argon2.hash(password, this.getArgonOptions());
+    const passwordHash = await argon2.hash(password, this.getArgonOptions());
     const trial_ends_at = new Date();
     trial_ends_at.setDate(trial_ends_at.getDate() + 14);
 
-    const business = this.businessRepository.create({
-      name,
-      email: normalizedEmail,
-      password_hash,
-      plan_id: defaultPlan.id,
-      plan_status: PlanStatus.TRIAL,
-      trial_ends_at,
-    });
+    // 1) Business con datos por defecto, 2) primer usuario admin asociado — en una sola transacción.
+    const savedUser = await this.businessRepository.manager.transaction(
+      async (manager) => {
+        const business = await manager.save(
+          manager.create(Business, {
+            name,
+            plan_id: defaultPlan.id,
+            plan_status: PlanStatus.TRIAL,
+            trial_ends_at,
+          }),
+        );
 
-    const savedBusiness = await this.businessRepository.save(business);
-    const reloaded = await this.validateBusiness(savedBusiness.id);
-    return this.generateBusinessToken(reloaded!);
+        return manager.save(
+          manager.create(User, {
+            businessId: business.id,
+            email: normalizedEmail,
+            passwordHash,
+            role: UserRole.ADMIN,
+            status: UserStatus.ACTIVE,
+            isAccountActivated: true,
+            activatedAt: new Date(),
+          }),
+        );
+      },
+    );
+
+    const reloaded = await this.validateUser(savedUser.id);
+    return this.generateUserToken(reloaded!);
   }
 
   async login(loginDto: LoginDto) {
@@ -136,204 +152,102 @@ export class AuthService {
 
     this.logger.log(`[login] attempt email=${normalizedEmail}`);
 
-    // 1. Try Business login first
-    const business = await this.businessRepository.findOne({
-      where: { email: normalizedEmail },
-      relations: ['plan_object'],
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        password_hash: true,
-        plan_status: true,
-        plan_id: true,
-      },
-    });
-
-    if (business) {
-      this.logger.log(`[login] business account found id=${business.id}`);
-
-      if (business.plan_id === null) {
-        this.logger.warn(
-          `[login] blocked global admin attempt email=${normalizedEmail} id=${business.id}`,
-        );
-        throw new UnauthorizedException(
-          'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
-        );
-      }
-
-      if (
-        await argon2.verify(
-          business.password_hash,
-          password,
-          this.getArgonOptions(),
-        )
-      ) {
-        this.logger.log(
-          `[login] business password valid — issuing token id=${business.id}`,
-        );
-        const reloaded = await this.validateBusiness(business.id);
-        return this.generateBusinessToken(reloaded!);
-      }
-
-      this.logger.warn(
-        `[login] business password mismatch email=${normalizedEmail} id=${business.id}`,
-      );
-    } else {
-      this.logger.log(
-        `[login] no business account for email=${normalizedEmail}, trying CRM user`,
-      );
-    }
-
-    // 2. Try CrmUser login
-    const crmUser = await this.crmUserRepository.findOne({
+    const user = await this.userRepository.findOne({
       where: { email: normalizedEmail, isActive: true },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        passwordHash: true,
-        businessId: true,
-      },
+      relations: ['business', 'business.plan_object'],
     });
 
-    if (crmUser) {
-      this.logger.log(
-        `[login] CRM user found id=${crmUser.id} role=${crmUser.role} businessId=${crmUser.businessId}`,
-      );
-
-      const businessEntity = await this.validateBusiness(crmUser.businessId);
-      if (businessEntity && businessEntity.plan_id === null) {
-        this.logger.warn(
-          `[login] blocked global admin CRM user email=${normalizedEmail} id=${crmUser.id}`,
-        );
-        throw new UnauthorizedException(
-          'Los administradores globales y usuarios asociados no pueden iniciar sesión por el login tradicional.',
-        );
-      }
-
-      if (
-        crmUser.passwordHash &&
-        (await argon2.verify(
-          crmUser.passwordHash,
-          password,
-          this.getArgonOptions(),
-        ))
-      ) {
-        if (!businessEntity) {
-          this.logger.warn(
-            `[login] CRM user has no valid business email=${normalizedEmail} id=${crmUser.id}`,
-          );
-          throw new UnauthorizedException('Credenciales incorrectas');
-        }
-        this.logger.log(
-          `[login] CRM user password valid — issuing token id=${crmUser.id} role=${crmUser.role}`,
-        );
-        return this.generateCrmUserToken(businessEntity, crmUser);
-      }
-
+    if (!user) {
       this.logger.warn(
-        `[login] CRM user password mismatch email=${normalizedEmail} id=${crmUser.id}`,
+        `[login] no active user found for email=${normalizedEmail}`,
       );
-    } else {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+
+    if (user.business.plan_id === null) {
       this.logger.warn(
-        `[login] no active CRM user found for email=${normalizedEmail}`,
+        `[login] blocked global admin attempt email=${normalizedEmail} id=${user.id}`,
+      );
+      throw new UnauthorizedException(
+        'Los administradores globales no pueden iniciar sesión por el login tradicional.',
       );
     }
 
-    this.logger.warn(
-      `[login] all strategies exhausted, rejecting email=${normalizedEmail}`,
+    const passwordValid =
+      !!user.passwordHash &&
+      (await argon2.verify(
+        user.passwordHash,
+        password,
+        this.getArgonOptions(),
+      ));
+
+    if (!passwordValid) {
+      this.logger.warn(
+        `[login] password mismatch email=${normalizedEmail} id=${user.id}`,
+      );
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+
+    this.logger.log(
+      `[login] password valid — issuing token id=${user.id} role=${user.role}`,
     );
-    throw new UnauthorizedException('Credenciales incorrectas');
+    return this.generateUserToken(user);
   }
 
-  refresh(user: Business & { crm_user_id?: string | null; role?: UserRole }) {
-    if (user.crm_user_id) {
-      const crmUserPartial = {
-        id: user.crm_user_id,
-        role: user.role ?? UserRole.ADMIN,
-        businessId: user.id,
-      } as User;
-      return this.generateCrmUserToken(user, crmUserPartial);
+  async refresh(userId: string) {
+    const user = await this.validateUser(userId);
+    if (!user) {
+      throw new UnauthorizedException();
     }
-    return this.generateBusinessToken(user);
+    return this.generateUserToken(user);
   }
 
-  private generateBusinessToken(business: Business) {
+  private generateUserToken(user: User) {
     const payload: JwtPayload = {
-      sub: business.id,
-      email: business.email,
-      plan: business.plan_object?.name || 'none',
-      plan_status: business.plan_status,
-      business_id: business.id,
+      sub: user.id,
+      email: user.email,
+      plan: user.business.plan_object?.name || 'none',
+      plan_status: user.business.plan_status,
+      business_id: user.business.id,
+      role: user.role,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
       user: {
-        id: business.id,
-        name: business.name,
-        email: business.email,
-        plan: business.plan_object,
-        plan_status: business.plan_status,
-        role: UserRole.ADMIN,
-        crm_user_id: null,
+        id: user.id,
+        businessId: user.business.id,
+        name: user.name,
+        email: user.email,
+        plan: user.business.plan_object,
+        plan_status: user.business.plan_status,
+        role: user.role,
       },
     };
   }
 
-  private generateCrmUserToken(
-    business: Business,
-    crmUser: Pick<User, 'id' | 'role' | 'businessId'>,
-  ) {
-    const payload: JwtPayload = {
-      sub: business.id,
-      email: business.email,
-      plan: business.plan_object?.name || 'none',
-      plan_status: business.plan_status,
-      business_id: business.id,
-      crm_user_id: crmUser.id,
-      role: crmUser.role,
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: business.id,
-        name: business.name,
-        email: business.email,
-        plan: business.plan_object,
-        plan_status: business.plan_status,
-        role: crmUser.role,
-        crm_user_id: crmUser.id,
-      },
-    };
-  }
-
-  async validateBusiness(id: string): Promise<Business | null> {
-    return this.businessRepository.findOne({
+  async validateUser(id: string): Promise<User | null> {
+    return this.userRepository.findOne({
       where: { id },
-      relations: ['plan_object'],
+      relations: ['business', 'business.plan_object'],
     });
   }
 
   async forgotPassword(email: string): Promise<void> {
-    const business = await this.businessRepository.findOne({
+    const user = await this.userRepository.findOne({
       where: { email: email.toLowerCase() },
     });
 
-    if (!business) return;
+    if (!user) return;
 
     const token = randomBytes(32).toString('hex');
     resetTokens.set(token, {
-      businessId: business.id,
+      userId: user.id,
       expiresAt: Date.now() + RESET_TTL_MS,
     });
 
     const link = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
-    this.logger.warn(
-      `[DEV] Password reset link for ${business.email}: ${link}`,
-    );
+    this.logger.warn(`[DEV] Password reset link for ${user.email}: ${link}`);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
@@ -343,133 +257,64 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    const business = await this.businessRepository.findOne({
-      where: { id: entry.businessId },
+    const user = await this.userRepository.findOne({
+      where: { id: entry.userId },
     });
-    if (!business) {
+    if (!user) {
       resetTokens.delete(token);
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    business.password_hash = await argon2.hash(
-      newPassword,
-      this.getArgonOptions(),
-    );
-    await this.businessRepository.save(business);
+    user.passwordHash = await argon2.hash(newPassword, this.getArgonOptions());
+    await this.userRepository.save(user);
     resetTokens.delete(token);
   }
 
-  private async loadSelfContext(
-    businessId: string,
-    crmUserId: string | null,
-  ): Promise<{ business: Business; crmUser: User | null }> {
-    const business = await this.businessRepository.findOne({
-      where: { id: businessId },
-      relations: ['plan_object'],
-    });
-    if (!business) {
-      throw new UnauthorizedException();
-    }
-
-    if (!crmUserId) {
-      return { business, crmUser: null };
-    }
-
-    const crmUser = await this.crmUserRepository.findOne({
-      where: { id: crmUserId, businessId },
-    });
-    if (!crmUser) {
-      throw new UnauthorizedException();
-    }
-
-    return { business, crmUser };
-  }
-
-  private toSelfProfile(
-    business: Business,
-    crmUser: User | null,
-    role: UserRole,
-  ): SelfProfile {
-    if (crmUser) {
-      return {
-        id: business.id,
-        businessId: business.id,
-        name: crmUser.name,
-        firstName: crmUser.firstName ?? null,
-        lastName: crmUser.lastName ?? null,
-        email: crmUser.email,
-        role,
-        plan: business.plan_object ?? null,
-        plan_status: business.plan_status,
-        crm_user_id: crmUser.id,
-        avatarUrl: crmUser.avatarUrl ?? null,
-        jobTitle: crmUser.jobTitle ?? null,
-        isAccountActivated: crmUser.isAccountActivated,
-        status: crmUser.status,
-        createdAt: crmUser.createdAt,
-      };
-    }
-
+  private toSelfProfile(user: User): SelfProfile {
     return {
-      id: business.id,
-      businessId: business.id,
-      name: business.name,
-      firstName: business.firstName ?? null,
-      lastName: business.lastName ?? null,
-      email: business.email,
-      role,
-      plan: business.plan_object ?? null,
-      plan_status: business.plan_status,
-      crm_user_id: null,
-      avatarUrl: business.avatarUrl ?? null,
-      jobTitle: business.jobTitle ?? null,
-      isAccountActivated: business.isAccountActivated,
-      status: 'active',
-      createdAt: business.created_at,
+      id: user.id,
+      businessId: user.businessId,
+      name: user.name,
+      firstName: user.firstName ?? null,
+      lastName: user.lastName ?? null,
+      email: user.email,
+      role: user.role,
+      plan: user.business?.plan_object ?? null,
+      plan_status: user.business?.plan_status,
+      avatarUrl: user.avatarUrl ?? null,
+      jobTitle: user.jobTitle ?? null,
+      isAccountActivated: user.isAccountActivated,
+      status: user.status,
+      createdAt: user.createdAt,
     };
   }
 
-  async getSelfProfile(
-    businessId: string,
-    crmUserId: string | null,
-    role: UserRole,
-  ): Promise<SelfProfile> {
-    const { business, crmUser } = await this.loadSelfContext(
-      businessId,
-      crmUserId,
-    );
-    return this.toSelfProfile(business, crmUser, role);
+  async getSelfProfile(userId: string): Promise<SelfProfile> {
+    const user = await this.validateUser(userId);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return this.toSelfProfile(user);
   }
 
   async updateProfile(
-    businessId: string,
-    crmUserId: string | null,
+    userId: string,
     dto: UpdateProfileDto,
-    role: UserRole,
   ): Promise<SelfProfile> {
-    const { business, crmUser } = await this.loadSelfContext(
-      businessId,
-      crmUserId,
-    );
-
-    if (crmUser) {
-      if (dto.firstName !== undefined) crmUser.firstName = dto.firstName;
-      if (dto.lastName !== undefined) crmUser.lastName = dto.lastName;
-      if (dto.jobTitle !== undefined) crmUser.jobTitle = dto.jobTitle;
-      await this.crmUserRepository.save(crmUser);
-      return this.toSelfProfile(business, crmUser, role);
+    const user = await this.validateUser(userId);
+    if (!user) {
+      throw new UnauthorizedException();
     }
 
-    if (dto.firstName !== undefined) business.firstName = dto.firstName;
-    if (dto.lastName !== undefined) business.lastName = dto.lastName;
-    if (dto.jobTitle !== undefined) business.jobTitle = dto.jobTitle;
-    await this.businessRepository.save(business);
-    return this.toSelfProfile(business, null, role);
+    if (dto.firstName !== undefined) user.firstName = dto.firstName;
+    if (dto.lastName !== undefined) user.lastName = dto.lastName;
+    if (dto.jobTitle !== undefined) user.jobTitle = dto.jobTitle;
+    await this.userRepository.save(user);
+    return this.toSelfProfile(user);
   }
 
   async changePassword(
-    businessId: string,
-    crmUserId: string | null,
+    userId: string,
     dto: ChangePasswordDto,
   ): Promise<void> {
     if (dto.newPassword === dto.currentPassword) {
@@ -478,48 +323,30 @@ export class AuthService {
       );
     }
 
-    const { business, crmUser } = await this.loadSelfContext(
-      businessId,
-      crmUserId,
-    );
-
-    if (crmUser) {
-      const isValid =
-        !!crmUser.passwordHash &&
-        (await argon2.verify(
-          crmUser.passwordHash,
-          dto.currentPassword,
-          this.getArgonOptions(),
-        ));
-      if (!isValid) {
-        throw new UnauthorizedException('Credenciales incorrectas');
-      }
-      crmUser.passwordHash = await argon2.hash(
-        dto.newPassword,
-        this.getArgonOptions(),
-      );
-      await this.crmUserRepository.save(crmUser);
-      return;
+    const user = await this.validateUser(userId);
+    if (!user) {
+      throw new UnauthorizedException();
     }
 
-    const isValid = await argon2.verify(
-      business.password_hash,
-      dto.currentPassword,
-      this.getArgonOptions(),
-    );
+    const isValid =
+      !!user.passwordHash &&
+      (await argon2.verify(
+        user.passwordHash,
+        dto.currentPassword,
+        this.getArgonOptions(),
+      ));
     if (!isValid) {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
-    business.password_hash = await argon2.hash(
+    user.passwordHash = await argon2.hash(
       dto.newPassword,
       this.getArgonOptions(),
     );
-    await this.businessRepository.save(business);
+    await this.userRepository.save(user);
   }
 
   async uploadAvatar(
-    businessId: string,
-    crmUserId: string | null,
+    userId: string,
     file: UploadableFile | undefined,
   ): Promise<{ avatarUrl: string }> {
     if (!file) {
@@ -536,21 +363,15 @@ export class AuthService {
       );
     }
 
-    const { business, crmUser } = await this.loadSelfContext(
-      businessId,
-      crmUserId,
-    );
-    const previousUrl = crmUser ? crmUser.avatarUrl : business.avatarUrl;
+    const user = await this.validateUser(userId);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    const previousUrl = user.avatarUrl;
 
     const avatarUrl = await this.avatarStorage.save(file);
-
-    if (crmUser) {
-      crmUser.avatarUrl = avatarUrl;
-      await this.crmUserRepository.save(crmUser);
-    } else {
-      business.avatarUrl = avatarUrl;
-      await this.businessRepository.save(business);
-    }
+    user.avatarUrl = avatarUrl;
+    await this.userRepository.save(user);
 
     if (previousUrl) {
       await this.avatarStorage.delete(previousUrl);
@@ -559,23 +380,15 @@ export class AuthService {
     return { avatarUrl };
   }
 
-  async removeAvatar(
-    businessId: string,
-    crmUserId: string | null,
-  ): Promise<void> {
-    const { business, crmUser } = await this.loadSelfContext(
-      businessId,
-      crmUserId,
-    );
-    const currentUrl = crmUser ? crmUser.avatarUrl : business.avatarUrl;
-
-    if (crmUser) {
-      crmUser.avatarUrl = null as unknown as string;
-      await this.crmUserRepository.save(crmUser);
-    } else {
-      business.avatarUrl = null as unknown as string;
-      await this.businessRepository.save(business);
+  async removeAvatar(userId: string): Promise<void> {
+    const user = await this.validateUser(userId);
+    if (!user) {
+      throw new UnauthorizedException();
     }
+    const currentUrl = user.avatarUrl;
+
+    user.avatarUrl = null as unknown as string;
+    await this.userRepository.save(user);
 
     if (currentUrl) {
       await this.avatarStorage.delete(currentUrl);
@@ -686,7 +499,7 @@ export class AuthService {
     await this.permissionRepository.save(copies);
   }
 
-  async getAllRoles(business?: Business): Promise<Role[]> {
+  async getAllRoles(business?: Business, role?: UserRole): Promise<Role[]> {
     const query = this.roleRepository.createQueryBuilder('role');
     if (business) {
       query.where('role.businessId = :businessId OR role.businessId IS NULL', {
@@ -698,8 +511,8 @@ export class AuthService {
 
     let roles = await query.orderBy('role.name', 'ASC').getMany();
 
-    if (business && business.email !== 'superadmin@zyntra.com') {
-      roles = roles.filter((role) => role.name !== 'superAdmin');
+    if (role !== UserRole.SUPER_ADMIN) {
+      roles = roles.filter((r) => r.name !== 'superAdmin');
     }
     return roles;
   }

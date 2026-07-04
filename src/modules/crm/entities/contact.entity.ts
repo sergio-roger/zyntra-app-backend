@@ -3,7 +3,7 @@ import { Business } from '@auth/entities/business.entity';
 import { Company } from '@crm/entities/company.entity';
 import { ContactActivity } from '@crm/entities/contact-activity.entity';
 import { Tag } from '@crm/entities/tag.entity';
-import { CrmUser } from '@crm/entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { Deal } from '@crm/entities/deal.entity';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 import {
@@ -56,13 +56,13 @@ export class Contact {
   @Column('uuid', { name: 'owner_id', nullable: true })
   ownerId: string | null;
 
-  @ManyToOne(() => CrmUser, {
+  @ManyToOne(() => User, {
     nullable: true,
     onDelete: 'SET NULL',
     eager: false,
   })
   @JoinColumn({ name: 'owner_id' })
-  owner: CrmUser | null;
+  owner: User | null;
 
   @Column({
     type: 'enum',
