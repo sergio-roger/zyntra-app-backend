@@ -708,10 +708,16 @@ export class CrmSeeder implements Seeder {
       '  Y" User login credentials (all plans use password: Zyntra2025!):',
     );
     for (const entry of BUSINESSES_DATA) {
-      console.log(`     - ${entry.adminUser.email} (Admin, ${entry.business.name})`);
-      console.log(`     - ${entry.agentUser.email} (Agente, ${entry.business.name})`);
+      console.log(
+        `     - ${entry.adminUser.email} (Admin, ${entry.business.name})`,
+      );
+      console.log(
+        `     - ${entry.agentUser.email} (Agente, ${entry.business.name})`,
+      );
     }
-    console.log(`     - superuser@zyntra.com (Super Admin, Zyntra Global Admin)`);
+    console.log(
+      `     - superuser@zyntra.com (Super Admin, Zyntra Global Admin)`,
+    );
     console.log('');
   }
 }

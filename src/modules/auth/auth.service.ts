@@ -313,10 +313,7 @@ export class AuthService {
     return this.toSelfProfile(user);
   }
 
-  async changePassword(
-    userId: string,
-    dto: ChangePasswordDto,
-  ): Promise<void> {
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
     if (dto.newPassword === dto.currentPassword) {
       throw new BadRequestException(
         'La nueva contraseña debe ser diferente a la actual',

@@ -233,7 +233,10 @@ describe('AuthService — unified login', () => {
 
       expect(txManager.create).toHaveBeenCalledWith(
         Business,
-        expect.objectContaining({ name: 'Nueva Empresa', plan_id: mockPlan.id }),
+        expect.objectContaining({
+          name: 'Nueva Empresa',
+          plan_id: mockPlan.id,
+        }),
       );
       expect(txManager.create).toHaveBeenCalledWith(
         User,

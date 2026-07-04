@@ -24,10 +24,7 @@ export class UserPreferencesController {
 
   @Get(':key')
   @ApiOperation({ summary: 'Get a user preference' })
-  async findOne(
-    @CurrentUser() user: UserContext,
-    @Param('key') key: string,
-  ) {
+  async findOne(@CurrentUser() user: UserContext, @Param('key') key: string) {
     if (!user.id) {
       throw new NotFoundException('Usuario no identificado');
     }

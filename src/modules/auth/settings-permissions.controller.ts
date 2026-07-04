@@ -1,7 +1,10 @@
 import { AuthService } from '@auth/auth.service';
 import { Business } from '@auth/entities/business.entity';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
-import { CurrentUser, UserContext } from '@common/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  UserContext,
+} from '@common/decorators/current-user.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { UserRole } from '@crm/enums/user-role.enum';
 import {

@@ -122,9 +122,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh session token' })
   @ApiOkResponse({ type: AuthResponseDto })
   async refresh(@Request() req: RequestWithUser) {
-    const { access_token, user } = await this.authService.refresh(
-      req.user.id,
-    );
+    const { access_token, user } = await this.authService.refresh(req.user.id);
     if (req.session) {
       req.session.jwt = access_token;
     }

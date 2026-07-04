@@ -132,10 +132,7 @@ describe('AuthController', () => {
 
       await controller.changePassword(dto, req);
 
-      expect(authService.changePassword).toHaveBeenCalledWith(
-        'user-uuid',
-        dto,
-      );
+      expect(authService.changePassword).toHaveBeenCalledWith('user-uuid', dto);
     });
 
     it('refresh scopes to the caller id from the token', async () => {
