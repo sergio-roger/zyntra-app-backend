@@ -1,3 +1,5 @@
+import { StorageFileResponse } from '@/storage-client/interfaces/storage-file-response.interface';
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   Injectable,
@@ -5,19 +7,10 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
-import FormData from 'form-data';
 import axios from 'axios';
-
-export interface StorageFileResponse {
-  id: string;
-  original_name: string;
-  size: number;
-  mime_type: string;
-  created_at: string;
-}
+import FormData from 'form-data';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class StorageClientService {
@@ -57,18 +50,31 @@ export class StorageClientService {
       filename: file.originalname,
       contentType: file.mimetype,
     });
-    form.append('bussines_id', companyId);
+    form.append('businessId', companyId);
     form.append('module', moduleName);
-    form.append('entity_id', entityId);
+    form.append('entityId', entityId);
 
     const url = `${this.baseUrl}/storage/upload`;
     const headers = this.buildHeaders(companyId, form.getHeaders());
 
     try {
       const response = await firstValueFrom(
-        this.httpService.post<StorageFileResponse>(url, form, { headers }),
+        this.httpService.post<{
+          id: string;
+          original_name: string;
+          size: number;
+          mime_type: string;
+          created_at: string;
+        }>(url, form, { headers }),
       );
-      return response.data;
+      const data = response.data;
+      return {
+        id: data.id,
+        originalName: data.original_name,
+        size: data.size,
+        mimeType: data.mime_type,
+        createdAt: data.created_at,
+      };
     } catch (error: unknown) {
       const isAxios = axios.isAxiosError(error);
       const msg = isAxios

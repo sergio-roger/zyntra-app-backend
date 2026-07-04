@@ -45,8 +45,8 @@ export class User {
   @Column({ name: 'job_title', nullable: true })
   jobTitle: string;
 
-  @Column({ name: 'avatar_url', nullable: true })
-  avatarUrl: string;
+  @Column({ name: 'avatar_url', nullable: true, type: 'varchar' })
+  avatarUrl: string | null;
 
   @Column({ name: 'avatar_file_id', type: 'uuid', nullable: true })
   avatarFileId: string | null;

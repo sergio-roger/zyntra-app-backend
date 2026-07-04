@@ -23,6 +23,10 @@ import { LogoStorageService } from '@auth/logo-storage.service';
 import { CompanyService } from '@auth/company.service';
 import { CompanyController } from '@auth/company.controller';
 import { StorageClientModule } from '@/storage-client/storage-client.module';
+import { UserService } from '@auth/user.service';
+import { RoleService } from '@auth/role.service';
+import { PermissionService } from '@auth/permission.service';
+import { MenuService } from '@auth/menu.service';
 
 @Module({
   imports: [
@@ -50,6 +54,10 @@ import { StorageClientModule } from '@/storage-client/storage-client.module';
   ],
   providers: [
     AuthService,
+    UserService,
+    RoleService,
+    PermissionService,
+    MenuService,
     JwtStrategy,
     UserPreferencesService,
     AvatarStorageService,

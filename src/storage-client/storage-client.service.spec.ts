@@ -73,7 +73,13 @@ describe('StorageClientService', () => {
         'user-1',
       );
 
-      expect(result).toEqual(responseData);
+      expect(result).toEqual({
+        id: 'file-uuid-1',
+        originalName: 'test.png',
+        size: 4,
+        mimeType: 'image/png',
+        createdAt: responseData.created_at,
+      });
       expect(httpService.post).toHaveBeenCalledWith(
         'http://localhost:3100/storage/upload',
         expect.any(Object),
