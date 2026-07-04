@@ -38,9 +38,11 @@ import { TeamsController } from '@crm/teams.controller';
 import { TeamsService } from '@crm/teams.service';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { StorageClientModule } from '@/storage-client/storage-client.module';
 
 @Module({
   imports: [
+    StorageClientModule,
     TypeOrmModule.forFeature([
       Contact,
       ContactActivity,

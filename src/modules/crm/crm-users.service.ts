@@ -1,6 +1,7 @@
+import { StorageClientService } from '@/storage-client/storage-client.service';
 import { Business } from '@auth/entities/business.entity';
-import { CreateCrmUserDto, UpdateCrmUserDto } from '@crm/dto/crm-user.dto';
 import { User } from '@auth/entities/user.entity';
+import { CreateCrmUserDto, UpdateCrmUserDto } from '@crm/dto/crm-user.dto';
 import { UserStatus } from '@crm/enums/user-status.enum';
 import {
   ConflictException,
@@ -17,14 +18,35 @@ export class CrmUsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly storageClient: StorageClientService,
   ) {}
 
   async list(business: Business) {
-    return this.userRepo.find({
+    const users = await this.userRepo.find({
       where: { businessId: business.id },
       relations: ['teams'],
       order: { createdAt: 'ASC' },
     });
+
+    return Promise.all(
+      users.map(async (user) => {
+        let avatarUrl = user.avatarUrl || null;
+        if (user.avatarFileId) {
+          try {
+            avatarUrl = await this.storageClient.getSignedUrl(
+              user.businessId,
+              user.avatarFileId,
+            );
+          } catch {
+            avatarUrl = null;
+          }
+        }
+        return {
+          ...user,
+          avatarUrl,
+        };
+      }),
+    );
   }
 
   async findOne(business: Business, id: string) {
@@ -33,6 +55,19 @@ export class CrmUsersService {
       relations: ['teams'],
     });
     if (!user) throw new NotFoundException('User not found');
+
+    let avatarUrl = user.avatarUrl || null;
+    if (user.avatarFileId) {
+      try {
+        avatarUrl = await this.storageClient.getSignedUrl(
+          user.businessId,
+          user.avatarFileId,
+        );
+      } catch {
+        avatarUrl = null;
+      }
+    }
+    user.avatarUrl = avatarUrl;
     return user;
   }
 
