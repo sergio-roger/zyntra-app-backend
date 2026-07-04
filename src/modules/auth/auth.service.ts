@@ -46,6 +46,12 @@ export interface MenuNode {
   children: MenuNode[];
 }
 
+export interface SelfProfileTeam {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface SelfProfile {
   id: string;
   businessId: string;
@@ -58,8 +64,12 @@ export interface SelfProfile {
   plan_status: string;
   avatarUrl: string | null;
   jobTitle: string | null;
+  phone: string | null;
+  bio: string | null;
   isAccountActivated: boolean;
   status: string;
+  activatedAt: Date | null;
+  teams: SelfProfileTeam[];
   createdAt: Date;
 }
 
@@ -283,14 +293,29 @@ export class AuthService {
       plan_status: user.business?.plan_status,
       avatarUrl: user.avatarUrl ?? null,
       jobTitle: user.jobTitle ?? null,
+      phone: user.phone ?? null,
+      bio: user.bio ?? null,
       isAccountActivated: user.isAccountActivated,
       status: user.status,
+      activatedAt: user.activatedAt ?? null,
+      teams: (user.teams ?? []).map((team) => ({
+        id: team.id,
+        name: team.name,
+        color: team.color,
+      })),
       createdAt: user.createdAt,
     };
   }
 
+  private async findSelfUser(userId: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['business', 'business.plan_object', 'teams'],
+    });
+  }
+
   async getSelfProfile(userId: string): Promise<SelfProfile> {
-    const user = await this.validateUser(userId);
+    const user = await this.findSelfUser(userId);
     if (!user) {
       throw new UnauthorizedException();
     }
@@ -301,7 +326,7 @@ export class AuthService {
     userId: string,
     dto: UpdateProfileDto,
   ): Promise<SelfProfile> {
-    const user = await this.validateUser(userId);
+    const user = await this.findSelfUser(userId);
     if (!user) {
       throw new UnauthorizedException();
     }
@@ -309,6 +334,8 @@ export class AuthService {
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.jobTitle !== undefined) user.jobTitle = dto.jobTitle;
+    if (dto.phone !== undefined) user.phone = dto.phone;
+    if (dto.bio !== undefined) user.bio = dto.bio;
     await this.userRepository.save(user);
     return this.toSelfProfile(user);
   }
