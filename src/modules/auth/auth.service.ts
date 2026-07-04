@@ -1,77 +1,41 @@
+import { StorageClientService } from '@/storage-client/storage-client.service';
 import {
-  Injectable,
-  ConflictException,
-  UnauthorizedException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
-import { randomBytes } from 'crypto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
-import * as argon2 from 'argon2';
-import { Business, PlanStatus } from '@auth/entities/business.entity';
-import { Plan } from '@auth/entities/plan.entity';
-import { User } from '@auth/entities/user.entity';
-import { RegisterDto } from '@auth/dto/register.dto';
-import { LoginDto } from '@auth/dto/login.dto';
-import { UserRole } from '@crm/enums/user-role.enum';
-import { UserStatus } from '@crm/enums/user-status.enum';
-import { JwtPayload } from '@auth/interfaces/jwt-payload.interface';
-import { Role } from '@auth/entities/role.entity';
-import { Menu } from '@auth/entities/menu.entity';
-import { Permission } from '@auth/entities/permission.entity';
-import { UpdateProfileDto } from '@auth/dto/update-profile.dto';
-import { ChangePasswordDto } from '@auth/dto/change-password.dto';
-import {
-  AvatarStorageService,
   ALLOWED_AVATAR_MIME_TYPES,
+  AvatarStorageService,
   MAX_AVATAR_SIZE_BYTES,
   UploadableFile,
 } from '@auth/avatar-storage.service';
+import { RESET_TTL_MS } from '@auth/constants/auth.constants';
+import { ChangePasswordDto } from '@auth/dto/change-password.dto';
+import { LoginDto } from '@auth/dto/login.dto';
+import { RegisterDto } from '@auth/dto/register.dto';
+import { UpdateProfileDto } from '@auth/dto/update-profile.dto';
+import { Business, PlanStatus } from '@auth/entities/business.entity';
+import { Menu } from '@auth/entities/menu.entity';
+import { Permission } from '@auth/entities/permission.entity';
+import { Plan } from '@auth/entities/plan.entity';
+import { Role } from '@auth/entities/role.entity';
+import { User } from '@auth/entities/user.entity';
+import { JwtPayload } from '@auth/interfaces/jwt-payload.interface';
+import { MenuNode } from '@auth/interfaces/menu-node.interface';
+import { ResetEntry } from '@auth/interfaces/reset-entry.interface';
+import { SelfProfile } from '@auth/interfaces/self-profile.interface';
+import { UserRole } from '@crm/enums/user-role.enum';
+import { UserStatus } from '@crm/enums/user-status.enum';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import * as argon2 from 'argon2';
+import { randomBytes } from 'crypto';
+import { Repository } from 'typeorm';
 
-// TODO: Replace with persisted PasswordResetToken entity + email delivery (SMTP/Resend).
-// In-memory store is fine for dev / single-instance only.
-type ResetEntry = { userId: string; expiresAt: number };
 const resetTokens = new Map<string, ResetEntry>();
-const RESET_TTL_MS = 30 * 60 * 1000; // 30 min
-
-export interface MenuNode {
-  id: string;
-  key: string;
-  label: string;
-  path: string;
-  parent_key: string | null;
-  access_level?: string;
-  children: MenuNode[];
-}
-
-export interface SelfProfileTeam {
-  id: string;
-  name: string;
-  color: string;
-}
-
-export interface SelfProfile {
-  id: string;
-  businessId: string;
-  name: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
-  role: UserRole;
-  plan: Plan | null;
-  plan_status: string;
-  avatarUrl: string | null;
-  jobTitle: string | null;
-  phone: string | null;
-  bio: string | null;
-  isAccountActivated: boolean;
-  status: string;
-  activatedAt: Date | null;
-  teams: SelfProfileTeam[];
-  createdAt: Date;
-}
 
 @Injectable()
 export class AuthService {
@@ -92,6 +56,7 @@ export class AuthService {
     private permissionRepository: Repository<Permission>,
     private jwtService: JwtService,
     private avatarStorage: AvatarStorageService,
+    private storageClient: StorageClientService,
   ) {}
 
   private getArgonOptions() {
@@ -280,7 +245,21 @@ export class AuthService {
     resetTokens.delete(token);
   }
 
-  private toSelfProfile(user: User): SelfProfile {
+  private async toSelfProfile(user: User): Promise<SelfProfile> {
+    let avatarUrl: string | null = null;
+    if (user.avatarFileId) {
+      try {
+        avatarUrl = await this.storageClient.getSignedUrl(
+          user.businessId,
+          user.avatarFileId,
+        );
+      } catch (err: unknown) {
+        this.logger.warn(
+          `Failed to get signed URL for user ${user.id} avatar file ${user.avatarFileId}: ${(err as Error).message}`,
+        );
+      }
+    }
+
     return {
       id: user.id,
       businessId: user.businessId,
@@ -291,7 +270,7 @@ export class AuthService {
       role: user.role,
       plan: user.business?.plan_object ?? null,
       plan_status: user.business?.plan_status,
-      avatarUrl: user.avatarUrl ?? null,
+      avatarUrl: avatarUrl || user.avatarUrl || null,
       jobTitle: user.jobTitle ?? null,
       phone: user.phone ?? null,
       bio: user.bio ?? null,
@@ -372,7 +351,7 @@ export class AuthService {
   async uploadAvatar(
     userId: string,
     file: UploadableFile | undefined,
-  ): Promise<{ avatarUrl: string }> {
+  ): Promise<{ avatarUrl: string; avatarFileId: string }> {
     if (!file) {
       throw new BadRequestException('No se recibió ningún archivo');
     }
@@ -391,17 +370,35 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException();
     }
-    const previousUrl = user.avatarUrl;
+    const previousFileId = user.avatarFileId;
 
-    const avatarUrl = await this.avatarStorage.save(file);
-    user.avatarUrl = avatarUrl;
-    await this.userRepository.save(user);
-
-    if (previousUrl) {
-      await this.avatarStorage.delete(previousUrl);
+    const multerFile = file as Express.Multer.File;
+    if (!multerFile.originalname) {
+      multerFile.originalname = 'avatar';
     }
 
-    return { avatarUrl };
+    const storageFile = await this.storageClient.uploadFile(
+      user.businessId,
+      multerFile,
+      'users',
+      user.id,
+    );
+
+    user.avatarFileId = storageFile.id;
+    user.avatarUrl = null as unknown as string;
+    await this.userRepository.save(user);
+
+    if (previousFileId) {
+      await this.storageClient
+        .deleteFile(user.businessId, previousFileId)
+        .catch(() => undefined);
+    }
+
+    const avatarUrl = await this.storageClient.getSignedUrl(
+      user.businessId,
+      storageFile.id,
+    );
+    return { avatarUrl, avatarFileId: storageFile.id };
   }
 
   async removeAvatar(userId: string): Promise<void> {
@@ -409,13 +406,20 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException();
     }
+    const currentFileId = user.avatarFileId;
     const currentUrl = user.avatarUrl;
 
+    user.avatarFileId = null;
     user.avatarUrl = null as unknown as string;
     await this.userRepository.save(user);
 
+    if (currentFileId) {
+      await this.storageClient
+        .deleteFile(user.businessId, currentFileId)
+        .catch(() => undefined);
+    }
     if (currentUrl) {
-      await this.avatarStorage.delete(currentUrl);
+      await this.avatarStorage.delete(currentUrl).catch(() => undefined);
     }
   }
 

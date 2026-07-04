@@ -22,6 +22,7 @@ import { AvatarStorageService } from '@auth/avatar-storage.service';
 import { LogoStorageService } from '@auth/logo-storage.service';
 import { CompanyService } from '@auth/company.service';
 import { CompanyController } from '@auth/company.controller';
+import { StorageClientModule } from '@/storage-client/storage-client.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CompanyController } from '@auth/company.controller';
       UserPreference,
     ]),
     PassportModule,
+    StorageClientModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -48,6 +48,9 @@ export class User {
   @Column({ name: 'avatar_url', nullable: true })
   avatarUrl: string;
 
+  @Column({ name: 'avatar_file_id', type: 'uuid', nullable: true })
+  avatarFileId: string | null;
+
   @Column({ nullable: true })
   phone: string;
 

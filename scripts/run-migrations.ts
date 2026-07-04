@@ -6,13 +6,20 @@ import * as fs from 'fs';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 async function runMigration(c: Client, filename: string) {
-  const sql = fs.readFileSync(path.join(__dirname, '../src/database/migrations', filename), 'utf8');
+  const sql = fs.readFileSync(
+    path.join(__dirname, '../src/database/migrations', filename),
+    'utf8',
+  );
   console.log(`\n>>> Running: ${filename}`);
   try {
     await c.query(sql);
     console.log(`    ✅ Success`);
   } catch (e: any) {
-    if (e.code === '42710' || e.code === '23505' || e.message.includes('already exists')) {
+    if (
+      e.code === '42710' ||
+      e.code === '23505' ||
+      e.message.includes('already exists')
+    ) {
       console.log(`    ℹ️  Skipped (already exists)`);
     } else {
       console.log(`    ❌ Error: ${e.message}`);
@@ -37,9 +44,13 @@ async function run() {
   await runMigration(c, '20260702_add_profile_fields_to_businesses.sql');
   await runMigration(c, '20260703_add_company_fields_to_businesses.sql');
   await runMigration(c, '20260704_add_profile_fields_to_users.sql');
+  await runMigration(c, '20260704_add_avatar_file_id_to_users.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();
 }
 
-run().catch(e => { console.error(e); process.exit(1); });
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
