@@ -30,6 +30,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
+import { StorageClientService } from '@/storage-client/storage-client.service';
 
 @Injectable()
 export class AuthService {
@@ -45,6 +46,7 @@ export class AuthService {
     private roleService: RoleService,
     private permissionService: PermissionService,
     private menuService: MenuService,
+    private storageClient: StorageClientService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -149,7 +151,7 @@ export class AuthService {
     return this.generateUserToken(user);
   }
 
-  private generateUserToken(user: User) {
+  private async generateUserToken(user: User) {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
@@ -158,6 +160,20 @@ export class AuthService {
       business_id: user.business.id,
       role: user.role,
     };
+
+    let avatarUrl: string | null = null;
+    if (user.avatarFileId) {
+      try {
+        avatarUrl = await this.storageClient.getSignedUrl(
+          user.businessId,
+          user.avatarFileId,
+        );
+      } catch (err: unknown) {
+        this.logger.warn(
+          `Failed to get signed URL for user ${user.id} avatar file ${user.avatarFileId}: ${(err as Error).message}`,
+        );
+      }
+    }
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -169,6 +185,7 @@ export class AuthService {
         plan: user.business.plan_object,
         plan_status: user.business.plan_status,
         role: user.role,
+        avatarUrl: avatarUrl || user.avatarUrl || null,
       },
     };
   }

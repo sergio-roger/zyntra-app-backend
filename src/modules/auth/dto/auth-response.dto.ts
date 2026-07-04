@@ -36,6 +36,9 @@ class UserDataDto {
 
   @ApiProperty({ enum: PlanStatus, example: PlanStatus.TRIAL })
   plan_status: PlanStatus;
+
+  @ApiProperty({ example: 'https://storage.zyntra.com/...', nullable: true })
+  avatarUrl: string | null;
 }
 
 class ErrorDto {

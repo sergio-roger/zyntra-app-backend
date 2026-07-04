@@ -159,7 +159,10 @@ export class CrmUsersService {
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.name !== undefined) user.name = dto.name;
     if (dto.jobTitle !== undefined) user.jobTitle = dto.jobTitle;
-    if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl;
+    if (dto.avatarUrl !== undefined) {
+      user.avatarUrl = dto.avatarUrl;
+      user.avatarFileId = null;
+    }
     if (dto.role !== undefined) user.role = dto.role;
     if (dto.status !== undefined) user.status = dto.status;
     if (isActive !== undefined) user.isActive = isActive;
