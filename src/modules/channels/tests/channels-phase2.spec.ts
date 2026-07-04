@@ -1,23 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
-  NotFoundException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ObjectLiteral, Repository } from 'typeorm';
 
-import { ChannelProviderFactory } from '../providers/channel-provider.factory';
-import { WebChatChannelProvider } from '../providers/web-chat-channel.provider';
+import { ChannelsService } from '@/modules/channels/channels.service';
+import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
+import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
 import {
-  ChannelsService,
-  encryptCredentials,
+  Channel,
+  ChannelStatus,
+} from '@/modules/channels/entities/channel.entity';
+import { ChannelProviderFactory } from '@/modules/channels/providers/channel-provider.factory';
+import { WebChatChannelProvider } from '@/modules/channels/providers/web-chat-channel.provider';
+import {
   decryptCredentials,
-} from '../channels.service';
-import { ChannelType } from '../entities/channel-type.entity';
-import { Channel, ChannelStatus } from '../entities/channel.entity';
-import { ChannelCredential } from '../entities/channel-credential.entity';
+  encryptCredentials,
+} from '@/modules/channels/utils/crypto.util';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -341,6 +343,108 @@ describe('ChannelsService', () => {
 
       const result = await service.remove('biz-1', 'c1');
       expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('findAllByBusiness()', () => {
+    it('returns every web_chat channel of the business, not just one', async () => {
+      const channels = [
+        {
+          id: 'c1',
+          business_id: 'biz-1',
+          name: 'Sitio principal',
+          channelType: WEB_CHAT_TYPE,
+        },
+        {
+          id: 'c2',
+          business_id: 'biz-1',
+          name: 'Landing campaña verano',
+          channelType: WEB_CHAT_TYPE,
+        },
+      ] as Channel[];
+      (channelRepo.find as jest.Mock).mockResolvedValue(channels);
+
+      const result = await service.findAllByBusiness('biz-1');
+
+      expect(result).toHaveLength(2);
+      expect(channelRepo.find).toHaveBeenCalledWith({
+        where: { business_id: 'biz-1', channelType: { key: 'web_chat' } },
+        relations: ['channelType'],
+        order: { created_at: 'DESC' },
+      });
+    });
+
+    it('is scoped by business_id (multi-tenant filter present in the query)', async () => {
+      (channelRepo.find as jest.Mock).mockResolvedValue([]);
+
+      await service.findAllByBusiness('biz-2');
+
+      const call = (channelRepo.find as jest.Mock).mock.calls[0][0];
+      expect(call.where.business_id).toBe('biz-2');
+    });
+  });
+
+  describe('findByChannelId()', () => {
+    it('resolves a channel by id alone, without requiring business_id', async () => {
+      const channel = {
+        id: 'chan-9',
+        business_id: 'biz-1',
+        name: 'Landing campaña verano',
+        channelType: WEB_CHAT_TYPE,
+      } as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      const result = await service.findByChannelId('chan-9');
+
+      expect(result).toEqual(channel);
+      expect(channelRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 'chan-9', channelType: { key: 'web_chat' } },
+        relations: ['channelType'],
+      });
+    });
+
+    it('returns null when the channel does not exist', async () => {
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.findByChannelId('missing-id');
+
+      expect(result).toBeNull();
+    });
+
+    it('still resolves a channel whose status is INACTIVE (soft-disable does not break existing references)', async () => {
+      const inactiveChannel = {
+        id: 'chan-9',
+        business_id: 'biz-1',
+        status: ChannelStatus.INACTIVE,
+        channelType: WEB_CHAT_TYPE,
+      } as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(inactiveChannel);
+
+      const result = await service.findByChannelId('chan-9');
+
+      expect(result?.status).toBe(ChannelStatus.INACTIVE);
+    });
+  });
+
+  describe('update() — soft-disable via status', () => {
+    it('sets status to INACTIVE without deleting the row', async () => {
+      const channel = {
+        id: 'chan-9',
+        business_id: 'biz-1',
+        status: ChannelStatus.ACTIVE,
+        channelType: WEB_CHAT_TYPE,
+      } as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+      (channelRepo.save as jest.Mock).mockImplementation((c) =>
+        Promise.resolve(c),
+      );
+
+      const result = await service.update('biz-1', 'chan-9', {
+        status: ChannelStatus.INACTIVE,
+      });
+
+      expect(result.status).toBe(ChannelStatus.INACTIVE);
+      expect(channelRepo.remove).not.toHaveBeenCalled();
     });
   });
 });

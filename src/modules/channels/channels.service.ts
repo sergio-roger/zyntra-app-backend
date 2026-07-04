@@ -1,3 +1,13 @@
+import { CreateChannelDto } from '@/modules/channels/dto/create-channel.dto';
+import { UpdateChannelDto } from '@/modules/channels/dto/update-channel.dto';
+import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
+import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
+import {
+  Channel,
+  ChannelStatus,
+} from '@/modules/channels/entities/channel.entity';
+import { ChannelProviderFactory } from '@/modules/channels/providers/channel-provider.factory';
+import { encryptCredentials } from '@/modules/channels/utils/crypto.util';
 import {
   BadRequestException,
   ForbiddenException,
@@ -6,57 +16,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as crypto from 'crypto';
-import { ChannelType } from './entities/channel-type.entity';
-import { Channel, ChannelStatus } from './entities/channel.entity';
-import { ChannelCredential } from './entities/channel-credential.entity';
-import { ChannelProviderFactory } from './providers/channel-provider.factory';
-import { CreateChannelDto } from './dto/create-channel.dto';
-import { UpdateChannelDto } from './dto/update-channel.dto';
-
-// AES-256-GCM helpers ---------------------------------------------------------
-const ALGO = 'aes-256-gcm';
-
-function getKey(): Buffer {
-  const raw = process.env.CHANNEL_CREDENTIALS_KEY;
-  if (!raw) throw new Error('CHANNEL_CREDENTIALS_KEY env var not set');
-  const key = Buffer.from(raw, 'hex');
-  if (key.length !== 32)
-    throw new Error('CHANNEL_CREDENTIALS_KEY must be 32 bytes (64 hex chars)');
-  return key;
-}
-
-export function encryptCredentials(data: Record<string, unknown>): string {
-  const key = getKey();
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv(ALGO, key, iv);
-  const plain = JSON.stringify(data);
-  const encrypted = Buffer.concat([
-    cipher.update(plain, 'utf8'),
-    cipher.final(),
-  ]);
-  const tag = cipher.getAuthTag();
-  return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`;
-}
-
-export function decryptCredentials(encoded: string): Record<string, unknown> {
-  const key = getKey();
-  const [ivHex, tagHex, ctHex] = encoded.split(':');
-  if (!ivHex || !tagHex || !ctHex) throw new Error('Invalid credential format');
-  const decipher = crypto.createDecipheriv(
-    ALGO,
-    key,
-    Buffer.from(ivHex, 'hex'),
-  );
-  decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
-  const decrypted = Buffer.concat([
-    decipher.update(Buffer.from(ctHex, 'hex')),
-    decipher.final(),
-  ]);
-  return JSON.parse(decrypted.toString('utf8')) as Record<string, unknown>;
-}
-
-// -----------------------------------------------------------------------------
 
 @Injectable()
 export class ChannelsService {
@@ -73,9 +32,6 @@ export class ChannelsService {
     private readonly providerFactory: ChannelProviderFactory,
   ) {}
 
-  // ---------------------------------------------------------------------------
-  // Channel Store
-  // ---------------------------------------------------------------------------
   async getStore() {
     return this.channelTypeRepo.find({
       order: { sort_order: 'ASC' },
@@ -92,9 +48,6 @@ export class ChannelsService {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // CRUD
-  // ---------------------------------------------------------------------------
   async create(businessId: string, dto: CreateChannelDto) {
     const channelType = await this.channelTypeRepo.findOne({
       where: { id: dto.channelTypeId },
@@ -126,7 +79,6 @@ export class ChannelsService {
     channel.config = setupResult.config;
     await this.channelRepo.save(channel);
 
-    // Persist (empty) credentials record — actual secrets added on activation
     const credData = encryptCredentials({});
     const cred = this.credentialRepo.create({
       channel_id: channel.id,
@@ -180,18 +132,9 @@ export class ChannelsService {
     return { success: true };
   }
 
-  // ---------------------------------------------------------------------------
-  // Ownership guard helper (used by controller)
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-  // Agent assignment
-  // ---------------------------------------------------------------------------
   async assignAgent(businessId: string, channelId: string, agentId: string) {
     const channel = await this.findOne(businessId, channelId);
 
-    // Verify agent belongs to the same business (done via agentRepo query)
-    // We only have access to channelRepo here — the AgentsService owns the Agent repo.
-    // We delegate ownership validation to the caller (AgentsService.findOne throws if not found).
     channel.agent_id = agentId;
     return this.channelRepo.save(channel);
   }
@@ -202,12 +145,21 @@ export class ChannelsService {
     return this.channelRepo.save(channel);
   }
 
-  async findByBusinessAndType(
-    businessId: string,
-    typeKey: string,
-  ): Promise<Channel | null> {
+  // ---------------------------------------------------------------------------
+  // Multi-channel lookups (a business can have N web_chat channels)
+  // ---------------------------------------------------------------------------
+
+  async findAllByBusiness(businessId: string): Promise<Channel[]> {
+    return this.channelRepo.find({
+      where: { business_id: businessId, channelType: { key: 'web_chat' } },
+      relations: ['channelType'],
+      order: { created_at: 'DESC' },
+    });
+  }
+
+  async findByChannelId(channelId: string): Promise<Channel | null> {
     return this.channelRepo.findOne({
-      where: { business_id: businessId, channelType: { key: typeKey } },
+      where: { id: channelId, channelType: { key: 'web_chat' } },
       relations: ['channelType'],
     });
   }

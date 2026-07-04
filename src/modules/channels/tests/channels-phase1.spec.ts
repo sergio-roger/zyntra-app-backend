@@ -13,6 +13,8 @@
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ObjectLiteral, Repository, QueryFailedError } from 'typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 import { ChannelType } from '../entities/channel-type.entity';
 import { Channel, ChannelStatus } from '../entities/channel.entity';
 import { ChannelCredential } from '../entities/channel-credential.entity';
@@ -190,6 +192,76 @@ describe('Channel constraint: uq_channel_per_business_type_name', () => {
 // ---------------------------------------------------------------------------
 // Suite 4 – ChannelCredential: unique channel_id
 // ---------------------------------------------------------------------------
+describe('Channel constraint: uq_channel_per_business_type_name allows multiple web_chat channels', () => {
+  let channelRepo: Repository<Channel>;
+
+  beforeEach(() => {
+    channelRepo = mockRepo<Channel>();
+  });
+
+  it('accepts two web_chat channels for the same business when names differ', async () => {
+    (channelRepo.save as jest.Mock)
+      .mockResolvedValueOnce({ id: 'c1', name: 'Sitio principal' })
+      .mockResolvedValueOnce({ id: 'c2', name: 'Landing campaña verano' });
+
+    const base = { business_id: 'biz-1', channel_type_id: 'ct-web' };
+
+    await expect(
+      channelRepo.save({ ...base, name: 'Sitio principal' } as Channel),
+    ).resolves.toMatchObject({ id: 'c1' });
+    await expect(
+      channelRepo.save({ ...base, name: 'Landing campaña verano' } as Channel),
+    ).resolves.toMatchObject({ id: 'c2' });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 3b – 20260704_document_channels_multi_web_support.sql (forward-only
+// raw SQL migration; this repo has no test DB, so we assert on file content
+// the same way 20260701's shape is asserted via CHANNEL_TYPES_SEED above)
+// ---------------------------------------------------------------------------
+describe('Migration: 20260704_document_channels_multi_web_support.sql', () => {
+  const migrationPath = path.resolve(
+    __dirname,
+    '../../../database/migrations/20260704_document_channels_multi_web_support.sql',
+  );
+  const sql = fs.readFileSync(migrationPath, 'utf8');
+
+  it('exists and is registered in scripts/run-migrations.ts', () => {
+    expect(sql.length).toBeGreaterThan(0);
+
+    const runnerPath = path.resolve(__dirname, '../../../../scripts/run-migrations.ts');
+    const runnerSrc = fs.readFileSync(runnerPath, 'utf8');
+    expect(runnerSrc).toContain(
+      '20260704_document_channels_multi_web_support.sql',
+    );
+  });
+
+  it('adds a composite index on (business_id, channel_type_id) idempotently', () => {
+    expect(sql).toMatch(
+      /CREATE INDEX IF NOT EXISTS idx_channels_business_type\s+ON public\.channels \(business_id, channel_type_id\)/,
+    );
+  });
+
+  it('does not add or drop any column/constraint (docs + index only)', () => {
+    expect(sql).not.toMatch(/ADD COLUMN/i);
+    expect(sql).not.toMatch(/DROP COLUMN/i);
+    expect(sql).not.toMatch(/^\s*ALTER TABLE.*ADD CONSTRAINT/im);
+  });
+
+  it('documents the multi-channel design via COMMENT ON', () => {
+    expect(sql).toMatch(
+      /COMMENT ON CONSTRAINT uq_channel_per_business_type_name ON public\.channels/,
+    );
+    expect(sql).toMatch(/COMMENT ON COLUMN public\.channels\.name/);
+    expect(sql).toMatch(/COMMENT ON COLUMN public\.channels\.status/);
+  });
+
+  it('includes a manual DOWN section (forward-only convention)', () => {
+    expect(sql).toMatch(/-- DOWN:/);
+  });
+});
+
 describe('ChannelCredential constraint: unique channel_id', () => {
   let credRepo: Repository<ChannelCredential>;
 
