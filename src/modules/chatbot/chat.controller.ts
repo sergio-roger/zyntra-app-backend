@@ -1,4 +1,7 @@
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { ChatService } from '@chatbot/chat.service';
+import { ChatRequestDto, ChatResponseDto } from '@chatbot/dto/chat.dto';
+import { LeadCaptureDto } from '@chatbot/dto/lead-capture.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
@@ -26,9 +29,6 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ChatService } from './chat.service';
-import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
-import { LeadCaptureDto } from './dto/lead-capture.dto';
 
 @ApiTags('Chat')
 @Controller('chat')
