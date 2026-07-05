@@ -7,14 +7,13 @@ import { TasksController } from './tasks.controller';
 import { TasksProcessor } from './tasks.processor';
 import { AgentTask, AgentTaskSchema } from './schemas/agent-task.schema';
 import { Business } from '../auth/entities/business.entity';
-import { ChatbotConfig } from '../chatbot/entities/chatbot-config.entity';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: AgentTask.name, schema: AgentTaskSchema },
     ]),
-    TypeOrmModule.forFeature([Business, ChatbotConfig]),
+    TypeOrmModule.forFeature([Business]),
     BullModule.registerQueue({
       name: 'agent-tasks',
     }),

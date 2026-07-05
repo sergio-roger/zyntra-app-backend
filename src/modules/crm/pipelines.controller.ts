@@ -1,0 +1,166 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  HttpCode,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiNoContentResponse,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { CurrentBusiness } from '@common/decorators/current-business.decorator';
+import {
+  CurrentUser,
+  UserContext,
+} from '@common/decorators/current-user.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import { RequiresModule } from '@common/decorators/requires-module.decorator';
+import { Business } from '@auth/entities/business.entity';
+import { UserRole } from '@crm/enums/user-role.enum';
+import { PipelinesService } from '@crm/pipelines.service';
+import {
+  CreatePipelineDto,
+  UpdatePipelineDto,
+  CreateStageDto,
+  UpdateStageDto,
+  ReorderStagesDto,
+} from '@crm/dto/pipeline.dto';
+
+@ApiTags('crm-pipelines')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@RequiresModule('crm_deals')
+@Controller('crm/pipelines')
+export class PipelinesController {
+  constructor(private readonly pipelines: PipelinesService) {}
+
+  // ─── Pipelines ─────────────────────────────────────────────────────────────
+
+  @Get()
+  @ApiOperation({ summary: 'List pipelines visible to the current user' })
+  @ApiOkResponse({ description: 'List of pipelines with their stages' })
+  list(
+    @CurrentBusiness() business: Business,
+    @CurrentUser() user: UserContext,
+  ) {
+    return this.pipelines.list(business, user);
+  }
+
+  @Post()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create a pipeline' })
+  @ApiCreatedResponse()
+  create(
+    @CurrentBusiness() business: Business,
+    @Body() dto: CreatePipelineDto,
+  ) {
+    return this.pipelines.create(business, dto);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update pipeline name / order / default flag' })
+  @ApiOkResponse({ description: 'Pipeline updated' })
+  update(
+    @CurrentBusiness() business: Business,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePipelineDto,
+  ) {
+    return this.pipelines.update(business, id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(204)
+  @ApiOperation({
+    summary: 'Soft-delete a pipeline (blocks if it has active deals)',
+  })
+  @ApiNoContentResponse({ description: 'Pipeline deleted' })
+  async remove(
+    @CurrentBusiness() business: Business,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    await this.pipelines.softDelete(business, id);
+  }
+
+  @Get(':id/forecast')
+  @ApiOperation({ summary: 'Get weighted pipeline forecast grouped by month' })
+  @ApiOkResponse({ description: 'Monthly forecast data' })
+  forecast(
+    @CurrentBusiness() business: Business,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.pipelines.forecast(business, id);
+  }
+
+  // ─── Stages ────────────────────────────────────────────────────────────────
+
+  @Get(':pipelineId/stages')
+  @ApiOperation({ summary: 'List stages of a pipeline' })
+  @ApiOkResponse({ description: 'List of stages' })
+  listStages(
+    @CurrentBusiness() business: Business,
+    @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
+  ) {
+    return this.pipelines.listStages(business, pipelineId);
+  }
+
+  @Post(':pipelineId/stages')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add a stage to a pipeline' })
+  @ApiCreatedResponse()
+  createStage(
+    @CurrentBusiness() business: Business,
+    @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
+    @Body() dto: CreateStageDto,
+  ) {
+    return this.pipelines.createStage(business, pipelineId, dto);
+  }
+
+  @Patch(':pipelineId/stages/reorder')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Bulk reorder stages in a single transaction' })
+  @ApiOkResponse({ description: 'Stages reordered' })
+  reorderStages(
+    @CurrentBusiness() business: Business,
+    @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
+    @Body() dto: ReorderStagesDto,
+  ) {
+    return this.pipelines.reorderStages(business, pipelineId, dto);
+  }
+
+  @Patch('stages/:stageId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a stage (name, color, probability, type)' })
+  @ApiOkResponse({ description: 'Stage updated' })
+  updateStage(
+    @CurrentBusiness() business: Business,
+    @Param('stageId', ParseUUIDPipe) stageId: string,
+    @Body() dto: UpdateStageDto,
+  ) {
+    return this.pipelines.updateStage(business, stageId, dto);
+  }
+
+  @Delete('stages/:stageId')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Delete a stage (blocks if it has active deals)' })
+  @ApiNoContentResponse({ description: 'Stage deleted' })
+  async deleteStage(
+    @CurrentBusiness() business: Business,
+    @Param('stageId', ParseUUIDPipe) stageId: string,
+  ) {
+    await this.pipelines.deleteStage(business, stageId);
+  }
+}

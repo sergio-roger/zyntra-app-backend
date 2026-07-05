@@ -24,4 +24,10 @@ export class CreateTagDto {
   @IsOptional()
   @MaxLength(200)
   description?: string;
+
+  @ApiPropertyOptional({ example: 'contact', default: 'contact' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  entity_type?: string;
 }

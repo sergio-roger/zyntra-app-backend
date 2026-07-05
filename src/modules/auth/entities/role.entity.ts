@@ -23,6 +23,9 @@ export class Role {
   @Column({ name: 'is_editable', type: 'boolean', default: true })
   isEditable: boolean;
 
+  @Column({ name: 'business_id', type: 'uuid', nullable: true })
+  businessId: string | null;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   badge: string;
 

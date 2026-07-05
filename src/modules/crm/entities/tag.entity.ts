@@ -1,19 +1,19 @@
+import { Business } from '@auth/entities/business.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
   DeleteDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Business } from '@auth/entities/business.entity';
 
 @Entity({ name: 'tags', schema: 'crm' })
 @Index(['business_id'])
-@Index('UQ_business_tag_name', ['business_id', 'name'], {
+@Index(['business_id', 'name'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })
@@ -31,11 +31,14 @@ export class Tag {
   @Column()
   name: string;
 
-  @Column({ default: '#6366f1' }) // Default indigo color
+  @Column({ default: '#6366f1' })
   color: string;
 
   @Column('text', { nullable: true })
   description: string | null;
+
+  @Column({ type: 'varchar', length: 50, default: 'contact' })
+  entity_type: string;
 
   @CreateDateColumn()
   created_at: Date;

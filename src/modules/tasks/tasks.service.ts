@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
@@ -16,17 +17,16 @@ import {
 } from './schemas/agent-task.schema';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Business } from '../auth/entities/business.entity';
-import { ChatbotConfig } from '../chatbot/entities/chatbot-config.entity';
 
 @Injectable()
 export class TasksService {
+  private readonly logger = new Logger(TasksService.name);
+
   constructor(
     @InjectModel(AgentTask.name)
     private taskModel: Model<AgentTaskDocument>,
     @InjectRepository(Business)
     private businessRepo: Repository<Business>,
-    @InjectRepository(ChatbotConfig)
-    private chatbotConfigRepo: Repository<ChatbotConfig>,
     @InjectQueue('agent-tasks')
     private tasksQueue: Queue,
   ) {}
@@ -69,39 +69,29 @@ export class TasksService {
       }
     }
 
-    // 3. Cargar configuración del chatbot para el contexto
-    const chatbotConfig = await this.chatbotConfigRepo.findOne({
-      where: { business_id: businessId },
-    });
-
-    // 3.1. Crear la tarea en MongoDB
+    // 3. Crear la tarea en MongoDB
     const task = await this.taskModel.create({
       business_id: businessId,
       type: dto.type,
       status: AgentTaskStatus.PENDING,
       input: dto.input as unknown,
     });
-    console.log('DEBUG: Tarea creada en MongoDB con ID:', task._id);
+    this.logger.debug(
+      `Tarea creada en MongoDB: id=${task._id.toString()} business_id=${businessId} type=${dto.type}`,
+    );
 
     // 4. Construir el BusinessContext para el worker Python
-    const configRecord = chatbotConfig as unknown as Record<string, unknown>;
     const businessContext = {
       business_id: business.id,
       name: business.name,
       plan: business.plan_object?.name || 'Standard',
-      industry:
-        configRecord && typeof configRecord.industry === 'string'
-          ? configRecord.industry
-          : 'N/A',
-      tone: chatbotConfig?.tone || 'friendly',
-      locale: chatbotConfig?.locale || 'es',
-      target_audience:
-        configRecord && typeof configRecord.target_audience === 'string'
-          ? configRecord.target_audience
-          : 'N/A',
-      active_channels: chatbotConfig?.active_channels || ['web'],
-      system_prompt_extra: chatbotConfig?.system_prompt_extra || '',
-      faqs_top: (chatbotConfig?.faqs || []).slice(0, 5),
+      industry: 'N/A',
+      tone: 'friendly',
+      locale: 'es',
+      target_audience: 'N/A',
+      active_channels: ['web'],
+      system_prompt_extra: '',
+      faqs_top: [],
     };
 
     // 5. Encolar en BullMQ (Redis)

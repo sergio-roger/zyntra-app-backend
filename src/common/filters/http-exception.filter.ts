@@ -5,7 +5,8 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { Logger } from 'nestjs-pino';
 
 interface HttpExceptionResponse {
   message?: string | string[];
@@ -31,9 +32,12 @@ const STATUS_ERROR_CODES: Record<number, string> = {
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  constructor(private readonly logger?: Logger) {}
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request & { id?: string }>();
 
     const status =
       exception instanceof HttpException
@@ -55,6 +59,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }));
 
     const formattedMessage = messages.join(', ');
+    const requestLine = `${request?.method} ${request?.url} -> ${status}`;
+
+    if (status >= (HttpStatus.INTERNAL_SERVER_ERROR as number)) {
+      this.logger?.error(
+        exception instanceof Error ? exception.stack : exception,
+        requestLine,
+      );
+    } else {
+      this.logger?.warn(`${formattedMessage} (${requestLine})`);
+    }
 
     response.status(status).json({
       success: false,

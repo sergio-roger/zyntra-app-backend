@@ -1,27 +1,29 @@
+import { ApiResponse } from '@common/interfaces/api-response.interface';
 import {
+  CallHandler,
+  ExecutionContext,
   Injectable,
   NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  StreamableFile,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiResponse } from '@common/interfaces/api-response.interface';
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor<
   unknown,
-  ApiResponse<unknown>
+  ApiResponse<unknown> | StreamableFile
 > {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<ApiResponse<unknown>> {
+  ): Observable<ApiResponse<unknown> | StreamableFile> {
     return next.handle().pipe(
       map((data: unknown) => {
-        // Default envelope: data is the whole controller return; envelope
-        // message stays generic. Domain fields named "message" inside the
-        // payload (e.g. a chatbot reply) are NOT promoted to the envelope.
+        if (data instanceof StreamableFile) {
+          return data;
+        }
+
         let message = 'Operation successful';
         let resultData: unknown = data;
 
@@ -29,8 +31,6 @@ export class TransformInterceptor implements NestInterceptor<
           const obj = data as Record<string, unknown>;
           const keys = Object.keys(obj);
 
-          // Status-only response: { message: '...' } with no other fields.
-          // The string is meant as the operation status, not domain data.
           if (
             keys.length === 1 &&
             keys[0] === 'message' &&

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Team } from './entities/team.entity';
-import { CrmUser } from './entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { Business } from '@auth/entities/business.entity';
 import { CreateTeamDto, UpdateTeamDto } from './dto/team.dto';
 
@@ -11,8 +11,8 @@ export class TeamsService {
   constructor(
     @InjectRepository(Team)
     private readonly teamRepo: Repository<Team>,
-    @InjectRepository(CrmUser)
-    private readonly userRepo: Repository<CrmUser>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
   async list(business: Business) {
@@ -42,7 +42,7 @@ export class TeamsService {
 
     if (member_ids && member_ids.length > 0) {
       team.members = await this.userRepo.find({
-        where: { id: In(member_ids), business_id: business.id },
+        where: { id: In(member_ids), businessId: business.id },
       });
     }
 
@@ -58,7 +58,7 @@ export class TeamsService {
     if (member_ids !== undefined) {
       if (member_ids.length > 0) {
         team.members = await this.userRepo.find({
-          where: { id: In(member_ids), business_id: business.id },
+          where: { id: In(member_ids), businessId: business.id },
         });
       } else {
         team.members = [];

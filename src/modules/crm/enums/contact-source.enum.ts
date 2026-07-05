@@ -1,6 +1,6 @@
 export enum ContactSource {
   MANUAL = 'manual',
-  CHATBOT = 'chatbot',
+  WEB_CHAT = 'web_chat',
   WHATSAPP = 'whatsapp',
   INSTAGRAM = 'instagram',
   EMAIL = 'email',

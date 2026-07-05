@@ -1,27 +1,35 @@
+import { AppController } from '@/app.controller';
+import { AppService } from '@/app.service';
+import { AgentsModule } from '@/modules/agents/agents.module';
+import { ChannelsModule } from '@/modules/channels/channels.module';
+import { LifecycleModule } from '@/modules/lifecycle/lifecycle.module';
+import { TasksModule } from '@/modules/tasks/tasks.module';
+import { AiModule } from '@ai/ai.module';
+import { AuthModule } from '@auth/auth.module';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { ChatbotModule } from '@chatbot/chatbot.module';
+import { PlanModuleGuard } from '@common/guards/plan-module.guard';
+import { RolesGuard } from '@common/guards/roles.guard';
+import { LoggingContextInterceptor } from '@common/interceptors/logging-context.interceptor';
+import { LoggerModule } from '@common/logging/logger.module';
+import { RedisModule } from '@common/redis/redis.module';
+import { CrmModule } from '@crm/crm.module';
+import { HttpModule } from '@nestjs/axios';
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
-import { HttpModule } from '@nestjs/axios';
-import { APP_GUARD } from '@nestjs/core';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AuthModule } from './modules/auth/auth.module';
-import { CrmModule } from './modules/crm/crm.module';
-import { LifecycleModule } from './modules/lifecycle/lifecycle.module';
-import { ChatbotModule } from './modules/chatbot/chatbot.module';
-import { AiModule } from './modules/ai/ai.module';
-import { TasksModule } from './modules/tasks/tasks.module';
-import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from './common/guards/roles.guard';
-import { PlanModuleGuard } from './common/guards/plan-module.guard';
-import { BullModule } from '@nestjs/bullmq';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    LoggerModule,
+    RedisModule,
 
     HttpModule.register({
       timeout: 30000,
@@ -37,6 +45,8 @@ import { BullModule } from '@nestjs/bullmq';
     AiModule,
 
     TasksModule,
+    ChannelsModule,
+    AgentsModule,
 
     BullModule.forRootAsync({
       inject: [ConfigService],
@@ -71,6 +81,7 @@ import { BullModule } from '@nestjs/bullmq';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PlanModuleGuard },
+    { provide: APP_INTERCEPTOR, useClass: LoggingContextInterceptor },
   ],
 })
 export class AppModule {}

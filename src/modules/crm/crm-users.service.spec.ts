@@ -2,9 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrmUsersService } from './crm-users.service';
-import { CrmUser } from './entities/user.entity';
+import { User } from '@auth/entities/user.entity';
 import { Business } from '@auth/entities/business.entity';
 import { NotFoundException, ConflictException } from '@nestjs/common';
+import { UserRole } from '@crm/enums/user-role.enum';
+import { UserStatus } from '@crm/enums/user-status.enum';
+import { StorageClientService } from '@/storage-client/storage-client.service';
 
 const mockBusiness = {
   id: 'business-uuid-1234',
@@ -13,15 +16,15 @@ const mockBusiness = {
 
 const mockCrmUser = {
   id: 'user-uuid-1',
-  business_id: 'business-uuid-1234',
+  businessId: 'business-uuid-1234',
   name: 'John Doe',
   email: 'john@example.com',
   teams: [],
-} as unknown as CrmUser;
+} as unknown as User;
 
 describe('CrmUsersService', () => {
   let service: CrmUsersService;
-  let repo: Repository<CrmUser>;
+  let repo: Repository<User>;
 
   const mockRepository = {
     find: jest.fn(),
@@ -31,19 +34,27 @@ describe('CrmUsersService', () => {
     softRemove: jest.fn(),
   };
 
+  const mockStorageClient = {
+    getSignedUrl: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CrmUsersService,
         {
-          provide: getRepositoryToken(CrmUser),
+          provide: getRepositoryToken(User),
           useValue: mockRepository,
+        },
+        {
+          provide: StorageClientService,
+          useValue: mockStorageClient,
         },
       ],
     }).compile();
 
     service = module.get<CrmUsersService>(CrmUsersService);
-    repo = module.get<Repository<CrmUser>>(getRepositoryToken(CrmUser));
+    repo = module.get<Repository<User>>(getRepositoryToken(User));
   });
 
   afterEach(() => {
@@ -55,18 +66,20 @@ describe('CrmUsersService', () => {
   });
 
   describe('list', () => {
-    it('should return all users for a business ordered by name', async () => {
+    it('should return all users for a business ordered by createdAt', async () => {
       const usersList = [mockCrmUser];
       mockRepository.find.mockResolvedValue(usersList);
 
       const result = await service.list(mockBusiness);
 
       expect(repo.find).toHaveBeenCalledWith({
-        where: { business_id: mockBusiness.id },
+        where: { businessId: mockBusiness.id },
         relations: ['teams'],
-        order: { name: 'ASC' },
+        order: { createdAt: 'ASC' },
       });
-      expect(result).toEqual(usersList);
+      expect(result).toEqual(
+        usersList.map((user) => ({ ...user, avatarUrl: null })),
+      );
     });
   });
 
@@ -77,7 +90,7 @@ describe('CrmUsersService', () => {
       const result = await service.findOne(mockBusiness, 'user-uuid-1');
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { id: 'user-uuid-1', business_id: mockBusiness.id },
+        where: { id: 'user-uuid-1', businessId: mockBusiness.id },
         relations: ['teams'],
       });
       expect(result).toEqual(mockCrmUser);
@@ -93,28 +106,42 @@ describe('CrmUsersService', () => {
   });
 
   describe('create', () => {
-    const createDto = { name: 'Alice Smith', email: 'alice@example.com' };
+    const createDto = {
+      name: 'Alice Smith',
+      email: 'alice@example.com',
+      role: UserRole.AGENT,
+    };
 
     it('should create and save a new user if email is unique for the business', async () => {
       mockRepository.findOne.mockResolvedValue(null);
       mockRepository.create.mockReturnValue({
         ...createDto,
-        business_id: mockBusiness.id,
+        firstName: 'Alice',
+        lastName: 'Smith',
+        status: UserStatus.ACTIVE,
+        isActive: true,
+        isAccountActivated: false,
+        businessId: mockBusiness.id,
       });
       mockRepository.save.mockResolvedValue({
         id: 'new-user-uuid',
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
 
       const result = await service.create(mockBusiness, createDto);
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { email: createDto.email, business_id: mockBusiness.id },
+        where: { email: createDto.email, businessId: mockBusiness.id },
       });
       expect(repo.create).toHaveBeenCalledWith({
         ...createDto,
-        business_id: mockBusiness.id,
+        firstName: 'Alice',
+        lastName: 'Smith',
+        status: UserStatus.ACTIVE,
+        isActive: true,
+        isAccountActivated: false,
+        businessId: mockBusiness.id,
       });
       expect(repo.save).toHaveBeenCalled();
       expect(result).toHaveProperty('id');
@@ -127,6 +154,7 @@ describe('CrmUsersService', () => {
         service.create(mockBusiness, {
           name: 'John Dup',
           email: mockCrmUser.email,
+          role: UserRole.AGENT,
         }),
       ).rejects.toThrow(ConflictException);
     });
@@ -159,13 +187,13 @@ describe('CrmUsersService', () => {
       mockRepository.findOne.mockResolvedValue(mockCrmUser);
       mockRepository.softRemove.mockResolvedValue({
         ...mockCrmUser,
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       });
 
       await service.remove(mockBusiness, mockCrmUser.id);
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { id: mockCrmUser.id, business_id: mockBusiness.id },
+        where: { id: mockCrmUser.id, businessId: mockBusiness.id },
         relations: ['teams'],
       });
       expect(repo.softRemove).toHaveBeenCalledWith(mockCrmUser);

@@ -16,6 +16,8 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOkResponse,
+  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
@@ -35,17 +37,24 @@ export class DealsController {
   constructor(private readonly deals: DealsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List deals (paginated, filterable)' })
+  @ApiOperation({
+    summary: 'List deals (paginated, filterable by pipeline/stage/status/team)',
+  })
+  @ApiOkResponse({ description: 'Paginated list of deals' })
   list(@CurrentBusiness() business: Business, @Query() query: ListDealsDto) {
     return this.deals.list(business, query);
   }
 
-  @Get('kanban')
+  @Get('kanban/:pipelineId')
   @ApiOperation({
-    summary: 'List open deals grouped by stage for Kanban board',
+    summary: 'Kanban board — open deals grouped by stage for a pipeline',
   })
-  kanban(@CurrentBusiness() business: Business) {
-    return this.deals.kanban(business);
+  @ApiOkResponse({ description: 'Deals grouped by stage' })
+  kanban(
+    @CurrentBusiness() business: Business,
+    @Param('pipelineId', ParseUUIDPipe) pipelineId: string,
+  ) {
+    return this.deals.kanban(business, pipelineId);
   }
 
   @Post()
@@ -57,6 +66,7 @@ export class DealsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get deal details' })
+  @ApiOkResponse({ description: 'Deal detail' })
   findOne(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -64,8 +74,21 @@ export class DealsController {
     return this.deals.findOne(business, id);
   }
 
+  @Get(':id/history')
+  @ApiOperation({ summary: 'Get deal stage history (velocity tracking)' })
+  @ApiOkResponse({ description: 'Stage history entries' })
+  stageHistory(
+    @CurrentBusiness() business: Business,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.deals.stageHistory(business, id);
+  }
+
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a deal' })
+  @ApiOperation({
+    summary: 'Update a deal (move stage triggers DealStageHistory + status)',
+  })
+  @ApiOkResponse({ description: 'Updated deal' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -77,7 +100,8 @@ export class DealsController {
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(204)
-  @ApiOperation({ summary: 'Delete a deal' })
+  @ApiOperation({ summary: 'Soft-delete a deal' })
+  @ApiNoContentResponse({ description: 'Deal deleted' })
   async remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

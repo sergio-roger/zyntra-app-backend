@@ -1,10 +1,8 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "resolvePackageJsonExports": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "isolatedModules": true,
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -26,6 +24,7 @@
       "@auth/*": ["src/modules/auth/*"],
       "@crm/*": ["src/modules/crm/*"],
       "@ai/*": ["src/modules/ai/*"],
+      "@chatbot/*": ["src/modules/chatbot/*"],
       "@common/*": ["src/common/*"]
     }
   }

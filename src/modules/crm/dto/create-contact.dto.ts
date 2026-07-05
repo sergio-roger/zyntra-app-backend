@@ -12,7 +12,6 @@ import {
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { emptyToUndefined } from '@/common/transformers/string.transformer';
-import { ContactStage } from '@crm/enums/contact-stage.enum';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 
 export class CreateContactDto {
@@ -35,17 +34,11 @@ export class CreateContactDto {
   @MaxLength(40)
   phone?: string;
 
-  @ApiPropertyOptional({ enum: ContactStage, default: ContactStage.LEAD })
-  @Transform(emptyToUndefined)
-  @IsOptional()
-  @IsEnum(ContactStage)
-  stage?: ContactStage;
-
   @ApiPropertyOptional()
   @Transform(emptyToUndefined)
   @IsOptional()
   @IsUUID()
-  lifecycle_stage_id?: string;
+  lifecycleStageId?: string;
 
   @ApiPropertyOptional({ enum: ContactSource, default: ContactSource.MANUAL })
   @Transform(emptyToUndefined)
@@ -68,5 +61,21 @@ export class CreateContactDto {
   @ApiPropertyOptional({ type: 'object', additionalProperties: true })
   @IsOptional()
   @IsObject()
-  custom_fields?: Record<string, any>;
+  customFields?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'UUID of the CRM user who owns this contact',
+  })
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsUUID()
+  ownerId?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'UUID of the Channel associated with this contact',
+  })
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsUUID()
+  channelId?: string | null;
 }

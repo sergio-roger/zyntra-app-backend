@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+# User-uploaded files (My Account avatars, etc.)
+/uploads
+
 # IDEs and editors
 /.idea
 /.vscode
@@ -29,3 +32,8 @@ Thumbs.db
 .env.development
 .env.local
 .env.*.local
+
+# Repomix output
+repomix-output.xml
+repomix-output*
+

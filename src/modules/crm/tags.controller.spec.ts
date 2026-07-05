@@ -55,7 +55,14 @@ describe('TagsController', () => {
     it('should call tagsService.findAll with the current business', async () => {
       mockTagsService.findAll.mockResolvedValue([mockTag]);
       const result = await controller.findAll(mockBusiness);
-      expect(service.findAll).toHaveBeenCalledWith(mockBusiness);
+      expect(service.findAll).toHaveBeenCalledWith(mockBusiness, undefined);
+      expect(result).toEqual([mockTag]);
+    });
+
+    it('should call tagsService.findAll with current business and entityType', async () => {
+      mockTagsService.findAll.mockResolvedValue([mockTag]);
+      const result = await controller.findAll(mockBusiness, 'company');
+      expect(service.findAll).toHaveBeenCalledWith(mockBusiness, 'company');
       expect(result).toEqual([mockTag]);
     });
   });

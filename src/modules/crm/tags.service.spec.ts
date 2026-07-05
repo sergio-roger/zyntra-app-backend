@@ -70,6 +70,19 @@ describe('TagsService', () => {
       });
       expect(result).toEqual(tagsList);
     });
+
+    it('should filter by entity_type if entityType is provided', async () => {
+      const tagsList = [mockTag];
+      mockRepository.find.mockResolvedValue(tagsList);
+
+      const result = await service.findAll(mockBusiness, 'company');
+
+      expect(repo.find).toHaveBeenCalledWith({
+        where: { business_id: mockBusiness.id, entity_type: 'company' },
+        order: { name: 'ASC' },
+      });
+      expect(result).toEqual(tagsList);
+    });
   });
 
   describe('findOne', () => {

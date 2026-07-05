@@ -15,11 +15,14 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { Business } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
-import { CrmUser } from '@crm/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { Role } from './entities/role.entity';
 import { Menu } from './entities/menu.entity';
 import { Permission } from './entities/permission.entity';
+import { MenuService } from './menu.service';
+import { PermissionService } from './permission.service';
+import { RoleService } from './role.service';
+import { UserService } from './user.service';
+import { StorageClientService } from '@/storage-client/storage-client.service';
 
 // ─── Datos de menús (refleja seed-rbac.ts) ───────────────────────────────────
 
@@ -155,6 +158,20 @@ const CHILD_MENUS = [
     parent_key: 'inbox',
   },
   {
+    id: 'm-settings-config',
+    key: 'settings_config',
+    label: 'Configuración',
+    path: '/settings/configuracion',
+    parent_key: 'settings',
+  },
+  {
+    id: 'm-settings-my-account',
+    key: 'settings_my_account',
+    label: 'Mi cuenta',
+    path: '/settings/my-account',
+    parent_key: 'settings',
+  },
+  {
     id: 'm-settings-users',
     key: 'settings_users',
     label: 'Usuarios',
@@ -205,6 +222,8 @@ const PM_BRANDSTART = [
   { menu_key: 'analytics', access_level: 'locked' },
   { menu_key: 'billing', access_level: 'full' },
   { menu_key: 'settings', access_level: 'read_only' },
+  { menu_key: 'settings_config', access_level: 'read_only' },
+  { menu_key: 'settings_my_account', access_level: 'read_only' },
   { menu_key: 'settings_users', access_level: 'locked' },
   { menu_key: 'settings_teams', access_level: 'locked' },
   { menu_key: 'settings_lifecycle', access_level: 'read_only' },
@@ -227,6 +246,8 @@ const PM_IMPULSE_PRO = [
   { menu_key: 'analytics', access_level: 'full' },
   { menu_key: 'billing', access_level: 'full' },
   { menu_key: 'settings', access_level: 'full' },
+  { menu_key: 'settings_config', access_level: 'full' },
+  { menu_key: 'settings_my_account', access_level: 'full' },
 ];
 
 const PM_CORE_DIGITAL = [
@@ -239,21 +260,14 @@ const PM_CORE_DIGITAL = [
   { menu_key: 'analytics', access_level: 'full' },
   { menu_key: 'billing', access_level: 'full' },
   { menu_key: 'settings', access_level: 'full' },
+  { menu_key: 'settings_config', access_level: 'full' },
+  { menu_key: 'settings_my_account', access_level: 'full' },
 ];
 
 // ─── Helper: mock de conn.query por tipo de SQL ───────────────────────────────
 
 function buildMockQuery(planModules: typeof PM_BRANDSTART, menus = ALL_MENUS) {
   return jest.fn().mockImplementation((sql: string, params: string[]) => {
-    if (sql.includes('security.roles')) {
-      const roleMap: Record<string, string> = {
-        admin: 'role-admin-id',
-        manager: 'role-manager-id',
-        agent: 'role-agent-id',
-      };
-      const id = roleMap[params[0]];
-      return Promise.resolve(id ? [{ id }] : []);
-    }
     if (sql.includes('plan_modules')) {
       return Promise.resolve(planModules);
     }
@@ -268,6 +282,21 @@ function buildMockQuery(planModules: typeof PM_BRANDSTART, menus = ALL_MENUS) {
     }
     return Promise.resolve([]);
   });
+}
+
+// La resolución de rol ahora vive en RoleService.findByName (repositorio),
+// ya no es una query SQL cruda — se mockea directamente aquí.
+function buildRoleServiceMock() {
+  const roleMap: Record<string, string> = {
+    admin: 'role-admin-id',
+    manager: 'role-manager-id',
+    agent: 'role-agent-id',
+  };
+  return {
+    findByName: jest.fn((name: string) =>
+      Promise.resolve(roleMap[name] ? { id: roleMap[name] } : null),
+    ),
+  };
 }
 
 // ─── Setup del módulo de prueba ───────────────────────────────────────────────
@@ -298,30 +327,33 @@ async function buildService(
 }> {
   const mockQuery = buildMockQuery(planModules, menus);
   const permissionRepo = buildPermissionRepoMock(permissionCount);
+  const roleServiceMock = buildRoleServiceMock();
 
   const businessRepo = {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    manager: { transaction: jest.fn() },
+  };
+
+  const menuRepo = {
+    find: jest.fn(),
     manager: { connection: { query: mockQuery } },
   };
 
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       AuthService,
+      MenuService,
+      PermissionService,
       { provide: getRepositoryToken(Business), useValue: businessRepo },
       { provide: getRepositoryToken(Plan), useValue: { findOne: jest.fn() } },
-      {
-        provide: getRepositoryToken(CrmUser),
-        useValue: { findOne: jest.fn() },
-      },
-      {
-        provide: getRepositoryToken(Role),
-        useValue: { findOne: jest.fn(), find: jest.fn() },
-      },
-      { provide: getRepositoryToken(Menu), useValue: { find: jest.fn() } },
+      { provide: getRepositoryToken(Menu), useValue: menuRepo },
       { provide: getRepositoryToken(Permission), useValue: permissionRepo },
       { provide: JwtService, useValue: { sign: jest.fn() } },
+      { provide: UserService, useValue: {} },
+      { provide: RoleService, useValue: roleServiceMock },
+      { provide: StorageClientService, useValue: {} },
     ],
   }).compile();
 

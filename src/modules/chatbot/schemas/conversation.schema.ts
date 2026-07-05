@@ -49,6 +49,10 @@ export class Conversation {
     handoff_reason?: string;
     tags?: string[];
   };
+
+  // Added Phase 4: links conversation to a Channel entity (PostgreSQL UUID)
+  @Prop({ index: true })
+  channel_id: string;
 }
 
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);

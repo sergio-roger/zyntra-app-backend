@@ -6,11 +6,19 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   HttpCode,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -31,13 +39,18 @@ export class CustomFieldsController {
 
   @Get()
   @ApiOperation({ summary: 'List all custom fields' })
-  findAll(@CurrentBusiness() business: Business) {
-    return this.fieldsService.findAll(business);
+  @ApiOkResponse({ description: 'List of custom fields' })
+  findAll(
+    @CurrentBusiness() business: Business,
+    @Query('entity_type') entityType?: string,
+  ) {
+    return this.fieldsService.findAll(business, entityType);
   }
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create a custom field' })
+  @ApiCreatedResponse({ description: 'Custom field created' })
   create(
     @CurrentBusiness() business: Business,
     @Body() dto: CreateCustomFieldDto,
@@ -48,6 +61,7 @@ export class CustomFieldsController {
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Update a custom field' })
+  @ApiOkResponse({ description: 'Custom field updated' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -60,6 +74,7 @@ export class CustomFieldsController {
   @Roles(UserRole.ADMIN)
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a custom field' })
+  @ApiNoContentResponse({ description: 'Custom field deleted' })
   remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,

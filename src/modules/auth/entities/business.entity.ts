@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Plan } from './plan.entity';
+import { Plan } from '@auth/entities/plan.entity';
 
 export enum PlanStatus {
   TRIAL = 'trial',
@@ -24,11 +24,23 @@ export class Business {
   @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column({ nullable: true })
   email: string;
 
-  @Column()
-  password_hash: string;
+  @Column({ nullable: true })
+  phone: string;
+
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true })
+  tax_id: string;
+
+  @Column({ nullable: true })
+  website: string;
+
+  @Column({ nullable: true })
+  logo_url: string;
 
   @Column({ nullable: true })
   plan_id: string;

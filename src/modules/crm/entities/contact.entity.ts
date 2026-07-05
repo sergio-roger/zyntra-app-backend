@@ -1,36 +1,38 @@
+import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { Business } from '@auth/entities/business.entity';
+import { Company } from '@crm/entities/company.entity';
+import { ContactActivity } from '@crm/entities/contact-activity.entity';
+import { Tag } from '@crm/entities/tag.entity';
+import { User } from '@auth/entities/user.entity';
+import { Deal } from '@crm/entities/deal.entity';
+import { ContactSource } from '@crm/enums/contact-source.enum';
+import { Channel } from '@/modules/channels/entities/channel.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-  Unique,
-  ManyToOne,
-  JoinColumn,
-  OneToMany,
-  ManyToMany,
-  JoinTable,
   DeleteDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Unique,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Business } from '@auth/entities/business.entity';
-import { Tag } from './tag.entity';
-import { ContactActivity } from '@crm/entities/contact-activity.entity';
-import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
-import { ContactStage } from '@crm/enums/contact-stage.enum';
-import { ContactSource } from '@crm/enums/contact-source.enum';
 
 @Entity({ name: 'contacts', schema: 'crm' })
-@Index(['business_id', 'stage'])
-@Index(['business_id', 'source'])
-@Unique('UQ_business_email', ['business_id', 'email'])
-@Unique('UQ_business_phone', ['business_id', 'phone'])
+@Index(['businessId', 'source'])
+@Unique('UQ_business_email', ['businessId', 'email'])
+@Unique('UQ_business_phone', ['businessId', 'phone'])
 export class Contact {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column('uuid', { name: 'business_id' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -45,19 +47,34 @@ export class Contact {
   @Column('varchar', { nullable: true })
   phone: string | null;
 
-  @Column({
-    type: 'enum',
-    enum: ContactStage,
-    nullable: true,
-  })
-  stage: ContactStage | null;
-
-  @Column('uuid', { nullable: true })
-  lifecycle_stage_id: string | null;
+  @Column('uuid', { name: 'lifecycle_stage_id', nullable: true })
+  lifecycleStageId: string | null;
 
   @ManyToOne(() => LifecycleStage)
   @JoinColumn({ name: 'lifecycle_stage_id' })
-  lifecycle_stage: LifecycleStage;
+  lifecycleStage: LifecycleStage;
+
+  @Column('uuid', { name: 'owner_id', nullable: true })
+  ownerId: string | null;
+
+  @ManyToOne(() => User, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
+  @JoinColumn({ name: 'owner_id' })
+  owner: User | null;
+
+  @Column('uuid', { name: 'channel_id', nullable: true })
+  channelId: string | null;
+
+  @ManyToOne(() => Channel, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
+  @JoinColumn({ name: 'channel_id' })
+  channel: Channel | null;
 
   @Column({
     type: 'enum',
@@ -75,36 +92,52 @@ export class Contact {
   })
   tags: Tag[];
 
+  @ManyToMany(() => Deal, (deal) => deal.contacts)
+  deals: Deal[];
+
   @Column('text', { nullable: true })
   notes: string | null;
 
-  @Column('varchar', { nullable: true })
-  company_name: string | null;
+  @Column('uuid', { name: 'company_id', nullable: true })
+  companyId: string | null;
 
-  @Column('decimal', { precision: 12, scale: 2, default: 0 })
-  deal_value: number;
+  @ManyToOne(() => Company, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
+  @JoinColumn({ name: 'company_id' })
+  company: Company | null;
 
-  @Column('jsonb', { nullable: true })
-  custom_fields: Record<string, any> | null;
+  @Column('decimal', {
+    name: 'deal_value',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  dealValue: number;
 
-  @Column('boolean', { default: false })
-  is_archived: boolean;
+  @Column('jsonb', { name: 'custom_fields', nullable: true })
+  customFields: Record<string, any> | null;
+
+  @Column('boolean', { name: 'is_archived', default: false })
+  isArchived: boolean;
 
   @Column('numeric', { precision: 5, scale: 2, nullable: true })
   score: number | null;
 
-  @Column('timestamp', { nullable: true })
-  last_activity_at: Date | null;
+  @Column('timestamp', { name: 'last_activity_at', nullable: true })
+  lastActivityAt: Date | null;
 
   @OneToMany(() => ContactActivity, (a) => a.contact)
   activities: ContactActivity[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

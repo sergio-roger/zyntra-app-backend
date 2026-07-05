@@ -29,6 +29,9 @@ export class CustomField {
   @JoinColumn({ name: 'business_id' })
   business: Business;
 
+  @Column({ default: 'contact' })
+  entity_type: string; // 'contact' | 'company'
+
   @Column()
   name: string; // internal key, e.g., 'preferred_contact_method'
 

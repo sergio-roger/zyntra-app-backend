@@ -1,11 +1,11 @@
 import { Request } from 'express';
 import { Business } from '@auth/entities/business.entity';
+import { User } from '@auth/entities/user.entity';
 
 export interface RequestWithUser extends Request {
-  user: Business & {
-    business_id?: string;
-    email?: string;
-    plan?: string;
+  user: User & {
+    business: Business;
+    plan_id?: string;
     plan_status?: string;
   };
   session: {

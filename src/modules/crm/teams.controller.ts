@@ -9,7 +9,14 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -28,6 +35,7 @@ export class TeamsController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
   @ApiOperation({ summary: 'List all teams' })
+  @ApiOkResponse({ description: 'List of teams' })
   list(@CurrentBusiness() business: Business) {
     return this.teamsService.list(business);
   }
@@ -35,6 +43,7 @@ export class TeamsController {
   @Post()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new team' })
+  @ApiCreatedResponse({ description: 'Team created' })
   create(@CurrentBusiness() business: Business, @Body() dto: CreateTeamDto) {
     return this.teamsService.create(business, dto);
   }
@@ -42,6 +51,7 @@ export class TeamsController {
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Update a team' })
+  @ApiOkResponse({ description: 'Team updated' })
   update(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
@@ -53,6 +63,7 @@ export class TeamsController {
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete a team' })
+  @ApiNoContentResponse({ description: 'Team deleted' })
   remove(
     @CurrentBusiness() business: Business,
     @Param('id', ParseUUIDPipe) id: string,
