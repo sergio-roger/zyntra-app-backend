@@ -122,11 +122,11 @@ describe('ContactsService', () => {
       qb.getManyAndCount.mockResolvedValue([[], 0]);
 
       await service.list(mockBusiness, {
-        source: 'chatbot',
+        source: 'web_chat',
       } as ListContactsDto);
 
       expect(qb.andWhere).toHaveBeenCalledWith('c.source = :source', {
-        source: 'chatbot',
+        source: 'web_chat',
       });
     });
 

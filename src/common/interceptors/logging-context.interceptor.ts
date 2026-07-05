@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { PinoLogger } from 'nestjs-pino';
-import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 
 @Injectable()
 export class LoggingContextInterceptor implements NestInterceptor {
@@ -16,12 +16,17 @@ export class LoggingContextInterceptor implements NestInterceptor {
     if (context.getType() === 'http') {
       const req = context.switchToHttp().getRequest<RequestWithUser>();
       const user = req.user as
-        | { id?: string; crm_user_id?: string; role?: string }
+        | {
+            id?: string;
+            businessId?: string;
+            crm_user_id?: string;
+            role?: string;
+          }
         | undefined;
 
-      if (user?.id) {
+      if (user?.businessId) {
         this.logger.assign({
-          businessId: user.id,
+          businessId: user.businessId,
           crmUserId: user.crm_user_id ?? undefined,
           role: user.role ?? undefined,
         });

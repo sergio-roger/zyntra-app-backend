@@ -70,4 +70,12 @@ export class CreateContactDto {
   @IsOptional()
   @IsUUID()
   ownerId?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'UUID of the Channel associated with this contact',
+  })
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsUUID()
+  channelId?: string | null;
 }

@@ -52,10 +52,7 @@ export class ChannelsController {
     @Param('businessId', ParseUUIDPipe) businessId: string,
     @Body() dto: CreateChannelDto,
   ) {
-    this.channelsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.channelsService.assertOwnership(req.user.businessId, businessId);
     return this.channelsService.create(businessId, dto);
   }
 
@@ -66,10 +63,7 @@ export class ChannelsController {
     @Req() req: RequestWithUser,
     @Param('businessId', ParseUUIDPipe) businessId: string,
   ) {
-    this.channelsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.channelsService.assertOwnership(req.user.businessId, businessId);
     return this.channelsService.findAll(businessId);
   }
 
@@ -81,10 +75,7 @@ export class ChannelsController {
     @Param('businessId', ParseUUIDPipe) businessId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    this.channelsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.channelsService.assertOwnership(req.user.businessId, businessId);
     return this.channelsService.findOne(businessId, id);
   }
 
@@ -98,10 +89,7 @@ export class ChannelsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateChannelDto,
   ) {
-    this.channelsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.channelsService.assertOwnership(req.user.businessId, businessId);
     return this.channelsService.update(businessId, id, dto);
   }
 
@@ -115,10 +103,7 @@ export class ChannelsController {
     @Param('businessId', ParseUUIDPipe) businessId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    this.channelsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.channelsService.assertOwnership(req.user.businessId, businessId);
     return this.channelsService.remove(businessId, id);
   }
 
@@ -131,7 +116,7 @@ export class ChannelsController {
     @Req() req: RequestWithUser,
     @Param('channelId', ParseUUIDPipe) channelId: string,
   ) {
-    const businessId = (req.user as { id: string }).id;
+    const businessId = req.user.businessId;
     return this.channelsService.getEmbedSnippet(businessId, channelId);
   }
 
@@ -146,10 +131,7 @@ export class ChannelsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AssignAgentDto,
   ) {
-    this.channelsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.channelsService.assertOwnership(req.user.businessId, businessId);
     return this.channelsService.assignAgent(businessId, id, dto.agentId);
   }
 
@@ -163,10 +145,7 @@ export class ChannelsController {
     @Param('businessId', ParseUUIDPipe) businessId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    this.channelsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.channelsService.assertOwnership(req.user.businessId, businessId);
     return this.channelsService.unassignAgent(businessId, id);
   }
 }

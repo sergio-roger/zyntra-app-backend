@@ -18,7 +18,6 @@ import {
   ConversationDocument,
 } from './schemas/conversation.schema';
 import { Message, MessageDocument } from './schemas/message.schema';
-import { ChatbotConfig } from './entities/chatbot-config.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
@@ -31,7 +30,6 @@ import { isOriginAllowed } from '@/modules/channels/utils/origin.util';
 import { ChatGateway } from './chat.gateway';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
 import { LeadCaptureDto } from './dto/lead-capture.dto';
-import type { AiService } from '../ai/ai.service';
 
 export const AGENT_RESPONSE_QUEUE = 'agent-response';
 
@@ -49,8 +47,6 @@ export class ChatService {
     private conversationModel: Model<ConversationDocument>,
     @InjectModel(Message.name)
     private messageModel: Model<MessageDocument>,
-    @InjectRepository(ChatbotConfig)
-    private configRepo: Repository<ChatbotConfig>,
     @InjectRepository(Contact)
     private contactsRepo: Repository<Contact>,
     @InjectRepository(LifecycleStage)
@@ -67,18 +63,10 @@ export class ChatService {
   // ---------------------------------------------------------------------------
   // Channel resolution (a business can have N web_chat channels)
   // ---------------------------------------------------------------------------
-  /**
-   * Resolution order: explicit channel_id first, then fall back to
-   * business_id (pre-migration embeds). Returns `useLegacy: true` only when
-   * the business has no Channel rows at all — i.e. it never migrated off
-   * ChatbotConfig — so existing legacy behaviour keeps working unchanged.
-   */
   private async resolveChannel(
     businessId: string,
     channelId?: string,
-  ): Promise<
-    { channel: Channel; useLegacy: false } | { channel: null; useLegacy: true }
-  > {
+  ): Promise<Channel> {
     if (channelId) {
       const channel = await this.channelsService.findByChannelId(channelId);
       if (!channel || channel.status !== ChannelStatus.ACTIVE) {
@@ -90,12 +78,12 @@ export class ChatService {
             `not the request's business_id=${businessId}. Using the channel's own business_id.`,
         );
       }
-      return { channel, useLegacy: false };
+      return channel;
     }
 
     const channels = await this.channelsService.findAllByBusiness(businessId);
     if (channels.length === 0) {
-      return { channel: null, useLegacy: true };
+      throw new NotFoundException('Este negocio no tiene canales configurados');
     }
 
     const active = channels.filter((c) => c.status === ChannelStatus.ACTIVE);
@@ -109,7 +97,7 @@ export class ChatService {
           `channel_id explicitly. Using channel_id=${active[0].id}.`,
       );
     }
-    return { channel: active[0], useLegacy: false };
+    return active[0];
   }
 
   private assertOriginAllowed(
@@ -127,7 +115,7 @@ export class ChatService {
   }
 
   // ---------------------------------------------------------------------------
-  // Main chat handler (refactored Phase 4)
+  // Main chat handler
   // ---------------------------------------------------------------------------
   async processChat(
     request: ChatRequestDto,
@@ -142,18 +130,10 @@ export class ChatService {
     }
 
     // 1. Resolve the web_chat channel (channel_id first, business_id fallback)
-    const resolution = await this.resolveChannel(business_id, channel_id);
-
-    // Fall back to legacy behaviour (business never migrated to Channel) — use chatbot_config
-    if (resolution.useLegacy) {
-      return this.legacyProcessChat(request, ip);
-    }
-
-    const channel = resolution.channel;
+    const channel = await this.resolveChannel(business_id, channel_id);
     this.assertOriginAllowed(channel, origin, referer);
 
-    // Tenant identity comes from the resolved channel row, not the
-    // caller-supplied business_id (kept only for logging/analytics above).
+    // Tenant identity comes from the resolved channel row
     const effectiveBusinessId = channel.business_id;
 
     // 2. Find or create conversation (keyed by channel + visitor fingerprint)
@@ -401,106 +381,7 @@ export class ChatService {
   }
 
   // ---------------------------------------------------------------------------
-  // Legacy path (no channel configured) — preserves original behaviour
-  // ---------------------------------------------------------------------------
-  private async legacyProcessChat(
-    request: ChatRequestDto,
-    ip?: string,
-  ): Promise<ChatResponseDto> {
-    const { message, business_id, conversation_id } = request;
-
-    const config = await this.configRepo.findOne({ where: { business_id } });
-    if (!config) throw new NotFoundException('Chatbot no disponible');
-
-    let conversation: ConversationDocument | null = null;
-    if (conversation_id) {
-      conversation = await this.conversationModel.findById(conversation_id);
-    }
-
-    if (!conversation) {
-      conversation = await this.conversationModel.create({
-        business_id,
-        channel: 'web',
-        status: 'open',
-        started_at: new Date(),
-        last_message_at: new Date(),
-        visitor: { ip_hash: ip ?? '', user_agent: '' },
-      });
-    }
-
-    const conversationIdStr = conversation._id.toString();
-    const recentMessages = await this.messageModel
-      .find({ conversation_id: conversationIdStr })
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean();
-
-    const history = [...recentMessages].reverse().map((m) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    }));
-
-    const toneMap: Record<string, string> = {
-      formal: 'Usa un tono formal y profesional.',
-      friendly: 'Usa un tono amigable y cercano.',
-      professional: 'Usa un tono profesional pero no frío.',
-      casual: 'Usa un tono casual y relajado.',
-    };
-
-    const faqs = config.faqs?.length
-      ? `\n\nFAQs:\n${config.faqs.map((f, i) => `${i + 1}. P: ${f.question}\n   R: ${f.answer}`).join('\n')}`
-      : '';
-
-    const systemPrompt = `${config.system_prompt_extra ?? ''}\n\n${toneMap[config.tone as string] ?? toneMap.friendly}\n\nNombre: ${config.name}\nIdioma: ${config.locale}${faqs}`;
-
-    await import('../ai/ai.service');
-    const aiSvc = (this as unknown as { aiService?: unknown })
-      .aiService as AiService;
-
-    const aiResponse = await aiSvc.chat({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...history,
-        { role: 'user', content: message },
-      ],
-    });
-
-    const reply =
-      aiResponse.choices[0]?.message?.content ??
-      'Lo siento, no pude procesar tu solicitud.';
-    const latencyMs = 0;
-
-    await this.messageModel.create({
-      conversation_id: conversationIdStr,
-      role: 'user',
-      content: message,
-      channel: 'web',
-    });
-    await this.messageModel.create({
-      conversation_id: conversationIdStr,
-      role: 'assistant',
-      content: reply,
-      tokens_used: aiResponse.usage?.total_tokens,
-      latency_ms: latencyMs,
-      model: aiResponse.model,
-      channel: 'web',
-    });
-    await this.conversationModel.updateOne(
-      { _id: conversation._id },
-      { last_message_at: new Date() },
-    );
-
-    return {
-      id: crypto.randomUUID(),
-      conversation_id: conversationIdStr,
-      message: reply,
-      pending: false,
-      created_at: new Date().toISOString(),
-    };
-  }
-
-  // ---------------------------------------------------------------------------
-  // Existing helpers (kept for backward compat)
+  // Config and Lead helpers
   // ---------------------------------------------------------------------------
   async getPublicConfig(
     businessId: string,
@@ -508,25 +389,7 @@ export class ChatService {
     origin?: string,
     referer?: string,
   ) {
-    const resolution = await this.resolveChannel(businessId, channelId);
-
-    if (resolution.useLegacy) {
-      const config = await this.configRepo.findOne({
-        where: { business_id: businessId },
-        select: [
-          'name',
-          'welcome_message',
-          'tone',
-          'locale',
-          'theme',
-          'is_active',
-        ],
-      });
-      if (!config) throw new NotFoundException('Chatbot no encontrado');
-      return config;
-    }
-
-    const { channel } = resolution;
+    const channel = await this.resolveChannel(businessId, channelId);
     this.assertOriginAllowed(channel, origin, referer);
 
     const cfg = channel.config as Record<string, unknown>;
@@ -548,10 +411,8 @@ export class ChatService {
       throw new BadRequestException('Email o phone requerido');
     }
 
-    const resolution = await this.resolveChannel(businessId, channel_id);
-    if (!resolution.useLegacy) {
-      this.assertOriginAllowed(resolution.channel, origin, referer);
-    }
+    const channel = await this.resolveChannel(businessId, channel_id);
+    this.assertOriginAllowed(channel, origin, referer);
 
     const existing = email
       ? await this.contactsRepo.findOne({ where: { businessId, email } })
@@ -578,8 +439,9 @@ export class ChatService {
       name,
       email: email ?? null,
       phone: phone ?? null,
-      source: ContactSource.CHATBOT,
+      source: ContactSource.WEB_CHAT,
       lifecycleStageId: defaultStage?.id ?? null,
+      channelId: channel.id,
       lastActivityAt: new Date(),
     });
 

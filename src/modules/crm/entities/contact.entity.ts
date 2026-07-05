@@ -6,6 +6,7 @@ import { Tag } from '@crm/entities/tag.entity';
 import { User } from '@auth/entities/user.entity';
 import { Deal } from '@crm/entities/deal.entity';
 import { ContactSource } from '@crm/enums/contact-source.enum';
+import { Channel } from '@/modules/channels/entities/channel.entity';
 import {
   Column,
   CreateDateColumn,
@@ -63,6 +64,17 @@ export class Contact {
   })
   @JoinColumn({ name: 'owner_id' })
   owner: User | null;
+
+  @Column('uuid', { name: 'channel_id', nullable: true })
+  channelId: string | null;
+
+  @ManyToOne(() => Channel, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: false,
+  })
+  @JoinColumn({ name: 'channel_id' })
+  channel: Channel | null;
 
   @Column({
     type: 'enum',

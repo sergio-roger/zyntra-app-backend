@@ -38,8 +38,8 @@ export class ChatController {
 
   @Public()
   @Get('public-config')
-  @ApiOperation({ summary: 'Obtiene la configuración pública del chatbot' })
-  @ApiOkResponse({ description: 'Public chatbot config' })
+  @ApiOperation({ summary: 'Obtiene la configuración pública del canal/chat' })
+  @ApiOkResponse({ description: 'Public chat config' })
   async getPublicConfig(
     @Query('business_id') businessId: string,
     @Query('channel_id') channelId?: string,
@@ -64,7 +64,7 @@ export class ChatController {
     @Query('channelId') channelId?: string,
     @Query('status') status?: string,
   ) {
-    const businessId = (req.user as { id?: string }).id;
+    const businessId = req.user.businessId;
     if (!businessId)
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.chatService.getConversations(businessId, { channelId, status });
@@ -78,7 +78,7 @@ export class ChatController {
   })
   @ApiOkResponse({ description: 'Conversation with messages' })
   async getConversation(@Req() req: RequestWithUser, @Param('id') id: string) {
-    const businessId = (req.user as { id?: string }).id;
+    const businessId = req.user.businessId;
     if (!businessId)
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.chatService.getConversationDetail(businessId, id);
@@ -96,7 +96,7 @@ export class ChatController {
     @Param('id') id: string,
     @Body('status') status: string,
   ) {
-    const businessId = (req.user as { id?: string }).id;
+    const businessId = req.user.businessId;
     if (!businessId)
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.chatService.updateConversationStatus(businessId, id, status);
@@ -122,7 +122,7 @@ export class ChatController {
 
   @Public()
   @Post('lead-capture')
-  @ApiOperation({ summary: 'Captura un lead desde el chatbot' })
+  @ApiOperation({ summary: 'Captura un lead desde el chat' })
   @ApiCreatedResponse({ description: 'Lead captured' })
   async leadCapture(
     @Body() dto: LeadCaptureDto,

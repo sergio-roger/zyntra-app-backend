@@ -372,7 +372,7 @@ export class ContactsService {
   }
 
   private static readonly SOURCE_LABELS: Record<string, string> = {
-    chatbot: 'Chatbot',
+    web_chat: 'Web Chat',
     email: 'Email',
     form: 'Formulario',
     import: 'Importación',

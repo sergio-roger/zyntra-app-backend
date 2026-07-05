@@ -41,10 +41,7 @@ export class AgentsController {
     @Param('businessId', ParseUUIDPipe) businessId: string,
     @Body() dto: CreateAgentDto,
   ) {
-    this.agentsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.agentsService.assertOwnership(req.user.businessId, businessId);
     return this.agentsService.create(businessId, dto);
   }
 
@@ -55,10 +52,7 @@ export class AgentsController {
     @Req() req: RequestWithUser,
     @Param('businessId', ParseUUIDPipe) businessId: string,
   ) {
-    this.agentsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.agentsService.assertOwnership(req.user.businessId, businessId);
     return this.agentsService.findAll(businessId);
   }
 
@@ -69,10 +63,7 @@ export class AgentsController {
     @Param('businessId', ParseUUIDPipe) businessId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    this.agentsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.agentsService.assertOwnership(req.user.businessId, businessId);
     return this.agentsService.findOne(businessId, id);
   }
 
@@ -85,10 +76,7 @@ export class AgentsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAgentDto,
   ) {
-    this.agentsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.agentsService.assertOwnership(req.user.businessId, businessId);
     return this.agentsService.update(businessId, id, dto);
   }
 
@@ -103,10 +91,7 @@ export class AgentsController {
     @Param('businessId', ParseUUIDPipe) businessId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    this.agentsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.agentsService.assertOwnership(req.user.businessId, businessId);
     return this.agentsService.remove(businessId, id);
   }
 
@@ -122,10 +107,7 @@ export class AgentsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: TestAgentDto,
   ) {
-    this.agentsService.assertOwnership(
-      (req.user as { id: string }).id,
-      businessId,
-    );
+    this.agentsService.assertOwnership(req.user.businessId, businessId);
     return this.agentsService.sandboxTest(businessId, id, dto.message);
   }
 }

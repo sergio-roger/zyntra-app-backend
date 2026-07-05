@@ -15,7 +15,6 @@ import { ObjectLiteral, Repository } from 'typeorm';
 import { ChatService, AGENT_RESPONSE_QUEUE } from '../chat.service';
 import { Conversation } from '../schemas/conversation.schema';
 import { Message } from '../schemas/message.schema';
-import { ChatbotConfig } from '../entities/chatbot-config.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
 import {
@@ -104,10 +103,6 @@ async function buildModule() {
         useValue: conversationModel,
       },
       { provide: getModelToken(Message.name), useValue: messageModel },
-      {
-        provide: getRepositoryToken(ChatbotConfig),
-        useValue: makeRepo<ChatbotConfig>(),
-      },
       { provide: getRepositoryToken(Contact), useValue: makeRepo<Contact>() },
       {
         provide: getRepositoryToken(LifecycleStage),
@@ -496,12 +491,9 @@ describe('ChatService.processChat() — channel resolution', () => {
     ).rejects.toThrow(NotFoundException);
   });
 
-  it('falls back to the legacy chatbot_config flow when the business has zero channels', async () => {
+  it('throws NotFoundException when the business has zero channels', async () => {
     (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([]);
 
-    // legacyProcessChat will throw NotFoundException because ChatbotConfig repo
-    // (mocked via makeRepo) has no config for this business — that's enough to
-    // prove we reached the legacy path instead of resolving a Channel.
     await expect(
       service.processChat({ business_id: 'biz-1', message: 'hola' }),
     ).rejects.toThrow(NotFoundException);

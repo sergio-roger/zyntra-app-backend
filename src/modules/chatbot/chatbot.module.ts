@@ -4,7 +4,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { ChatbotConfig } from './entities/chatbot-config.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { Business } from '../auth/entities/business.entity';
 import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
@@ -14,8 +13,6 @@ import {
   ConversationSchema,
 } from './schemas/conversation.schema';
 import { Message, MessageSchema } from './schemas/message.schema';
-import { ChatbotController } from './chatbot.controller';
-import { ChatbotService } from './chatbot.service';
 import { ChatService, AGENT_RESPONSE_QUEUE } from './chat.service';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
@@ -26,7 +23,6 @@ import { AiModule } from '../ai/ai.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      ChatbotConfig,
       Contact,
       Business,
       LifecycleStage,
@@ -45,8 +41,8 @@ import { AiModule } from '../ai/ai.module';
     AiModule,
     ChannelsModule,
   ],
-  controllers: [ChatbotController, ChatController, InternalCallbackController],
-  providers: [ChatbotService, ChatService, ChatGateway, ChatRateLimitGuard],
+  controllers: [ChatController, InternalCallbackController],
+  providers: [ChatService, ChatGateway, ChatRateLimitGuard],
   exports: [ChatService],
 })
 export class ChatbotModule {}

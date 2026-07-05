@@ -494,6 +494,7 @@ export class CrmSeeder implements Seeder {
               source: contactData.source,
               dealValue: contactData.deal_value,
               ownerId: owner?.id ?? null,
+              channelId: null,
               customFields: {
                 industry: i % 2 === 0 ? 'Tecnología' : 'Salud',
                 budget: (i + 1) * 1500,
