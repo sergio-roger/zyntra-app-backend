@@ -10,15 +10,13 @@ describe('isOriginAllowed()', () => {
   });
 
   it('allows an exact domain match via Origin', () => {
-    expect(isOriginAllowed(['example.com'], 'https://example.com')).toBe(
-      true,
-    );
+    expect(isOriginAllowed(['example.com'], 'https://example.com')).toBe(true);
   });
 
   it('allows a subdomain of an allowed domain', () => {
-    expect(
-      isOriginAllowed(['example.com'], 'https://widget.example.com'),
-    ).toBe(true);
+    expect(isOriginAllowed(['example.com'], 'https://widget.example.com')).toBe(
+      true,
+    );
   });
 
   it('rejects a domain not present in the allowlist', () => {

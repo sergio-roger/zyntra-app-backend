@@ -420,9 +420,7 @@ describe('ChatService.processChat() — channel resolution', () => {
       message: 'hola',
     });
 
-    expect(channelsService.findByChannelId).toHaveBeenCalledWith(
-      'chan-web-1',
-    );
+    expect(channelsService.findByChannelId).toHaveBeenCalledWith('chan-web-1');
     expect(channelsService.findAllByBusiness).not.toHaveBeenCalled();
   });
 

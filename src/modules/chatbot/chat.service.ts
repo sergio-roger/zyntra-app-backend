@@ -542,11 +542,7 @@ export class ChatService {
     };
   }
 
-  async captureLead(
-    dto: LeadCaptureDto,
-    origin?: string,
-    referer?: string,
-  ) {
+  async captureLead(dto: LeadCaptureDto, origin?: string, referer?: string) {
     const { business_id: businessId, channel_id, name, email, phone } = dto;
     if (!email && !phone) {
       throw new BadRequestException('Email o phone requerido');

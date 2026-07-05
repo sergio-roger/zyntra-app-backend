@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ObjectLiteral, Repository } from 'typeorm';
+import { FindManyOptions, ObjectLiteral, Repository } from 'typeorm';
 
 import { ChannelsService } from '@/modules/channels/channels.service';
 import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
@@ -379,8 +379,12 @@ describe('ChannelsService', () => {
 
       await service.findAllByBusiness('biz-2');
 
-      const call = (channelRepo.find as jest.Mock).mock.calls[0][0];
-      expect(call.where.business_id).toBe('biz-2');
+      const findMock = channelRepo.find as jest.Mock<
+        Promise<Channel[]>,
+        [FindManyOptions<Channel>]
+      >;
+      const call = findMock.mock.calls[0][0];
+      expect((call.where as { business_id: string }).business_id).toBe('biz-2');
     });
   });
 

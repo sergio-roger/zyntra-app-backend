@@ -40,10 +40,7 @@ describe('ChatRateLimitGuard', () => {
 
     expect(allowed).toBe(true);
     expect(redis.incr).toHaveBeenCalledWith('ratelimit:chat:chan-1:fp-1');
-    expect(redis.expire).toHaveBeenCalledWith(
-      'ratelimit:chat:chan-1:fp-1',
-      60,
-    );
+    expect(redis.expire).toHaveBeenCalledWith('ratelimit:chat:chan-1:fp-1', 60);
   });
 
   it('does not reset the TTL on subsequent hits within the window', async () => {
@@ -110,9 +107,7 @@ describe('ChatRateLimitGuard', () => {
       ),
     );
 
-    expect(redis.incr).toHaveBeenCalledWith(
-      'ratelimit:chat:biz-1:203.0.113.9',
-    );
+    expect(redis.incr).toHaveBeenCalledWith('ratelimit:chat:biz-1:203.0.113.9');
   });
 
   it('allows the request without touching Redis when neither channel_id nor business_id is present', async () => {

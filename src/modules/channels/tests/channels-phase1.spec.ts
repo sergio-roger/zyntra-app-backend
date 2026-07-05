@@ -233,7 +233,10 @@ describe('Migration: 20260704_document_channels_multi_web_support.sql', () => {
   it('exists and is registered in scripts/run-migrations.ts', () => {
     expect(sql.length).toBeGreaterThan(0);
 
-    const runnerPath = path.resolve(__dirname, '../../../../scripts/run-migrations.ts');
+    const runnerPath = path.resolve(
+      __dirname,
+      '../../../../scripts/run-migrations.ts',
+    );
     const runnerSrc = fs.readFileSync(runnerPath, 'utf8');
     expect(runnerSrc).toContain(
       '20260704_document_channels_multi_web_support.sql',

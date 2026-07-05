@@ -21,7 +21,8 @@ export class LeadCaptureDto {
   business_id: string;
 
   @ApiPropertyOptional({
-    description: 'UUID of the target Channel (channels.id), takes priority over business_id.',
+    description:
+      'UUID of the target Channel (channels.id), takes priority over business_id.',
   })
   @IsOptional()
   @IsUUID()
