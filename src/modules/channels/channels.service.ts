@@ -7,6 +7,7 @@ import {
   ChannelStatus,
 } from '@/modules/channels/entities/channel.entity';
 import { ChannelProviderFactory } from '@/modules/channels/providers/channel-provider.factory';
+import { buildEmbedSnippet } from '@/modules/channels/utils/embed-snippet.util';
 import { encryptCredentials } from '@/modules/channels/utils/crypto.util';
 import {
   BadRequestException,
@@ -145,9 +146,26 @@ export class ChannelsService {
     return this.channelRepo.save(channel);
   }
 
-  // ---------------------------------------------------------------------------
-  // Multi-channel lookups (a business can have N web_chat channels)
-  // ---------------------------------------------------------------------------
+  async getEmbedSnippet(businessId: string, channelId: string) {
+    const channel = await this.findOne(businessId, channelId);
+
+    if (channel.channelType.key !== 'web_chat') {
+      throw new BadRequestException(
+        'El snippet de embed solo aplica a canales de tipo web_chat',
+      );
+    }
+
+    const snippet = buildEmbedSnippet({
+      channelId: channel.id,
+      businessId: channel.business_id,
+    });
+
+    return {
+      channel_id: channel.id,
+      business_id: channel.business_id,
+      snippet,
+    };
+  }
 
   async findAllByBusiness(businessId: string): Promise<Channel[]> {
     return this.channelRepo.find({

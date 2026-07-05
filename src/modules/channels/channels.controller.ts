@@ -1,3 +1,10 @@
+import { ChannelsService } from '@/modules/channels/channels.service';
+import { AssignAgentDto } from '@/modules/channels/dto/assign-agent.dto';
+import { CreateChannelDto } from '@/modules/channels/dto/create-channel.dto';
+import { UpdateChannelDto } from '@/modules/channels/dto/update-channel.dto';
+import { Roles } from '@common/decorators/roles.decorator';
+import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import { UserRole } from '@crm/enums/user-role.enum';
 import {
   Body,
   Controller,
@@ -18,13 +25,6 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@crm/enums/user-role.enum';
-import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
-import { ChannelsService } from '@/modules/channels/channels.service';
-import { CreateChannelDto } from '@/modules/channels/dto/create-channel.dto';
-import { UpdateChannelDto } from '@/modules/channels/dto/update-channel.dto';
-import { AssignAgentDto } from '@/modules/channels/dto/assign-agent.dto';
 
 @ApiTags('Channels')
 @ApiBearerAuth()
@@ -32,9 +32,6 @@ import { AssignAgentDto } from '@/modules/channels/dto/assign-agent.dto';
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
 
-  // ---------------------------------------------------------------------------
-  // Channel Store — public-ish (any authenticated user can browse)
-  // ---------------------------------------------------------------------------
   @Get('channels/store')
   @ApiOperation({
     summary: 'Lista todos los tipos de canal disponibles (Channel Store)',
@@ -46,9 +43,6 @@ export class ChannelsController {
     return this.channelsService.getStore();
   }
 
-  // ---------------------------------------------------------------------------
-  // CRUD bajo /businesses/:businessId/channels
-  // ---------------------------------------------------------------------------
   @Post('businesses/:businessId/channels')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Crea un nuevo canal para el business' })
@@ -128,9 +122,19 @@ export class ChannelsController {
     return this.channelsService.remove(businessId, id);
   }
 
-  // ---------------------------------------------------------------------------
-  // Agent assignment
-  // ---------------------------------------------------------------------------
+  @Get('channels/:channelId/embed-snippet')
+  @ApiOperation({
+    summary: 'Genera el snippet de embed para un canal web_chat específico',
+  })
+  @ApiOkResponse({ description: 'Snippet HTML listo para copiar' })
+  getEmbedSnippet(
+    @Req() req: RequestWithUser,
+    @Param('channelId', ParseUUIDPipe) channelId: string,
+  ) {
+    const businessId = (req.user as { id: string }).id;
+    return this.channelsService.getEmbedSnippet(businessId, channelId);
+  }
+
   @Post('businesses/:businessId/channels/:id/agent')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(HttpStatus.OK)

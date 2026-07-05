@@ -91,11 +91,27 @@ it (`emitNewMessage` etc. still target `business:{id}` /
 | `auth` | `{ businessId, conversationId? }` | `{ businessId, channelId?, conversationId? }` |
 | Rooms joined | `business:{businessId}` (+ `conversation:{id}` once identified) | same, plus `channel:{channelId}` when `channelId` is provided |
 
+## Embed snippet
+
+There used to be two duplicate, business-only `GET /chat/embed-snippet`
+endpoints (`chat.controller.ts` and the now-removed `embed.controller.ts`) —
+both registered the exact same route, and neither could express "which of
+this business's N web channels" the snippet was for. Both were removed.
+
+The snippet is now generated per channel: `GET
+/channels/:channelId/embed-snippet` (`ChannelsController` /
+`ChannelsService.getEmbedSnippet`). `businessId` comes from the JWT, not the
+URL, so the snippet is only returned if the channel belongs to the caller's
+business.
+Output: `<script src="..." data-channel-id="{channelId}"
+data-business-id="{businessId}" defer></script>` — `data-business-id` is kept
+for debug/analytics only, the widget must look the channel up by
+`data-channel-id`.
+
 ## Not yet migrated
 
 Controllers/endpoints out of scope for this change (left on `business_id`
-only, to be revisited separately): `GET /chat/embed-snippet` (both the one in
-`chat.controller.ts` and the duplicate in `embed.controller.ts`), and the
-admin inbox endpoints (`GET /chat/conversations`, `GET
-/chat/conversations/:id`, `PATCH /chat/conversations/:id/status`), which are
-authenticated and already scoped by the caller's own `business_id`.
+only, to be revisited separately): the admin inbox endpoints (`GET
+/chat/conversations`, `GET /chat/conversations/:id`, `PATCH
+/chat/conversations/:id/status`), which are authenticated and already scoped
+by the caller's own `business_id`.

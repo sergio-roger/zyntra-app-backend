@@ -31,7 +31,7 @@ export class ChatbotController {
 
   @Get('config')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Get chatbot configuration' })
+  @ApiOperation({ summary: 'Obtiene la configuración del chatbot' })
   @ApiOkResponse({ description: 'Chatbot configuration' })
   async getConfig(@Req() req: RequestWithUser) {
     const businessId = (req.user as { id?: string }).id;
@@ -41,7 +41,7 @@ export class ChatbotController {
 
   @Put('config')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update chatbot configuration' })
+  @ApiOperation({ summary: 'Actualiza la configuración del chatbot' })
   @ApiOkResponse({ description: 'Updated configuration' })
   async updateConfig(
     @Req() req: RequestWithUser,
@@ -55,7 +55,7 @@ export class ChatbotController {
   @Post('config')
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create default chatbot configuration' })
+  @ApiOperation({ summary: 'Crea la configuración por defecto del chatbot' })
   @ApiCreatedResponse({ description: 'Configuration created' })
   async createConfig(@Req() req: RequestWithUser) {
     const businessId = (req.user as { id?: string }).id;
@@ -65,7 +65,7 @@ export class ChatbotController {
 
   @Post('config/ensure')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Get or create chatbot configuration' })
+  @ApiOperation({ summary: 'Obtiene o crea la configuración del chatbot' })
   @ApiOkResponse({ description: 'Existing or newly created configuration' })
   async ensureConfig(@Req() req: RequestWithUser) {
     const businessId = (req.user as { id?: string }).id;

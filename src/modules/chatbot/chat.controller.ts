@@ -4,9 +4,7 @@ import { ChatRequestDto, ChatResponseDto } from '@chatbot/dto/chat.dto';
 import { LeadCaptureDto } from '@chatbot/dto/lead-capture.dto';
 import { ChatRateLimitGuard } from '@chatbot/guards/chat-rate-limit.guard';
 import { Public } from '@common/decorators/public.decorator';
-import { Roles } from '@common/decorators/roles.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
-import { UserRole } from '@crm/enums/user-role.enum';
 import {
   Body,
   Controller,
@@ -40,7 +38,7 @@ export class ChatController {
 
   @Public()
   @Get('public-config')
-  @ApiOperation({ summary: 'Get public chatbot configuration' })
+  @ApiOperation({ summary: 'Obtiene la configuración pública del chatbot' })
   @ApiOkResponse({ description: 'Public chatbot config' })
   async getPublicConfig(
     @Query('business_id') businessId: string,
@@ -59,7 +57,7 @@ export class ChatController {
   @Get('conversations')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'List conversations (inbox)' })
+  @ApiOperation({ summary: 'Lista las conversaciones (bandeja de entrada)' })
   @ApiOkResponse({ description: 'List of conversations' })
   async listConversations(
     @Req() req: RequestWithUser,
@@ -75,7 +73,9 @@ export class ChatController {
   @Get('conversations/:id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get conversation detail with messages' })
+  @ApiOperation({
+    summary: 'Obtiene el detalle de una conversación con sus mensajes',
+  })
   @ApiOkResponse({ description: 'Conversation with messages' })
   async getConversation(@Req() req: RequestWithUser, @Param('id') id: string) {
     const businessId = (req.user as { id?: string }).id;
@@ -89,7 +89,7 @@ export class ChatController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Update conversation status (open/closed/bot/human)',
+    summary: 'Actualiza el estado de una conversación (open/closed/bot/human)',
   })
   async updateConversationStatus(
     @Req() req: RequestWithUser,
@@ -102,25 +102,11 @@ export class ChatController {
     return this.chatService.updateConversationStatus(businessId, id, status);
   }
 
-  @Get('embed-snippet')
-  @UseGuards(JwtAuthGuard)
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get chatbot embed snippet' })
-  @ApiOkResponse({ description: 'HTML embed snippet' })
-  getEmbedSnippet(@Req() req: RequestWithUser) {
-    const businessId = (req.user as { id?: string }).id;
-    if (!businessId) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-    return { snippet: `<script src="/embed.js?b=${businessId}"></script>` };
-  }
-
   @Public()
   @UseGuards(ChatRateLimitGuard)
   @Post('chat')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send chat message' })
+  @ApiOperation({ summary: 'Envía un mensaje de chat' })
   @ApiOkResponse({ description: 'AI response message' })
   async chat(
     @Body() request: ChatRequestDto,
@@ -136,7 +122,7 @@ export class ChatController {
 
   @Public()
   @Post('lead-capture')
-  @ApiOperation({ summary: 'Capture lead from chatbot' })
+  @ApiOperation({ summary: 'Captura un lead desde el chatbot' })
   @ApiCreatedResponse({ description: 'Lead captured' })
   async leadCapture(
     @Body() dto: LeadCaptureDto,

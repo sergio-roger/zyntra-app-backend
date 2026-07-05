@@ -18,7 +18,6 @@ import { ChatbotController } from './chatbot.controller';
 import { ChatbotService } from './chatbot.service';
 import { ChatService, AGENT_RESPONSE_QUEUE } from './chat.service';
 import { ChatController } from './chat.controller';
-import { EmbedController } from './embed.controller';
 import { ChatGateway } from './chat.gateway';
 import { InternalCallbackController } from './internal-callback.controller';
 import { ChatRateLimitGuard } from './guards/chat-rate-limit.guard';
@@ -46,12 +45,7 @@ import { AiModule } from '../ai/ai.module';
     AiModule,
     ChannelsModule,
   ],
-  controllers: [
-    ChatbotController,
-    ChatController,
-    EmbedController,
-    InternalCallbackController,
-  ],
+  controllers: [ChatbotController, ChatController, InternalCallbackController],
   providers: [ChatbotService, ChatService, ChatGateway, ChatRateLimitGuard],
   exports: [ChatService],
 })

@@ -430,6 +430,49 @@ describe('ChannelsService', () => {
     });
   });
 
+  describe('getEmbedSnippet()', () => {
+    it('returns a channel-scoped snippet for a web_chat channel', async () => {
+      const channel = {
+        id: 'chan-1',
+        business_id: 'biz-1',
+        channelType: WEB_CHAT_TYPE,
+      } as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      const result = await service.getEmbedSnippet('biz-1', 'chan-1');
+
+      expect(result.channel_id).toBe('chan-1');
+      expect(result.business_id).toBe('biz-1');
+      expect(result.snippet).toContain('data-channel-id="chan-1"');
+      expect(result.snippet).toContain('data-business-id="biz-1"');
+      expect(channelRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 'chan-1', business_id: 'biz-1' },
+        relations: ['channelType'],
+      });
+    });
+
+    it('throws NotFoundException when the channel does not belong to the business', async () => {
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.getEmbedSnippet('biz-1', 'chan-other-business'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException for a non-web_chat channel', async () => {
+      const channel = {
+        id: 'chan-2',
+        business_id: 'biz-1',
+        channelType: FACEBOOK_TYPE,
+      } as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      await expect(
+        service.getEmbedSnippet('biz-1', 'chan-2'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
   describe('update() — soft-disable via status', () => {
     it('sets status to INACTIVE without deleting the row', async () => {
       const channel = {
