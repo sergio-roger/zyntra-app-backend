@@ -1,4 +1,6 @@
 import { ChatGateway } from '../chat.gateway';
+import { JwtService } from '@nestjs/jwt';
+import { Socket } from 'socket.io';
 
 const makeSocket = (auth: Record<string, unknown>) => ({
   id: 'socket-1',
@@ -12,13 +14,13 @@ describe('ChatGateway.handleConnection() — channel-scoped room', () => {
   let gateway: ChatGateway;
 
   beforeEach(() => {
-    gateway = new ChatGateway({ verify: jest.fn() } as any);
+    gateway = new ChatGateway({ verify: jest.fn() } as unknown as JwtService);
   });
 
   it('joins both business:{id} and channel:{id} rooms when channelId is provided', () => {
     const client = makeSocket({ businessId: 'biz-1', channelId: 'chan-1' });
 
-    gateway.handleConnection(client as any);
+    gateway.handleConnection(client as unknown as Socket);
 
     expect(client.join).toHaveBeenCalledWith('business:biz-1');
     expect(client.join).toHaveBeenCalledWith('channel:chan-1');
@@ -28,7 +30,7 @@ describe('ChatGateway.handleConnection() — channel-scoped room', () => {
   it('joins only business:{id} when channelId is absent (pre-migration widgets)', () => {
     const client = makeSocket({ businessId: 'biz-1' });
 
-    gateway.handleConnection(client as any);
+    gateway.handleConnection(client as unknown as Socket);
 
     expect(client.join).toHaveBeenCalledWith('business:biz-1');
     expect(client.join).not.toHaveBeenCalledWith(
@@ -39,7 +41,7 @@ describe('ChatGateway.handleConnection() — channel-scoped room', () => {
   it('still rejects sockets with neither businessId nor a JWT token', () => {
     const client = makeSocket({ channelId: 'chan-1' });
 
-    gateway.handleConnection(client as any);
+    gateway.handleConnection(client as unknown as Socket);
 
     expect(client.disconnect).toHaveBeenCalled();
     expect(client.join).not.toHaveBeenCalled();

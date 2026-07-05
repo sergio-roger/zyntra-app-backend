@@ -1,6 +1,7 @@
 import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatRateLimitGuard } from '../guards/chat-rate-limit.guard';
+import Redis from 'ioredis';
 
 const makeRedis = () => ({
   incr: jest.fn(),
@@ -26,7 +27,7 @@ describe('ChatRateLimitGuard', () => {
   beforeEach(() => {
     redis = makeRedis();
     guard = new ChatRateLimitGuard(
-      redis as any,
+      redis as unknown as Redis,
       makeConfig({ CHAT_RATE_LIMIT_MAX: 3, CHAT_RATE_LIMIT_WINDOW_SEC: 60 }),
     );
   });

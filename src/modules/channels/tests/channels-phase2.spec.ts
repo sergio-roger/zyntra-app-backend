@@ -261,10 +261,12 @@ describe('ChannelsService', () => {
   describe('create()', () => {
     it('creates a web_chat channel and returns embedCode', async () => {
       (channelTypeRepo.findOne as jest.Mock).mockResolvedValue(WEB_CHAT_TYPE);
-      (channelRepo.save as jest.Mock).mockImplementation((entity) => {
-        entity.id = entity.id ?? 'new-chan';
-        return Promise.resolve(entity);
-      });
+      (channelRepo.save as jest.Mock).mockImplementation(
+        (entity: { id?: string }) => {
+          entity.id = entity.id ?? 'new-chan';
+          return Promise.resolve(entity);
+        },
+      );
       (credentialRepo.save as jest.Mock).mockResolvedValue({});
 
       const result = await service.create('biz-1', {
@@ -465,9 +467,9 @@ describe('ChannelsService', () => {
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
 
-      await expect(
-        service.getEmbedSnippet('biz-1', 'chan-2'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.getEmbedSnippet('biz-1', 'chan-2')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

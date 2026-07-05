@@ -67,7 +67,13 @@ export class WebChatChannelProvider implements ChannelProvider {
     const name = (config.name as string | undefined) ?? 'Asistente';
     const greeting = (config.greeting as string | undefined) ?? '';
 
-    const resolvedConfig = { ...config, position, primaryColor, name, greeting };
+    const resolvedConfig = {
+      ...config,
+      position,
+      primaryColor,
+      name,
+      greeting,
+    };
 
     const embedCode = buildEmbedSnippet({
       channelId,

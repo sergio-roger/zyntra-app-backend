@@ -22,11 +22,7 @@ import { AiModule } from '../ai/ai.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Contact,
-      Business,
-      LifecycleStage,
-    ]),
+    TypeOrmModule.forFeature([Contact, Business, LifecycleStage]),
     MongooseModule.forFeature([
       { name: Conversation.name, schema: ConversationSchema },
       { name: Message.name, schema: MessageSchema },

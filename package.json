@@ -1,8 +1,8 @@
 {
   "name": "backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Zyntra Chat Backend: API and Core Logic.",
+  "author": "Sergio Floreano",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
