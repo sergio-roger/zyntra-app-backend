@@ -423,6 +423,13 @@ export const MENUS_DATA = [
     description: null,
   },
   {
+    key: 'settings_my_channels',
+    label: 'Mis Canales',
+    path: '/settings/my-channels',
+    parent_key: 'settings_business',
+    description: null,
+  },
+  {
     key: 'settings_agents',
     label: 'Agentes',
     path: '/settings/agents',
