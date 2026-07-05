@@ -7,7 +7,7 @@ import {
   MinLength,
   IsEnum,
 } from 'class-validator';
-import { ChannelStatus } from '../entities/channel.entity';
+import { ChannelStatus } from '@/modules/channels/entities/channel.entity';
 
 export class UpdateChannelDto {
   @ApiPropertyOptional()

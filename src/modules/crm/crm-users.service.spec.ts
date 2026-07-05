@@ -7,6 +7,7 @@ import { Business } from '@auth/entities/business.entity';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { UserStatus } from '@crm/enums/user-status.enum';
+import { StorageClientService } from '@/storage-client/storage-client.service';
 
 const mockBusiness = {
   id: 'business-uuid-1234',
@@ -33,6 +34,10 @@ describe('CrmUsersService', () => {
     softRemove: jest.fn(),
   };
 
+  const mockStorageClient = {
+    getSignedUrl: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -40,6 +45,10 @@ describe('CrmUsersService', () => {
         {
           provide: getRepositoryToken(User),
           useValue: mockRepository,
+        },
+        {
+          provide: StorageClientService,
+          useValue: mockStorageClient,
         },
       ],
     }).compile();
@@ -68,7 +77,9 @@ describe('CrmUsersService', () => {
         relations: ['teams'],
         order: { createdAt: 'ASC' },
       });
-      expect(result).toEqual(usersList);
+      expect(result).toEqual(
+        usersList.map((user) => ({ ...user, avatarUrl: null })),
+      );
     });
   });
 

@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -20,9 +22,15 @@ import { ChatbotConfig } from './entities/chatbot-config.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { ContactSource } from '@crm/enums/contact-source.enum';
 import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
-import { Channel } from '@/modules/channels/entities/channel.entity';
+import {
+  Channel,
+  ChannelStatus,
+} from '@/modules/channels/entities/channel.entity';
+import { ChannelsService } from '@/modules/channels/channels.service';
+import { isOriginAllowed } from '@/modules/channels/utils/origin.util';
 import { ChatGateway } from './chat.gateway';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
+import { LeadCaptureDto } from './dto/lead-capture.dto';
 import type { AiService } from '../ai/ai.service';
 
 export const AGENT_RESPONSE_QUEUE = 'agent-response';
@@ -33,6 +41,7 @@ const FALLBACK_MESSAGE =
 
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
   private readonly serviceToken: string;
 
   constructor(
@@ -46,8 +55,7 @@ export class ChatService {
     private contactsRepo: Repository<Contact>,
     @InjectRepository(LifecycleStage)
     private stageRepo: Repository<LifecycleStage>,
-    @InjectRepository(Channel)
-    private channelRepo: Repository<Channel>,
+    private readonly channelsService: ChannelsService,
     @InjectQueue(AGENT_RESPONSE_QUEUE)
     private agentQueue: Queue,
     private readonly chatGateway: ChatGateway,
@@ -57,28 +65,96 @@ export class ChatService {
   }
 
   // ---------------------------------------------------------------------------
+  // Channel resolution (a business can have N web_chat channels)
+  // ---------------------------------------------------------------------------
+  /**
+   * Resolution order: explicit channel_id first, then fall back to
+   * business_id (pre-migration embeds). Returns `useLegacy: true` only when
+   * the business has no Channel rows at all — i.e. it never migrated off
+   * ChatbotConfig — so existing legacy behaviour keeps working unchanged.
+   */
+  private async resolveChannel(
+    businessId: string,
+    channelId?: string,
+  ): Promise<
+    { channel: Channel; useLegacy: false } | { channel: null; useLegacy: true }
+  > {
+    if (channelId) {
+      const channel = await this.channelsService.findByChannelId(channelId);
+      if (!channel || channel.status !== ChannelStatus.ACTIVE) {
+        throw new NotFoundException('Canal no encontrado o inactivo');
+      }
+      if (channel.business_id !== businessId) {
+        this.logger.warn(
+          `channel_id=${channelId} belongs to business_id=${channel.business_id}, ` +
+            `not the request's business_id=${businessId}. Using the channel's own business_id.`,
+        );
+      }
+      return { channel, useLegacy: false };
+    }
+
+    const channels = await this.channelsService.findAllByBusiness(businessId);
+    if (channels.length === 0) {
+      return { channel: null, useLegacy: true };
+    }
+
+    const active = channels.filter((c) => c.status === ChannelStatus.ACTIVE);
+    if (active.length === 0) {
+      throw new NotFoundException('Este negocio no tiene canales web activos');
+    }
+    if (active.length > 1) {
+      this.logger.warn(
+        `business_id=${businessId} has ${active.length} active web_chat channels; ` +
+          `this embed is resolving by business_id and should be updated to send ` +
+          `channel_id explicitly. Using channel_id=${active[0].id}.`,
+      );
+    }
+    return { channel: active[0], useLegacy: false };
+  }
+
+  private assertOriginAllowed(
+    channel: Channel,
+    origin?: string,
+    referer?: string,
+  ): void {
+    const allowedDomains = (channel.config as { allowedDomains?: unknown })
+      ?.allowedDomains;
+    if (!isOriginAllowed(allowedDomains, origin, referer)) {
+      throw new ForbiddenException(
+        'Este dominio no está autorizado para este canal',
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Main chat handler (refactored Phase 4)
   // ---------------------------------------------------------------------------
   async processChat(
     request: ChatRequestDto,
     ip?: string,
+    origin?: string,
+    referer?: string,
   ): Promise<ChatResponseDto> {
-    const { message, business_id, conversation_id } = request;
+    const { message, business_id, channel_id, conversation_id } = request;
 
     if (!business_id) {
       throw new BadRequestException('business_id es requerido');
     }
 
-    // 1. Resolve the web_chat channel for this business
-    const channel = await this.channelRepo.findOne({
-      where: { business_id, channelType: { key: 'web_chat' } },
-      relations: ['channelType'],
-    });
+    // 1. Resolve the web_chat channel (channel_id first, business_id fallback)
+    const resolution = await this.resolveChannel(business_id, channel_id);
 
-    // Fall back to legacy behaviour (no channel yet) — use chatbot_config
-    if (!channel) {
+    // Fall back to legacy behaviour (business never migrated to Channel) — use chatbot_config
+    if (resolution.useLegacy) {
       return this.legacyProcessChat(request, ip);
     }
+
+    const channel = resolution.channel;
+    this.assertOriginAllowed(channel, origin, referer);
+
+    // Tenant identity comes from the resolved channel row, not the
+    // caller-supplied business_id (kept only for logging/analytics above).
+    const effectiveBusinessId = channel.business_id;
 
     // 2. Find or create conversation (keyed by channel + visitor fingerprint)
     const fingerprint = request.visitor?.fingerprint ?? ip ?? 'anonymous';
@@ -86,11 +162,11 @@ export class ChatService {
       ? await this.conversationModel.findById(conversation_id)
       : null;
 
-    if (!conversation || conversation.business_id !== business_id) {
+    if (!conversation || conversation.business_id !== effectiveBusinessId) {
       if (!conversation_id) {
         // Check for an existing open conversation with same fingerprint+channel
         conversation = await this.conversationModel.findOne({
-          business_id,
+          business_id: effectiveBusinessId,
           channel_id: channel.id,
           'visitor.fingerprint': fingerprint,
           status: 'open',
@@ -100,7 +176,7 @@ export class ChatService {
 
     if (!conversation) {
       conversation = await this.conversationModel.create({
-        business_id,
+        business_id: effectiveBusinessId,
         channel_id: channel.id,
         channel: 'web_chat',
         status: 'open',
@@ -142,7 +218,7 @@ export class ChatService {
           conversationId: conversationIdStr,
           channelId: channel.id,
           agentId: channel.agent_id,
-          businessId: business_id,
+          businessId: effectiveBusinessId,
           jobId,
         },
         { jobId },
@@ -171,7 +247,7 @@ export class ChatService {
     );
 
     this.chatGateway.emitNewMessage(
-      business_id,
+      effectiveBusinessId,
       conversationIdStr,
       FALLBACK_MESSAGE,
       'assistant',
@@ -426,32 +502,59 @@ export class ChatService {
   // ---------------------------------------------------------------------------
   // Existing helpers (kept for backward compat)
   // ---------------------------------------------------------------------------
-  async getPublicConfig(businessId: string) {
-    const config = await this.configRepo.findOne({
-      where: { business_id: businessId },
-      select: [
-        'name',
-        'welcome_message',
-        'tone',
-        'locale',
-        'theme',
-        'is_active',
-      ],
-    });
-    if (!config) throw new NotFoundException('Chatbot no encontrado');
-    return config;
+  async getPublicConfig(
+    businessId: string,
+    channelId?: string,
+    origin?: string,
+    referer?: string,
+  ) {
+    const resolution = await this.resolveChannel(businessId, channelId);
+
+    if (resolution.useLegacy) {
+      const config = await this.configRepo.findOne({
+        where: { business_id: businessId },
+        select: [
+          'name',
+          'welcome_message',
+          'tone',
+          'locale',
+          'theme',
+          'is_active',
+        ],
+      });
+      if (!config) throw new NotFoundException('Chatbot no encontrado');
+      return config;
+    }
+
+    const { channel } = resolution;
+    this.assertOriginAllowed(channel, origin, referer);
+
+    const cfg = channel.config as Record<string, unknown>;
+    return {
+      channel_id: channel.id,
+      business_id: channel.business_id,
+      name: (cfg?.name as string) ?? 'Asistente',
+      theme: (cfg?.theme as string) ?? 'auto',
+      position: (cfg?.position as string) ?? 'bottom-right',
+      primaryColor: (cfg?.primaryColor as string) ?? '#6366f1',
+      greeting: (cfg?.greeting as string) ?? '',
+      is_active: channel.status === ChannelStatus.ACTIVE,
+    };
   }
 
-  async captureLead(dto: {
-    business_id: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    conversation_id?: string;
-  }) {
-    const { business_id: businessId, name, email, phone } = dto;
+  async captureLead(
+    dto: LeadCaptureDto,
+    origin?: string,
+    referer?: string,
+  ) {
+    const { business_id: businessId, channel_id, name, email, phone } = dto;
     if (!email && !phone) {
       throw new BadRequestException('Email o phone requerido');
+    }
+
+    const resolution = await this.resolveChannel(businessId, channel_id);
+    if (!resolution.useLegacy) {
+      this.assertOriginAllowed(resolution.channel, origin, referer);
     }
 
     const existing = email

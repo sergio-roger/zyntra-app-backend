@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ChannelProvider } from '../interfaces/channel-provider.interface';
-import { WebChatChannelProvider } from './web-chat-channel.provider';
-import { FacebookChannelProvider } from './facebook-channel.provider';
-import { TelegramChannelProvider } from './telegram-channel.provider';
+import { ChannelProvider } from '@/modules/channels/interfaces/channel-provider.interface';
+import { WebChatChannelProvider } from '@/modules/channels/providers/web-chat-channel.provider';
+import { FacebookChannelProvider } from '@/modules/channels/providers/facebook-channel.provider';
+import { TelegramChannelProvider } from '@/modules/channels/providers/telegram-channel.provider';
 
 @Injectable()
 export class ChannelProviderFactory {

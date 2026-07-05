@@ -3,7 +3,7 @@ import {
   ChannelProvider,
   ChannelSetupResult,
   IncomingMessage,
-} from '../interfaces/channel-provider.interface';
+} from '@/modules/channels/interfaces/channel-provider.interface';
 
 export class TelegramChannelProvider implements ChannelProvider {
   validateConfig(): void {

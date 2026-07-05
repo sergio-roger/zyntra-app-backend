@@ -10,8 +10,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
-import { ChannelType } from './channel-type.entity';
-import { ChannelCredential } from './channel-credential.entity';
+import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
+import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
 
 export enum ChannelStatus {
   ACTIVE = 'active',

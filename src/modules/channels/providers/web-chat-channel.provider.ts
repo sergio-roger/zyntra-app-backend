@@ -3,7 +3,7 @@ import {
   ChannelProvider,
   ChannelSetupResult,
   IncomingMessage,
-} from '../interfaces/channel-provider.interface';
+} from '@/modules/channels/interfaces/channel-provider.interface';
 
 const VALID_POSITIONS = ['bottom-left', 'bottom-right'] as const;
 const HEX_COLOR_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;

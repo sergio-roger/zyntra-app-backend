@@ -2,6 +2,7 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { ChatService } from '@chatbot/chat.service';
 import { ChatRequestDto, ChatResponseDto } from '@chatbot/dto/chat.dto';
 import { LeadCaptureDto } from '@chatbot/dto/lead-capture.dto';
+import { ChatRateLimitGuard } from '@chatbot/guards/chat-rate-limit.guard';
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
@@ -41,8 +42,18 @@ export class ChatController {
   @Get('public-config')
   @ApiOperation({ summary: 'Get public chatbot configuration' })
   @ApiOkResponse({ description: 'Public chatbot config' })
-  async getPublicConfig(@Query('business_id') businessId: string) {
-    return this.chatService.getPublicConfig(businessId);
+  async getPublicConfig(
+    @Query('business_id') businessId: string,
+    @Query('channel_id') channelId?: string,
+    @Headers('origin') origin?: string,
+    @Headers('referer') referer?: string,
+  ) {
+    return this.chatService.getPublicConfig(
+      businessId,
+      channelId,
+      origin,
+      referer,
+    );
   }
 
   @Get('conversations')
@@ -106,6 +117,7 @@ export class ChatController {
   }
 
   @Public()
+  @UseGuards(ChatRateLimitGuard)
   @Post('chat')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send chat message' })
@@ -113,18 +125,24 @@ export class ChatController {
   async chat(
     @Body() request: ChatRequestDto,
     @Headers('x-forwarded-for') ip?: string,
+    @Headers('origin') origin?: string,
+    @Headers('referer') referer?: string,
   ): Promise<ChatResponseDto> {
     this.logger.debug(
-      `chat message received: business_id=${request.business_id ?? 'unknown'} conversation_id=${request.conversation_id ?? 'new'} channel=${request.channel ?? 'web'} length=${request.message.length} ip=${ip ?? 'unknown'}`,
+      `chat message received: business_id=${request.business_id ?? 'unknown'} channel_id=${request.channel_id ?? 'none'} conversation_id=${request.conversation_id ?? 'new'} channel=${request.channel ?? 'web'} length=${request.message.length} ip=${ip ?? 'unknown'}`,
     );
-    return this.chatService.processChat(request, ip);
+    return this.chatService.processChat(request, ip, origin, referer);
   }
 
   @Public()
   @Post('lead-capture')
   @ApiOperation({ summary: 'Capture lead from chatbot' })
   @ApiCreatedResponse({ description: 'Lead captured' })
-  async leadCapture(@Body() dto: LeadCaptureDto) {
-    return this.chatService.captureLead(dto);
+  async leadCapture(
+    @Body() dto: LeadCaptureDto,
+    @Headers('origin') origin?: string,
+    @Headers('referer') referer?: string,
+  ) {
+    return this.chatService.captureLead(dto, origin, referer);
   }
 }

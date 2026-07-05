@@ -23,10 +23,22 @@ export class ChatRequestDto {
   @IsMongoId()
   conversation_id?: string;
 
-  @ApiPropertyOptional({ description: 'UUID of the target Business' })
+  @ApiProperty({
+    description:
+      'UUID of the target Business. Still required for traceability/analytics ' +
+      'and as a fallback when channel_id is not provided.',
+  })
+  @IsUUID()
+  business_id: string;
+
+  @ApiPropertyOptional({
+    description:
+      'UUID of the target Channel (channels.id). Takes priority over ' +
+      'business_id for resolving which web_chat channel handles the request.',
+  })
   @IsOptional()
   @IsUUID()
-  business_id?: string;
+  channel_id?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

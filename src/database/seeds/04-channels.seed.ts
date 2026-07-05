@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { ChannelType } from '../../modules/channels/entities/channel-type.entity';
+import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
 import { Seeder } from './seeder.interface';
 
 const CHANNEL_TYPES_SEED = [

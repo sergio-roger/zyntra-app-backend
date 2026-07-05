@@ -8,7 +8,7 @@ import { ChatbotConfig } from './entities/chatbot-config.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { Business } from '../auth/entities/business.entity';
 import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
-import { Channel } from '@/modules/channels/entities/channel.entity';
+import { ChannelsModule } from '@/modules/channels/channels.module';
 import {
   Conversation,
   ConversationSchema,
@@ -21,17 +21,12 @@ import { ChatController } from './chat.controller';
 import { EmbedController } from './embed.controller';
 import { ChatGateway } from './chat.gateway';
 import { InternalCallbackController } from './internal-callback.controller';
+import { ChatRateLimitGuard } from './guards/chat-rate-limit.guard';
 import { AiModule } from '../ai/ai.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      ChatbotConfig,
-      Contact,
-      Business,
-      LifecycleStage,
-      Channel,
-    ]),
+    TypeOrmModule.forFeature([ChatbotConfig, Contact, Business, LifecycleStage]),
     MongooseModule.forFeature([
       { name: Conversation.name, schema: ConversationSchema },
       { name: Message.name, schema: MessageSchema },
@@ -44,6 +39,7 @@ import { AiModule } from '../ai/ai.module';
     }),
     BullModule.registerQueue({ name: AGENT_RESPONSE_QUEUE }),
     AiModule,
+    ChannelsModule,
   ],
   controllers: [
     ChatbotController,
@@ -51,7 +47,7 @@ import { AiModule } from '../ai/ai.module';
     EmbedController,
     InternalCallbackController,
   ],
-  providers: [ChatbotService, ChatService, ChatGateway],
+  providers: [ChatbotService, ChatService, ChatGateway, ChatRateLimitGuard],
   exports: [ChatService],
 })
 export class ChatbotModule {}

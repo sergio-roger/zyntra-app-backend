@@ -17,6 +17,8 @@ interface SocketContext {
   kind: ClientKind;
   /** Tenant the socket belongs to. */
   businessId: string;
+  /** Set for visitors that identify a specific channel (post-migration widgets). */
+  channelId?: string;
   /** Set for visitors as soon as they identify a conversation. */
   conversationId?: string;
   /** Business id from JWT (agents only). */
@@ -29,6 +31,9 @@ interface SocketContext {
  *
  * Rooms:
  *   business:{id}        → agents of a business + visitors of it (for list refresh)
+ *   channel:{id}         → visitors of a specific channel, joined when channelId is
+ *                          provided (prevents two web widgets of the same business
+ *                          from crossing messages once events are scoped to it)
  *   conversation:{id}    → both ends of a single conversation (visitor + agents)
  *
  * Each socket carries a SocketContext in `socket.data` so we can route events
@@ -60,6 +65,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Visitor (widget) flow — no JWT, must declare businessId.
     if (!token) {
       const businessId = auth.businessId as string | undefined;
+      const channelId = auth.channelId as string | undefined;
       const conversationId = auth.conversationId as string | undefined;
       if (!businessId) {
         this.logger.warn(
@@ -71,10 +77,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const ctx: SocketContext = {
         kind: 'visitor',
         businessId,
+        channelId,
         conversationId,
       };
       client.data = ctx;
       void client.join(`business:${businessId}`);
+      if (channelId) void client.join(`channel:${channelId}`);
       if (conversationId) this.attachToConversation(client, conversationId);
       return;
     }

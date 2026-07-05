@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Channel } from './channel.entity';
+import { Channel } from '@/modules/channels/entities/channel.entity';
 
 @Entity({ name: 'channel_types', schema: 'public' })
 export class ChannelType {

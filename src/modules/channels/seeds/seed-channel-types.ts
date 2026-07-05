@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
-import { ChannelType } from '../entities/channel-type.entity';
+import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
 
 dotenv.config();
 

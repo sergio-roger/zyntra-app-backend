@@ -21,10 +21,10 @@ import {
 import { Roles } from '@common/decorators/roles.decorator';
 import { UserRole } from '@crm/enums/user-role.enum';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
-import { ChannelsService } from './channels.service';
-import { CreateChannelDto } from './dto/create-channel.dto';
-import { UpdateChannelDto } from './dto/update-channel.dto';
-import { AssignAgentDto } from './dto/assign-agent.dto';
+import { ChannelsService } from '@/modules/channels/channels.service';
+import { CreateChannelDto } from '@/modules/channels/dto/create-channel.dto';
+import { UpdateChannelDto } from '@/modules/channels/dto/update-channel.dto';
+import { AssignAgentDto } from '@/modules/channels/dto/assign-agent.dto';
 
 @ApiTags('Channels')
 @ApiBearerAuth()

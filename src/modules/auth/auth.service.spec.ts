@@ -15,9 +15,17 @@ import { User } from './entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { UserStatus } from '@crm/enums/user-status.enum';
 import { Role } from './entities/role.entity';
-import { Menu } from './entities/menu.entity';
 import { Permission } from './entities/permission.entity';
 import { AvatarStorageService } from './avatar-storage.service';
+import { UserService } from './user.service';
+import { RoleService } from './role.service';
+import { PermissionService } from './permission.service';
+import { MenuService } from './menu.service';
+import { StorageClientService } from '@/storage-client/storage-client.service';
+
+// AuthService ahora delega login/register/perfil a UserService y la gestión de
+// roles a RoleService — se instancian reales aquí (con sus repos mockeados)
+// para conservar la cobertura de comportamiento en lugar de mockearlos como cajas negras.
 
 let HASHED = '';
 
@@ -92,7 +100,6 @@ describe('AuthService — unified login', () => {
     remove: jest.fn(),
     createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
   };
-  const menuRepo = { find: jest.fn() };
   const permissionRepo = { find: jest.fn(), delete: jest.fn() };
 
   const jwtService = { sign: jest.fn().mockReturnValue('mock-token') };
@@ -104,18 +111,30 @@ describe('AuthService — unified login', () => {
     delete: jest.fn().mockResolvedValue(undefined),
   };
 
+  const storageClient = {
+    uploadFile: jest.fn().mockResolvedValue({ id: 'file-id-1' }),
+    getSignedUrl: jest
+      .fn()
+      .mockResolvedValue('http://localhost:3000/signed/avatar.png'),
+    deleteFile: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
+        UserService,
+        RoleService,
         { provide: getRepositoryToken(Business), useValue: businessRepo },
         { provide: getRepositoryToken(Plan), useValue: planRepo },
         { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: getRepositoryToken(Role), useValue: roleRepo },
-        { provide: getRepositoryToken(Menu), useValue: menuRepo },
         { provide: getRepositoryToken(Permission), useValue: permissionRepo },
         { provide: JwtService, useValue: jwtService },
         { provide: AvatarStorageService, useValue: avatarStorage },
+        { provide: StorageClientService, useValue: storageClient },
+        { provide: PermissionService, useValue: {} },
+        { provide: MenuService, useValue: {} },
       ],
     }).compile();
 
@@ -481,7 +500,7 @@ describe('AuthService — unified login', () => {
           }),
         ).rejects.toThrow(BadRequestException);
 
-        expect(avatarStorage.save).not.toHaveBeenCalled();
+        expect(storageClient.uploadFile).not.toHaveBeenCalled();
       });
 
       it('rejects files that exceed the maximum size', async () => {
@@ -493,7 +512,7 @@ describe('AuthService — unified login', () => {
           }),
         ).rejects.toThrow(BadRequestException);
 
-        expect(avatarStorage.save).not.toHaveBeenCalled();
+        expect(storageClient.uploadFile).not.toHaveBeenCalled();
       });
 
       it('saves a valid file and returns the new avatarUrl', async () => {
@@ -506,9 +525,9 @@ describe('AuthService — unified login', () => {
           size: 100,
         });
 
-        expect(avatarStorage.save).toHaveBeenCalled();
+        expect(storageClient.uploadFile).toHaveBeenCalled();
         expect(result.avatarUrl).toBe(
-          'http://localhost:3000/uploads/avatars/new.png',
+          'http://localhost:3000/signed/avatar.png',
         );
       });
     });

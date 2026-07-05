@@ -12,6 +12,7 @@ import { PlanModuleGuard } from '@common/guards/plan-module.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { LoggingContextInterceptor } from '@common/interceptors/logging-context.interceptor';
 import { LoggerModule } from '@common/logging/logger.module';
+import { RedisModule } from '@common/redis/redis.module';
 import { CrmModule } from '@crm/crm.module';
 import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bullmq';
@@ -28,6 +29,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     }),
 
     LoggerModule,
+    RedisModule,
 
     HttpModule.register({
       timeout: 30000,

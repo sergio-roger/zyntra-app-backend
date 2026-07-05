@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -21,6 +22,7 @@ import {
   Channel,
   ChannelStatus,
 } from '@/modules/channels/entities/channel.entity';
+import { ChannelsService } from '@/modules/channels/channels.service';
 import { ChatGateway } from '../chat.gateway';
 
 // ---------------------------------------------------------------------------
@@ -54,6 +56,11 @@ const makeQueue = () => ({
   add: jest.fn().mockResolvedValue({ id: 'job-1' }),
 });
 
+const makeChannelsService = () => ({
+  findAllByBusiness: jest.fn().mockResolvedValue([]),
+  findByChannelId: jest.fn().mockResolvedValue(null),
+});
+
 const makeGateway = () => ({
   emitNewMessage: jest.fn(),
   emitConversationStatusChanged: jest.fn(),
@@ -78,14 +85,14 @@ const WEB_CHAT_CHANNEL_WITH_AGENT: Partial<Channel> = {
 let service: ChatService;
 let conversationModel: ReturnType<typeof makeMongoModel>;
 let messageModel: ReturnType<typeof makeMongoModel>;
-let channelRepo: Repository<Channel>;
+let channelsService: ReturnType<typeof makeChannelsService>;
 let agentQueue: ReturnType<typeof makeQueue>;
 let gateway: ReturnType<typeof makeGateway>;
 
 async function buildModule() {
   conversationModel = makeMongoModel();
   messageModel = makeMongoModel();
-  channelRepo = makeRepo<Channel>();
+  channelsService = makeChannelsService();
   agentQueue = makeQueue();
   gateway = makeGateway();
 
@@ -106,7 +113,7 @@ async function buildModule() {
         provide: getRepositoryToken(LifecycleStage),
         useValue: makeRepo<LifecycleStage>(),
       },
-      { provide: getRepositoryToken(Channel), useValue: channelRepo },
+      { provide: ChannelsService, useValue: channelsService },
       { provide: getQueueToken(AGENT_RESPONSE_QUEUE), useValue: agentQueue },
       { provide: ChatGateway, useValue: gateway },
       {
@@ -129,9 +136,9 @@ describe('ChatService.processChat() — channel WITH agent', () => {
   beforeEach(async () => {
     await buildModule();
 
-    (channelRepo.findOne as jest.Mock).mockResolvedValue(
+    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
       WEB_CHAT_CHANNEL_WITH_AGENT,
-    );
+    ]);
     // Simulate no existing conversation → create new one
     (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
     const fakeConv = {
@@ -184,7 +191,9 @@ describe('ChatService.processChat() — channel WITHOUT agent', () => {
   beforeEach(async () => {
     await buildModule();
 
-    (channelRepo.findOne as jest.Mock).mockResolvedValue(WEB_CHAT_CHANNEL); // no agent_id
+    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
+      WEB_CHAT_CHANNEL,
+    ]); // no agent_id
     (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
     const fakeConv = {
       _id: { toString: () => 'conv-456' },
@@ -233,7 +242,9 @@ describe('ChatService.processChat() — channel WITHOUT agent', () => {
 describe('ChatService: findOrCreate conversation', () => {
   beforeEach(async () => {
     await buildModule();
-    (channelRepo.findOne as jest.Mock).mockResolvedValue(WEB_CHAT_CHANNEL);
+    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
+      WEB_CHAT_CHANNEL,
+    ]);
     (messageModel.create as jest.Mock).mockResolvedValue({});
   });
 
@@ -379,5 +390,201 @@ describe('ChatService.updateConversationStatus()', () => {
       'conv-1',
       'closed',
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 6 – Channel resolution: channel_id priority, business_id fallback
+// ---------------------------------------------------------------------------
+describe('ChatService.processChat() — channel resolution', () => {
+  beforeEach(async () => {
+    await buildModule();
+    (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
+    (conversationModel.create as jest.Mock).mockResolvedValue({
+      _id: { toString: () => 'conv-res' },
+      business_id: 'biz-1',
+    });
+    (messageModel.create as jest.Mock).mockResolvedValue({});
+  });
+
+  afterEach(() => jest.clearAllMocks());
+
+  it('resolves by channel_id when provided, without consulting business_id fallback', async () => {
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
+      WEB_CHAT_CHANNEL,
+    );
+
+    await service.processChat({
+      business_id: 'biz-1',
+      channel_id: 'chan-web-1',
+      message: 'hola',
+    });
+
+    expect(channelsService.findByChannelId).toHaveBeenCalledWith(
+      'chan-web-1',
+    );
+    expect(channelsService.findAllByBusiness).not.toHaveBeenCalled();
+  });
+
+  it('throws NotFoundException when channel_id does not resolve to an active channel', async () => {
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      service.processChat({
+        business_id: 'biz-1',
+        channel_id: 'missing-chan',
+        message: 'hola',
+      }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('treats an INACTIVE channel resolved by channel_id as not found', async () => {
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
+      ...WEB_CHAT_CHANNEL,
+      status: ChannelStatus.INACTIVE,
+    });
+
+    await expect(
+      service.processChat({
+        business_id: 'biz-1',
+        channel_id: 'chan-web-1',
+        message: 'hola',
+      }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('falls back to business_id and uses the first active web channel when channel_id is absent', async () => {
+    const second = { ...WEB_CHAT_CHANNEL, id: 'chan-web-2' };
+    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
+      WEB_CHAT_CHANNEL,
+      second,
+    ]);
+
+    await service.processChat({ business_id: 'biz-1', message: 'hola' });
+
+    expect(channelsService.findAllByBusiness).toHaveBeenCalledWith('biz-1');
+    // conversation is created against the FIRST active channel (chan-web-1)
+    expect(conversationModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({ channel_id: 'chan-web-1' }),
+    );
+  });
+
+  it('ignores inactive channels when picking the business_id fallback', async () => {
+    const inactive = {
+      ...WEB_CHAT_CHANNEL,
+      id: 'chan-inactive',
+      status: ChannelStatus.INACTIVE,
+    };
+    const active = { ...WEB_CHAT_CHANNEL, id: 'chan-active' };
+    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
+      inactive,
+      active,
+    ]);
+
+    await service.processChat({ business_id: 'biz-1', message: 'hola' });
+
+    expect(conversationModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({ channel_id: 'chan-active' }),
+    );
+  });
+
+  it('throws NotFoundException when the business has channels but none are active', async () => {
+    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
+      { ...WEB_CHAT_CHANNEL, status: ChannelStatus.INACTIVE },
+    ]);
+
+    await expect(
+      service.processChat({ business_id: 'biz-1', message: 'hola' }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('falls back to the legacy chatbot_config flow when the business has zero channels', async () => {
+    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([]);
+
+    // legacyProcessChat will throw NotFoundException because ChatbotConfig repo
+    // (mocked via makeRepo) has no config for this business — that's enough to
+    // prove we reached the legacy path instead of resolving a Channel.
+    await expect(
+      service.processChat({ business_id: 'biz-1', message: 'hola' }),
+    ).rejects.toThrow(NotFoundException);
+    expect(channelsService.findByChannelId).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 7 – Origin/Referer validation against channel.config.allowedDomains
+// ---------------------------------------------------------------------------
+describe('ChatService.processChat() — allowed origin validation', () => {
+  beforeEach(async () => {
+    await buildModule();
+    (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
+    (conversationModel.create as jest.Mock).mockResolvedValue({
+      _id: { toString: () => 'conv-origin' },
+      business_id: 'biz-1',
+    });
+    (messageModel.create as jest.Mock).mockResolvedValue({});
+  });
+
+  afterEach(() => jest.clearAllMocks());
+
+  it('rejects with ForbiddenException when Origin does not match allowedDomains', async () => {
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
+      ...WEB_CHAT_CHANNEL,
+      config: { allowedDomains: ['example.com'] },
+    });
+
+    await expect(
+      service.processChat(
+        { business_id: 'biz-1', channel_id: 'chan-web-1', message: 'hola' },
+        undefined,
+        'https://evil.com',
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('allows the request when Origin matches an allowed domain', async () => {
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
+      ...WEB_CHAT_CHANNEL,
+      config: { allowedDomains: ['example.com'] },
+    });
+
+    const result = await service.processChat(
+      { business_id: 'biz-1', channel_id: 'chan-web-1', message: 'hola' },
+      undefined,
+      'https://example.com',
+    );
+
+    expect(result.conversation_id).toBe('conv-origin');
+  });
+
+  it('allows a subdomain of an allowed domain', async () => {
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
+      ...WEB_CHAT_CHANNEL,
+      config: { allowedDomains: ['example.com'] },
+    });
+
+    const result = await service.processChat(
+      { business_id: 'biz-1', channel_id: 'chan-web-1', message: 'hola' },
+      undefined,
+      undefined,
+      'https://app.example.com/widget',
+    );
+
+    expect(result.conversation_id).toBe('conv-origin');
+  });
+
+  it('allows any origin when allowedDomains is not configured', async () => {
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
+      ...WEB_CHAT_CHANNEL,
+      config: {},
+    });
+
+    const result = await service.processChat(
+      { business_id: 'biz-1', channel_id: 'chan-web-1', message: 'hola' },
+      undefined,
+      'https://anything.example.net',
+    );
+
+    expect(result.conversation_id).toBe('conv-origin');
   });
 });

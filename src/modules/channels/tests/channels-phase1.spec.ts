@@ -15,10 +15,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ObjectLiteral, Repository, QueryFailedError } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ChannelType } from '../entities/channel-type.entity';
-import { Channel, ChannelStatus } from '../entities/channel.entity';
-import { ChannelCredential } from '../entities/channel-credential.entity';
-import { CHANNEL_TYPES_SEED } from '../seeds/seed-channel-types';
+import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
+import {
+  Channel,
+  ChannelStatus,
+} from '@/modules/channels/entities/channel.entity';
+import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
+import { CHANNEL_TYPES_SEED } from '@/modules/channels/seeds/seed-channel-types';
 
 // ---------------------------------------------------------------------------
 // Helpers

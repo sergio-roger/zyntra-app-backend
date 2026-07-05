@@ -15,12 +15,14 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { Business } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
-import { User } from '@auth/entities/user.entity';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { Role } from './entities/role.entity';
-import { AvatarStorageService } from './avatar-storage.service';
 import { Menu } from './entities/menu.entity';
 import { Permission } from './entities/permission.entity';
+import { MenuService } from './menu.service';
+import { PermissionService } from './permission.service';
+import { RoleService } from './role.service';
+import { UserService } from './user.service';
+import { StorageClientService } from '@/storage-client/storage-client.service';
 
 // ─── Datos de menús (refleja seed-rbac.ts) ───────────────────────────────────
 
@@ -266,15 +268,6 @@ const PM_CORE_DIGITAL = [
 
 function buildMockQuery(planModules: typeof PM_BRANDSTART, menus = ALL_MENUS) {
   return jest.fn().mockImplementation((sql: string, params: string[]) => {
-    if (sql.includes('security.roles')) {
-      const roleMap: Record<string, string> = {
-        admin: 'role-admin-id',
-        manager: 'role-manager-id',
-        agent: 'role-agent-id',
-      };
-      const id = roleMap[params[0]];
-      return Promise.resolve(id ? [{ id }] : []);
-    }
     if (sql.includes('plan_modules')) {
       return Promise.resolve(planModules);
     }
@@ -289,6 +282,21 @@ function buildMockQuery(planModules: typeof PM_BRANDSTART, menus = ALL_MENUS) {
     }
     return Promise.resolve([]);
   });
+}
+
+// La resolución de rol ahora vive en RoleService.findByName (repositorio),
+// ya no es una query SQL cruda — se mockea directamente aquí.
+function buildRoleServiceMock() {
+  const roleMap: Record<string, string> = {
+    admin: 'role-admin-id',
+    manager: 'role-manager-id',
+    agent: 'role-agent-id',
+  };
+  return {
+    findByName: jest.fn((name: string) =>
+      Promise.resolve(roleMap[name] ? { id: roleMap[name] } : null),
+    ),
+  };
 }
 
 // ─── Setup del módulo de prueba ───────────────────────────────────────────────
@@ -319,34 +327,33 @@ async function buildService(
 }> {
   const mockQuery = buildMockQuery(planModules, menus);
   const permissionRepo = buildPermissionRepoMock(permissionCount);
+  const roleServiceMock = buildRoleServiceMock();
 
   const businessRepo = {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    manager: { transaction: jest.fn() },
+  };
+
+  const menuRepo = {
+    find: jest.fn(),
     manager: { connection: { query: mockQuery } },
   };
 
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       AuthService,
+      MenuService,
+      PermissionService,
       { provide: getRepositoryToken(Business), useValue: businessRepo },
       { provide: getRepositoryToken(Plan), useValue: { findOne: jest.fn() } },
-      {
-        provide: getRepositoryToken(User),
-        useValue: { findOne: jest.fn() },
-      },
-      {
-        provide: getRepositoryToken(Role),
-        useValue: { findOne: jest.fn(), find: jest.fn() },
-      },
-      { provide: getRepositoryToken(Menu), useValue: { find: jest.fn() } },
+      { provide: getRepositoryToken(Menu), useValue: menuRepo },
       { provide: getRepositoryToken(Permission), useValue: permissionRepo },
       { provide: JwtService, useValue: { sign: jest.fn() } },
-      {
-        provide: AvatarStorageService,
-        useValue: { save: jest.fn(), delete: jest.fn() },
-      },
+      { provide: UserService, useValue: {} },
+      { provide: RoleService, useValue: roleServiceMock },
+      { provide: StorageClientService, useValue: {} },
     ],
   }).compile();
 
