@@ -261,13 +261,10 @@ describe('ChannelsService', () => {
   describe('create()', () => {
     it('creates a web_chat channel and returns embedCode', async () => {
       (channelTypeRepo.findOne as jest.Mock).mockResolvedValue(WEB_CHAT_TYPE);
-      const savedChannel = {
-        id: 'new-chan',
-        business_id: 'biz-1',
-        config: {},
-        channelType: WEB_CHAT_TYPE,
-      };
-      (channelRepo.save as jest.Mock).mockResolvedValue(savedChannel);
+      (channelRepo.save as jest.Mock).mockImplementation((entity) => {
+        entity.id = entity.id ?? 'new-chan';
+        return Promise.resolve(entity);
+      });
       (credentialRepo.save as jest.Mock).mockResolvedValue({});
 
       const result = await service.create('biz-1', {
@@ -278,6 +275,7 @@ describe('ChannelsService', () => {
 
       expect(result.embedCode).toBeDefined();
       expect(result.embedCode).toContain('biz-1');
+      expect(result.embedCode).toContain('new-chan');
     });
 
     it('throws NotFoundException when channelTypeId does not exist', async () => {

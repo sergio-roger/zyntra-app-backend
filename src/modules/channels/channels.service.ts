@@ -155,9 +155,14 @@ export class ChannelsService {
       );
     }
 
+    const config = channel.config ?? {};
     const snippet = buildEmbedSnippet({
       channelId: channel.id,
       businessId: channel.business_id,
+      position: config.position as string | undefined,
+      primaryColor: config.primaryColor as string | undefined,
+      name: config.name as string | undefined,
+      greeting: config.greeting as string | undefined,
     });
 
     return {

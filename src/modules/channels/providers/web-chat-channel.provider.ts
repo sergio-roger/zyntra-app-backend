@@ -4,6 +4,7 @@ import {
   ChannelSetupResult,
   IncomingMessage,
 } from '@/modules/channels/interfaces/channel-provider.interface';
+import { buildEmbedSnippet } from '@/modules/channels/utils/embed-snippet.util';
 
 const VALID_POSITIONS = ['bottom-left', 'bottom-right'] as const;
 const HEX_COLOR_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
@@ -66,20 +67,18 @@ export class WebChatChannelProvider implements ChannelProvider {
     const name = (config.name as string | undefined) ?? 'Asistente';
     const greeting = (config.greeting as string | undefined) ?? '';
 
-    const embedCode = [
-      `<script`,
-      `  src="${process.env.WIDGET_CDN_URL ?? '/widget/zyntra-widget.js'}"`,
-      `  data-business-id="${businessId}"`,
-      `  data-position="${position}"`,
-      `  data-primary-color="${primaryColor}"`,
-      `  data-name="${name}"`,
-      `  data-greeting="${greeting}"`,
-      `  data-channel-id="${channelId}"`,
-      `  defer`,
-      `></script>`,
-    ].join('\n');
+    const resolvedConfig = { ...config, position, primaryColor, name, greeting };
 
-    return { config, embedCode };
+    const embedCode = buildEmbedSnippet({
+      channelId,
+      businessId,
+      position,
+      primaryColor,
+      name,
+      greeting,
+    });
+
+    return { config: resolvedConfig, embedCode };
   }
 
   parseIncoming(payload: Record<string, unknown>): IncomingMessage {
