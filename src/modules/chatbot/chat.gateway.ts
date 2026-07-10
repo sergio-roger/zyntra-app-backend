@@ -10,6 +10,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
+import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
 
 type ClientKind = 'agent' | 'visitor';
 
@@ -17,7 +18,7 @@ interface SocketContext {
   kind: ClientKind;
   /** Tenant the socket belongs to. */
   businessId: string;
-  /** Set for visitors that identify a specific channel (post-migration widgets). */
+  /** Channel the visitor's widget session is scoped to (visitors only). */
   channelId?: string;
   /** Set for visitors as soon as they identify a conversation. */
   conversationId?: string;
@@ -52,7 +53,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /** conversationId → set of socket ids participating. */
   private readonly socketsByConversation = new Map<string, Set<string>>();
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly widgetSessionService: WidgetSessionService,
+  ) {}
 
   // ─── Connection lifecycle ──────────────────────────────────────────────────
 
@@ -62,32 +66,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       (auth.token as string | undefined) ||
       client.handshake.headers.authorization?.replace('Bearer ', '');
 
-    // Visitor (widget) flow — no JWT, must declare businessId.
     if (!token) {
-      const businessId = auth.businessId as string | undefined;
-      const channelId = auth.channelId as string | undefined;
-      const conversationId = auth.conversationId as string | undefined;
-      if (!businessId) {
-        this.logger.warn(
-          `Socket ${client.id} rejected: missing businessId/token`,
-        );
-        client.disconnect();
-        return;
-      }
-      const ctx: SocketContext = {
-        kind: 'visitor',
-        businessId,
-        channelId,
-        conversationId,
-      };
-      client.data = ctx;
-      void client.join(`business:${businessId}`);
-      if (channelId) void client.join(`channel:${channelId}`);
-      if (conversationId) this.attachToConversation(client, conversationId);
+      this.logger.warn(`Socket ${client.id} rejected: missing token`);
+      client.disconnect();
       return;
     }
 
-    // Agent (dashboard) flow — JWT required.
+    // Visitor (widget) flow — same signed session token as the HTTP guard.
+    try {
+      const payload = this.widgetSessionService.verify(token);
+      const conversationId = auth.conversationId as string | undefined;
+      const ctx: SocketContext = {
+        kind: 'visitor',
+        businessId: payload.businessId,
+        channelId: payload.channelId,
+        conversationId,
+      };
+      client.data = ctx;
+      void client.join(`business:${payload.businessId}`);
+      void client.join(`channel:${payload.channelId}`);
+      if (conversationId) this.attachToConversation(client, conversationId);
+      return;
+    } catch {
+      // Not a widget session token — fall through to the agent JWT check.
+    }
+
+    // Agent (dashboard) flow — staff JWT required.
     try {
       const payload = this.jwtService.verify<{
         sub?: string;

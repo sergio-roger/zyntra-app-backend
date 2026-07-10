@@ -5,6 +5,8 @@ import { LeadCaptureDto } from '@chatbot/dto/lead-capture.dto';
 import { ChatRateLimitGuard } from '@chatbot/guards/chat-rate-limit.guard';
 import { Public } from '@common/decorators/public.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import type { RequestWithWidgetSession } from '@/modules/widget-session/interfaces/request-with-widget-session.interface';
+import { WidgetSessionGuard } from '@/modules/widget-session/widget-session.guard';
 import {
   Body,
   Controller,
@@ -38,17 +40,20 @@ export class ChatController {
 
   @Public()
   @Get('public-config')
-  @ApiOperation({ summary: 'Obtiene la configuración pública del canal/chat' })
-  @ApiOkResponse({ description: 'Public chat config' })
+  @ApiOperation({
+    summary:
+      'Intercambia un public_key del widget por un widget session token + config pública del canal',
+  })
+  @ApiOkResponse({ description: 'sessionToken + config pública del canal' })
   async getPublicConfig(
-    @Query('business_id') businessId: string,
-    @Query('channel_id') channelId?: string,
+    @Query('public_key') publicKey: string,
+    @Query('fp') fp?: string,
     @Headers('origin') origin?: string,
     @Headers('referer') referer?: string,
   ) {
-    return this.chatService.getPublicConfig(
-      businessId,
-      channelId,
+    return this.chatService.exchangeWidgetSession(
+      publicKey,
+      fp,
       origin,
       referer,
     );
@@ -103,32 +108,31 @@ export class ChatController {
   }
 
   @Public()
-  @UseGuards(ChatRateLimitGuard)
+  @UseGuards(WidgetSessionGuard, ChatRateLimitGuard)
   @Post('chat')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Envía un mensaje de chat' })
   @ApiOkResponse({ description: 'AI response message' })
   async chat(
     @Body() request: ChatRequestDto,
+    @Req() req: RequestWithWidgetSession,
     @Headers('x-forwarded-for') ip?: string,
-    @Headers('origin') origin?: string,
-    @Headers('referer') referer?: string,
   ): Promise<ChatResponseDto> {
     this.logger.debug(
-      `chat message received: business_id=${request.business_id ?? 'unknown'} channel_id=${request.channel_id ?? 'none'} conversation_id=${request.conversation_id ?? 'new'} channel=${request.channel ?? 'web'} length=${request.message.length} ip=${ip ?? 'unknown'}`,
+      `chat message received: business_id=${req.widgetSession.businessId} channel_id=${req.widgetSession.channelId} conversation_id=${request.conversation_id ?? 'new'} channel=${request.channel ?? 'web'} length=${request.message.length} ip=${ip ?? 'unknown'}`,
     );
-    return this.chatService.processChat(request, ip, origin, referer);
+    return this.chatService.processChat(request, req.widgetSession, ip);
   }
 
   @Public()
+  @UseGuards(WidgetSessionGuard)
   @Post('lead-capture')
   @ApiOperation({ summary: 'Captura un lead desde el chat' })
   @ApiCreatedResponse({ description: 'Lead captured' })
   async leadCapture(
     @Body() dto: LeadCaptureDto,
-    @Headers('origin') origin?: string,
-    @Headers('referer') referer?: string,
+    @Req() req: RequestWithWidgetSession,
   ) {
-    return this.chatService.captureLead(dto, origin, referer);
+    return this.chatService.captureLead(dto, req.widgetSession);
   }
 }

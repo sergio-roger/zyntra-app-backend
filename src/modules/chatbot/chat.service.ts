@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -26,7 +25,8 @@ import {
   ChannelStatus,
 } from '@/modules/channels/entities/channel.entity';
 import { ChannelsService } from '@/modules/channels/channels.service';
-import { isOriginAllowed } from '@/modules/channels/utils/origin.util';
+import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
+import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
 import { ChatGateway } from './chat.gateway';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
 import { LeadCaptureDto } from './dto/lead-capture.dto';
@@ -56,62 +56,21 @@ export class ChatService {
     private agentQueue: Queue,
     private readonly chatGateway: ChatGateway,
     private readonly config: ConfigService,
+    private readonly widgetSessionService: WidgetSessionService,
   ) {
     this.serviceToken = config.get<string>('SERVICE_TOKEN', '');
   }
 
   // ---------------------------------------------------------------------------
-  // Channel resolution (a business can have N web_chat channels)
+  // Channel lookup — channelId always comes from a verified widget session or
+  // the public_key exchange below, never from client-supplied request fields.
   // ---------------------------------------------------------------------------
-  private async resolveChannel(
-    businessId: string,
-    channelId?: string,
-  ): Promise<Channel> {
-    if (channelId) {
-      const channel = await this.channelsService.findByChannelId(channelId);
-      if (!channel || channel.status !== ChannelStatus.ACTIVE) {
-        throw new NotFoundException('Canal no encontrado o inactivo');
-      }
-      if (channel.business_id !== businessId) {
-        this.logger.warn(
-          `channel_id=${channelId} belongs to business_id=${channel.business_id}, ` +
-            `not the request's business_id=${businessId}. Using the channel's own business_id.`,
-        );
-      }
-      return channel;
+  private async getActiveChannel(channelId: string): Promise<Channel> {
+    const channel = await this.channelsService.findByChannelId(channelId);
+    if (!channel || channel.status !== ChannelStatus.ACTIVE) {
+      throw new NotFoundException('Canal no encontrado o inactivo');
     }
-
-    const channels = await this.channelsService.findAllByBusiness(businessId);
-    if (channels.length === 0) {
-      throw new NotFoundException('Este negocio no tiene canales configurados');
-    }
-
-    const active = channels.filter((c) => c.status === ChannelStatus.ACTIVE);
-    if (active.length === 0) {
-      throw new NotFoundException('Este negocio no tiene canales web activos');
-    }
-    if (active.length > 1) {
-      this.logger.warn(
-        `business_id=${businessId} has ${active.length} active web_chat channels; ` +
-          `this embed is resolving by business_id and should be updated to send ` +
-          `channel_id explicitly. Using channel_id=${active[0].id}.`,
-      );
-    }
-    return active[0];
-  }
-
-  private assertOriginAllowed(
-    channel: Channel,
-    origin?: string,
-    referer?: string,
-  ): void {
-    const allowedDomains = (channel.config as { allowedDomains?: unknown })
-      ?.allowedDomains;
-    if (!isOriginAllowed(allowedDomains, origin, referer)) {
-      throw new ForbiddenException(
-        'Este dominio no está autorizado para este canal',
-      );
-    }
+    return channel;
   }
 
   // ---------------------------------------------------------------------------
@@ -119,25 +78,18 @@ export class ChatService {
   // ---------------------------------------------------------------------------
   async processChat(
     request: ChatRequestDto,
+    widgetSession: WidgetSessionPayload,
     ip?: string,
-    origin?: string,
-    referer?: string,
   ): Promise<ChatResponseDto> {
-    const { message, business_id, channel_id, conversation_id } = request;
+    const { message, conversation_id } = request;
 
-    if (!business_id) {
-      throw new BadRequestException('business_id es requerido');
-    }
-
-    // 1. Resolve the web_chat channel (channel_id first, business_id fallback)
-    const channel = await this.resolveChannel(business_id, channel_id);
-    this.assertOriginAllowed(channel, origin, referer);
-
-    // Tenant identity comes from the resolved channel row
+    // 1. Load the channel fresh (status/agent_id may have changed since the
+    // session token was issued) — identity comes from the verified token.
+    const channel = await this.getActiveChannel(widgetSession.channelId);
     const effectiveBusinessId = channel.business_id;
 
     // 2. Find or create conversation (keyed by channel + visitor fingerprint)
-    const fingerprint = request.visitor?.fingerprint ?? ip ?? 'anonymous';
+    const fingerprint = widgetSession.visitorFingerprint;
     let conversation = conversation_id
       ? await this.conversationModel.findById(conversation_id)
       : null;
@@ -381,38 +333,57 @@ export class ChatService {
   }
 
   // ---------------------------------------------------------------------------
-  // Config and Lead helpers
+  // Widget public_key -> session token exchange
   // ---------------------------------------------------------------------------
-  async getPublicConfig(
-    businessId: string,
-    channelId?: string,
+  async exchangeWidgetSession(
+    publicKey: string,
+    fp?: string,
     origin?: string,
     referer?: string,
   ) {
-    const channel = await this.resolveChannel(businessId, channelId);
-    this.assertOriginAllowed(channel, origin, referer);
+    if (!publicKey) {
+      throw new BadRequestException('public_key es requerido');
+    }
+
+    // Resolves the channel and enforces allowed_origins in one step; throws
+    // UnauthorizedException (generic) if the key is unknown/revoked or the
+    // origin isn't allowlisted.
+    const channel = await this.channelsService.validateOriginAndGetChannel(
+      publicKey,
+      origin,
+      referer,
+    );
+    if (channel.status !== ChannelStatus.ACTIVE) {
+      throw new NotFoundException('Este canal no está activo');
+    }
+
+    const visitorFingerprint = fp ?? crypto.randomUUID();
+    const sessionToken = this.widgetSessionService.sign({
+      businessId: channel.business_id,
+      channelId: channel.id,
+      visitorFingerprint,
+    });
 
     const cfg = channel.config as Record<string, unknown>;
     return {
-      channel_id: channel.id,
-      business_id: channel.business_id,
+      sessionToken,
+      expiresIn: WidgetSessionService.EXPIRES_IN_SECONDS,
       name: (cfg?.name as string) ?? 'Asistente',
       theme: (cfg?.theme as string) ?? 'auto',
       position: (cfg?.position as string) ?? 'bottom-right',
       primaryColor: (cfg?.primaryColor as string) ?? '#6366f1',
       greeting: (cfg?.greeting as string) ?? '',
-      is_active: channel.status === ChannelStatus.ACTIVE,
     };
   }
 
-  async captureLead(dto: LeadCaptureDto, origin?: string, referer?: string) {
-    const { business_id: businessId, channel_id, name, email, phone } = dto;
+  async captureLead(dto: LeadCaptureDto, widgetSession: WidgetSessionPayload) {
+    const { name, email, phone } = dto;
     if (!email && !phone) {
       throw new BadRequestException('Email o phone requerido');
     }
 
-    const channel = await this.resolveChannel(businessId, channel_id);
-    this.assertOriginAllowed(channel, origin, referer);
+    const channel = await this.getActiveChannel(widgetSession.channelId);
+    const businessId = channel.business_id;
 
     const existing = email
       ? await this.contactsRepo.findOne({ where: { businessId, email } })

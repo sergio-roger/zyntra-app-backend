@@ -2,7 +2,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
-  ForbiddenException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -22,6 +21,8 @@ import {
   ChannelStatus,
 } from '@/modules/channels/entities/channel.entity';
 import { ChannelsService } from '@/modules/channels/channels.service';
+import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
+import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
 import { ChatGateway } from '../chat.gateway';
 
 // ---------------------------------------------------------------------------
@@ -56,8 +57,13 @@ const makeQueue = () => ({
 });
 
 const makeChannelsService = () => ({
-  findAllByBusiness: jest.fn().mockResolvedValue([]),
   findByChannelId: jest.fn().mockResolvedValue(null),
+  validateOriginAndGetChannel: jest.fn(),
+});
+
+const makeWidgetSessionService = () => ({
+  sign: jest.fn().mockReturnValue('signed.jwt.token'),
+  verify: jest.fn(),
 });
 
 const makeGateway = () => ({
@@ -70,6 +76,7 @@ const WEB_CHAT_CHANNEL: Partial<Channel> = {
   business_id: 'biz-1',
   agent_id: null,
   status: ChannelStatus.ACTIVE,
+  config: {},
   channelType: { key: 'web_chat' } as any,
 };
 
@@ -78,20 +85,34 @@ const WEB_CHAT_CHANNEL_WITH_AGENT: Partial<Channel> = {
   agent_id: 'agent-uuid-1',
 };
 
+const WIDGET_SESSION: WidgetSessionPayload = {
+  businessId: 'biz-1',
+  channelId: 'chan-web-1',
+  visitorFingerprint: 'fp-abc',
+  iat: 0,
+  exp: 0,
+};
+
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
 let service: ChatService;
 let conversationModel: ReturnType<typeof makeMongoModel>;
 let messageModel: ReturnType<typeof makeMongoModel>;
+let contactsRepo: Repository<Contact>;
+let stageRepo: Repository<LifecycleStage>;
 let channelsService: ReturnType<typeof makeChannelsService>;
+let widgetSessionService: ReturnType<typeof makeWidgetSessionService>;
 let agentQueue: ReturnType<typeof makeQueue>;
 let gateway: ReturnType<typeof makeGateway>;
 
 async function buildModule() {
   conversationModel = makeMongoModel();
   messageModel = makeMongoModel();
+  contactsRepo = makeRepo<Contact>();
+  stageRepo = makeRepo<LifecycleStage>();
   channelsService = makeChannelsService();
+  widgetSessionService = makeWidgetSessionService();
   agentQueue = makeQueue();
   gateway = makeGateway();
 
@@ -103,14 +124,12 @@ async function buildModule() {
         useValue: conversationModel,
       },
       { provide: getModelToken(Message.name), useValue: messageModel },
-      { provide: getRepositoryToken(Contact), useValue: makeRepo<Contact>() },
-      {
-        provide: getRepositoryToken(LifecycleStage),
-        useValue: makeRepo<LifecycleStage>(),
-      },
+      { provide: getRepositoryToken(Contact), useValue: contactsRepo },
+      { provide: getRepositoryToken(LifecycleStage), useValue: stageRepo },
       { provide: ChannelsService, useValue: channelsService },
       { provide: getQueueToken(AGENT_RESPONSE_QUEUE), useValue: agentQueue },
       { provide: ChatGateway, useValue: gateway },
+      { provide: WidgetSessionService, useValue: widgetSessionService },
       {
         provide: ConfigService,
         useValue: {
@@ -131,10 +150,9 @@ describe('ChatService.processChat() — channel WITH agent', () => {
   beforeEach(async () => {
     await buildModule();
 
-    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
       WEB_CHAT_CHANNEL_WITH_AGENT,
-    ]);
-    // Simulate no existing conversation → create new one
+    );
     (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
     const fakeConv = {
       _id: { toString: () => 'conv-123' },
@@ -147,11 +165,10 @@ describe('ChatService.processChat() — channel WITH agent', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('adds a job to the agent-response queue', async () => {
-    const result = await service.processChat({
-      business_id: 'biz-1',
-      message: 'Hola',
-      visitor: { fingerprint: 'fp-abc' },
-    });
+    const result = await service.processChat(
+      { message: 'Hola' },
+      WIDGET_SESSION,
+    );
 
     expect(agentQueue.add).toHaveBeenCalledWith(
       'agent-response',
@@ -167,14 +184,14 @@ describe('ChatService.processChat() — channel WITH agent', () => {
   });
 
   it('persists user message before enqueuing', async () => {
-    await service.processChat({ business_id: 'biz-1', message: 'Test' });
+    await service.processChat({ message: 'Test' }, WIDGET_SESSION);
     expect(messageModel.create).toHaveBeenCalledWith(
       expect.objectContaining({ role: 'user', content: 'Test' }),
     );
   });
 
   it('does NOT emit socket message synchronously (waits for callback)', async () => {
-    await service.processChat({ business_id: 'biz-1', message: 'Test' });
+    await service.processChat({ message: 'Test' }, WIDGET_SESSION);
     expect(gateway.emitNewMessage).not.toHaveBeenCalled();
   });
 });
@@ -186,9 +203,9 @@ describe('ChatService.processChat() — channel WITHOUT agent', () => {
   beforeEach(async () => {
     await buildModule();
 
-    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
       WEB_CHAT_CHANNEL,
-    ]); // no agent_id
+    ); // no agent_id
     (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
     const fakeConv = {
       _id: { toString: () => 'conv-456' },
@@ -201,33 +218,27 @@ describe('ChatService.processChat() — channel WITHOUT agent', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('returns fallback message without pending flag', async () => {
-    const result = await service.processChat({
-      business_id: 'biz-1',
-      message: 'Hola',
-    });
+    const result = await service.processChat(
+      { message: 'Hola' },
+      WIDGET_SESSION,
+    );
     expect(result.message).toBeTruthy();
     expect(result.pending).toBe(false);
   });
 
   it('does NOT enqueue a BullMQ job', async () => {
-    await service.processChat({ business_id: 'biz-1', message: 'Hola' });
+    await service.processChat({ message: 'Hola' }, WIDGET_SESSION);
     expect(agentQueue.add).not.toHaveBeenCalled();
   });
 
   it('emits socket event with fallback message', async () => {
-    await service.processChat({ business_id: 'biz-1', message: 'Hola' });
+    await service.processChat({ message: 'Hola' }, WIDGET_SESSION);
     expect(gateway.emitNewMessage).toHaveBeenCalledWith(
       'biz-1',
       'conv-456',
       expect.any(String),
       'assistant',
     );
-  });
-
-  it('throws BadRequestException when business_id is missing', async () => {
-    await expect(
-      service.processChat({ business_id: '', message: 'test' }),
-    ).rejects.toThrow(BadRequestException);
   });
 });
 
@@ -237,9 +248,9 @@ describe('ChatService.processChat() — channel WITHOUT agent', () => {
 describe('ChatService: findOrCreate conversation', () => {
   beforeEach(async () => {
     await buildModule();
-    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
       WEB_CHAT_CHANNEL,
-    ]);
+    );
     (messageModel.create as jest.Mock).mockResolvedValue({});
   });
 
@@ -251,20 +262,13 @@ describe('ChatService: findOrCreate conversation', () => {
       business_id: 'biz-1',
     };
     (conversationModel.findOne as jest.Mock).mockResolvedValue(existingConv);
+    const session = { ...WIDGET_SESSION, visitorFingerprint: 'fp-same' };
 
-    const r1 = await service.processChat({
-      business_id: 'biz-1',
-      message: 'first',
-      visitor: { fingerprint: 'fp-same' },
-    });
+    const r1 = await service.processChat({ message: 'first' }, session);
 
     // Second call with same fingerprint but no conversation_id
     (conversationModel.findOne as jest.Mock).mockResolvedValue(existingConv);
-    const r2 = await service.processChat({
-      business_id: 'biz-1',
-      message: 'second',
-      visitor: { fingerprint: 'fp-same' },
-    });
+    const r2 = await service.processChat({ message: 'second' }, session);
 
     expect(r1.conversation_id).toBe('conv-existing');
     expect(r2.conversation_id).toBe('conv-existing');
@@ -389,9 +393,9 @@ describe('ChatService.updateConversationStatus()', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Suite 6 – Channel resolution: channel_id priority, business_id fallback
+// Suite 6 – processChat() channel lookup (channelId always from widgetSession)
 // ---------------------------------------------------------------------------
-describe('ChatService.processChat() — channel resolution', () => {
+describe('ChatService.processChat() — channel lookup', () => {
   beforeEach(async () => {
     await buildModule();
     (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
@@ -404,177 +408,186 @@ describe('ChatService.processChat() — channel resolution', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  it('resolves by channel_id when provided, without consulting business_id fallback', async () => {
+  it('loads the channel by widgetSession.channelId, never from the request body', async () => {
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
       WEB_CHAT_CHANNEL,
     );
 
-    await service.processChat({
-      business_id: 'biz-1',
-      channel_id: 'chan-web-1',
-      message: 'hola',
-    });
+    await service.processChat({ message: 'hola' }, WIDGET_SESSION);
 
-    expect(channelsService.findByChannelId).toHaveBeenCalledWith('chan-web-1');
-    expect(channelsService.findAllByBusiness).not.toHaveBeenCalled();
+    expect(channelsService.findByChannelId).toHaveBeenCalledWith(
+      'chan-web-1',
+    );
   });
 
-  it('throws NotFoundException when channel_id does not resolve to an active channel', async () => {
+  it('throws NotFoundException when the channel does not resolve', async () => {
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue(null);
 
     await expect(
-      service.processChat({
-        business_id: 'biz-1',
-        channel_id: 'missing-chan',
-        message: 'hola',
-      }),
+      service.processChat({ message: 'hola' }, WIDGET_SESSION),
     ).rejects.toThrow(NotFoundException);
   });
 
-  it('treats an INACTIVE channel resolved by channel_id as not found', async () => {
+  it('treats an INACTIVE channel as not found', async () => {
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
       ...WEB_CHAT_CHANNEL,
       status: ChannelStatus.INACTIVE,
     });
 
     await expect(
-      service.processChat({
-        business_id: 'biz-1',
-        channel_id: 'chan-web-1',
-        message: 'hola',
-      }),
+      service.processChat({ message: 'hola' }, WIDGET_SESSION),
     ).rejects.toThrow(NotFoundException);
-  });
-
-  it('falls back to business_id and uses the first active web channel when channel_id is absent', async () => {
-    const second = { ...WEB_CHAT_CHANNEL, id: 'chan-web-2' };
-    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
-      WEB_CHAT_CHANNEL,
-      second,
-    ]);
-
-    await service.processChat({ business_id: 'biz-1', message: 'hola' });
-
-    expect(channelsService.findAllByBusiness).toHaveBeenCalledWith('biz-1');
-    // conversation is created against the FIRST active channel (chan-web-1)
-    expect(conversationModel.create).toHaveBeenCalledWith(
-      expect.objectContaining({ channel_id: 'chan-web-1' }),
-    );
-  });
-
-  it('ignores inactive channels when picking the business_id fallback', async () => {
-    const inactive = {
-      ...WEB_CHAT_CHANNEL,
-      id: 'chan-inactive',
-      status: ChannelStatus.INACTIVE,
-    };
-    const active = { ...WEB_CHAT_CHANNEL, id: 'chan-active' };
-    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
-      inactive,
-      active,
-    ]);
-
-    await service.processChat({ business_id: 'biz-1', message: 'hola' });
-
-    expect(conversationModel.create).toHaveBeenCalledWith(
-      expect.objectContaining({ channel_id: 'chan-active' }),
-    );
-  });
-
-  it('throws NotFoundException when the business has channels but none are active', async () => {
-    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([
-      { ...WEB_CHAT_CHANNEL, status: ChannelStatus.INACTIVE },
-    ]);
-
-    await expect(
-      service.processChat({ business_id: 'biz-1', message: 'hola' }),
-    ).rejects.toThrow(NotFoundException);
-  });
-
-  it('throws NotFoundException when the business has zero channels', async () => {
-    (channelsService.findAllByBusiness as jest.Mock).mockResolvedValue([]);
-
-    await expect(
-      service.processChat({ business_id: 'biz-1', message: 'hola' }),
-    ).rejects.toThrow(NotFoundException);
-    expect(channelsService.findByChannelId).not.toHaveBeenCalled();
   });
 });
 
 // ---------------------------------------------------------------------------
-// Suite 7 – Origin/Referer validation against channel.config.allowedDomains
+// Suite 7 – exchangeWidgetSession() (public_key -> session token exchange)
 // ---------------------------------------------------------------------------
-describe('ChatService.processChat() — allowed origin validation', () => {
+describe('ChatService.exchangeWidgetSession()', () => {
   beforeEach(async () => {
     await buildModule();
-    (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
-    (conversationModel.create as jest.Mock).mockResolvedValue({
-      _id: { toString: () => 'conv-origin' },
-      business_id: 'biz-1',
-    });
-    (messageModel.create as jest.Mock).mockResolvedValue({});
   });
 
   afterEach(() => jest.clearAllMocks());
 
-  it('rejects with ForbiddenException when Origin does not match allowedDomains', async () => {
-    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
-      ...WEB_CHAT_CHANNEL,
-      config: { allowedDomains: ['example.com'] },
-    });
-
-    await expect(
-      service.processChat(
-        { business_id: 'biz-1', channel_id: 'chan-web-1', message: 'hola' },
-        undefined,
-        'https://evil.com',
-      ),
-    ).rejects.toThrow(ForbiddenException);
+  it('throws BadRequestException when public_key is missing', async () => {
+    await expect(service.exchangeWidgetSession('')).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
-  it('allows the request when Origin matches an allowed domain', async () => {
-    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
+  it('signs a session token with businessId/channelId from the resolved channel', async () => {
+    (
+      channelsService.validateOriginAndGetChannel as jest.Mock
+    ).mockResolvedValue({
       ...WEB_CHAT_CHANNEL,
-      config: { allowedDomains: ['example.com'] },
+      config: { name: 'Bot', greeting: 'Hola!' },
     });
 
-    const result = await service.processChat(
-      { business_id: 'biz-1', channel_id: 'chan-web-1', message: 'hola' },
-      undefined,
+    const result = await service.exchangeWidgetSession(
+      'wpk_abc',
+      'fp-visitor',
       'https://example.com',
     );
 
-    expect(result.conversation_id).toBe('conv-origin');
+    expect(channelsService.validateOriginAndGetChannel).toHaveBeenCalledWith(
+      'wpk_abc',
+      'https://example.com',
+      undefined,
+    );
+    expect(widgetSessionService.sign).toHaveBeenCalledWith({
+      businessId: 'biz-1',
+      channelId: 'chan-web-1',
+      visitorFingerprint: 'fp-visitor',
+    });
+    expect(result.sessionToken).toBe('signed.jwt.token');
+    expect(result.expiresIn).toBe(WidgetSessionService.EXPIRES_IN_SECONDS);
+    expect(result.name).toBe('Bot');
+    expect(result.greeting).toBe('Hola!');
   });
 
-  it('allows a subdomain of an allowed domain', async () => {
-    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
-      ...WEB_CHAT_CHANNEL,
-      config: { allowedDomains: ['example.com'] },
-    });
+  it('generates a fallback visitor fingerprint when fp is not provided', async () => {
+    (
+      channelsService.validateOriginAndGetChannel as jest.Mock
+    ).mockResolvedValue(WEB_CHAT_CHANNEL);
 
-    const result = await service.processChat(
-      { business_id: 'biz-1', channel_id: 'chan-web-1', message: 'hola' },
-      undefined,
-      undefined,
-      'https://app.example.com/widget',
-    );
+    await service.exchangeWidgetSession('wpk_abc');
 
-    expect(result.conversation_id).toBe('conv-origin');
+    const signedPayload = (widgetSessionService.sign as jest.Mock).mock
+      .calls[0][0];
+    expect(typeof signedPayload.visitorFingerprint).toBe('string');
+    expect(signedPayload.visitorFingerprint.length).toBeGreaterThan(0);
   });
 
-  it('allows any origin when allowedDomains is not configured', async () => {
-    (channelsService.findByChannelId as jest.Mock).mockResolvedValue({
+  it('throws NotFoundException when the resolved channel is not active', async () => {
+    (
+      channelsService.validateOriginAndGetChannel as jest.Mock
+    ).mockResolvedValue({
       ...WEB_CHAT_CHANNEL,
-      config: {},
+      status: ChannelStatus.INACTIVE,
     });
 
-    const result = await service.processChat(
-      { business_id: 'biz-1', channel_id: 'chan-web-1', message: 'hola' },
-      undefined,
-      'https://anything.example.net',
+    await expect(service.exchangeWidgetSession('wpk_abc')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('propagates UnauthorizedException for an invalid/revoked public_key or disallowed origin', async () => {
+    (
+      channelsService.validateOriginAndGetChannel as jest.Mock
+    ).mockRejectedValue(new UnauthorizedException());
+
+    await expect(service.exchangeWidgetSession('wpk_bad')).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 8 – captureLead()
+// ---------------------------------------------------------------------------
+describe('ChatService.captureLead()', () => {
+  beforeEach(async () => {
+    await buildModule();
+    (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
+      WEB_CHAT_CHANNEL,
+    );
+  });
+
+  afterEach(() => jest.clearAllMocks());
+
+  it('throws BadRequestException when neither email nor phone is provided', async () => {
+    await expect(
+      service.captureLead({ name: 'Visitante' } as any, WIDGET_SESSION),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('creates a new contact scoped to the widgetSession businessId/channelId', async () => {
+    (contactsRepo.findOne as jest.Mock).mockResolvedValue(null);
+    (stageRepo.findOne as jest.Mock).mockResolvedValue({ id: 'stage-1' });
+    (contactsRepo.save as jest.Mock).mockImplementation((c: any) => {
+      c.id = 'contact-1';
+      return Promise.resolve(c);
+    });
+
+    const result = await service.captureLead(
+      { name: 'Visitante', email: 'a@b.com' } as any,
+      WIDGET_SESSION,
     );
 
-    expect(result.conversation_id).toBe('conv-origin');
+    expect(contactsRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        businessId: 'biz-1',
+        channelId: 'chan-web-1',
+        email: 'a@b.com',
+      }),
+    );
+    expect(result).toEqual({
+      success: true,
+      contact_id: 'contact-1',
+      message: 'Lead capturado',
+    });
+  });
+
+  it('updates an existing contact instead of creating a duplicate', async () => {
+    (contactsRepo.findOne as jest.Mock).mockResolvedValue({
+      id: 'contact-existing',
+      name: 'Old name',
+    });
+    (contactsRepo.save as jest.Mock).mockImplementation((c: any) =>
+      Promise.resolve(c),
+    );
+
+    const result = await service.captureLead(
+      { name: 'Nuevo nombre', email: 'a@b.com' } as any,
+      WIDGET_SESSION,
+    );
+
+    expect(result).toEqual({
+      success: true,
+      contact_id: 'contact-existing',
+      message: 'Lead actualizado',
+    });
+    expect(contactsRepo.create).not.toHaveBeenCalled();
   });
 });

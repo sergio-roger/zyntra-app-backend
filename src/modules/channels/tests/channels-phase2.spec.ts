@@ -2,10 +2,11 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { FindManyOptions, ObjectLiteral, Repository } from 'typeorm';
+import { FindManyOptions, IsNull, ObjectLiteral, Repository } from 'typeorm';
 
 import { ChannelsService } from '@/modules/channels/channels.service';
 import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
@@ -153,28 +154,34 @@ describe('WebChatChannelProvider.setup()', () => {
     provider = new WebChatChannelProvider();
   });
 
-  it('returns embedCode containing the businessId', async () => {
-    const bizId = 'biz-abc-123';
-    const result = await provider.setup('chan-1', bizId, {
-      position: 'bottom-right',
-    });
-    expect(result.embedCode).toContain(`data-business-id="${bizId}"`);
-  });
-
-  it('returns embedCode containing the channelId', async () => {
-    const chanId = 'chan-xyz';
-    const result = await provider.setup(chanId, 'biz-1', {});
-    expect(result.embedCode).toContain(`data-channel-id="${chanId}"`);
+  it('returns embedCode containing the publicKey', async () => {
+    const result = await provider.setup(
+      'chan-1',
+      'biz-1',
+      { position: 'bottom-right' },
+      'wpk_abc123',
+    );
+    expect(result.embedCode).toContain('data-public-key="wpk_abc123"');
   });
 
   it('returns embedCode with correct position data attribute', async () => {
-    const result = await provider.setup('c', 'b', { position: 'bottom-left' });
+    const result = await provider.setup(
+      'c',
+      'b',
+      { position: 'bottom-left' },
+      'wpk_x',
+    );
     expect(result.embedCode).toContain('data-position="bottom-left"');
   });
 
   it('uses default position bottom-right when not provided', async () => {
-    const result = await provider.setup('c', 'b', {});
+    const result = await provider.setup('c', 'b', {}, 'wpk_x');
     expect(result.embedCode).toContain('data-position="bottom-right"');
+  });
+
+  it('omits embedCode when no publicKey is given', async () => {
+    const result = await provider.setup('c', 'b', {});
+    expect(result.embedCode).toBeUndefined();
   });
 });
 
@@ -276,8 +283,29 @@ describe('ChannelsService', () => {
       });
 
       expect(result.embedCode).toBeDefined();
-      expect(result.embedCode).toContain('biz-1');
-      expect(result.embedCode).toContain('new-chan');
+      expect(result.embedCode).toMatch(/data-public-key="wpk_/);
+      expect(result.embedCode).not.toContain('biz-1');
+      expect(result.embedCode).not.toContain('new-chan');
+    });
+
+    it('generates a public_key for a new web_chat channel', async () => {
+      (channelTypeRepo.findOne as jest.Mock).mockResolvedValue(WEB_CHAT_TYPE);
+      (channelRepo.save as jest.Mock).mockImplementation(
+        (entity: { id?: string }) => {
+          entity.id = entity.id ?? 'new-chan';
+          return Promise.resolve(entity);
+        },
+      );
+      (credentialRepo.save as jest.Mock).mockResolvedValue({});
+
+      await service.create('biz-1', {
+        channelTypeId: 'ct-web-uuid',
+        name: 'Mi Chat',
+      });
+
+      expect(channelRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ public_key: expect.stringMatching(/^wpk_/) }),
+      );
     });
 
     it('throws NotFoundException when channelTypeId does not exist', async () => {
@@ -431,10 +459,11 @@ describe('ChannelsService', () => {
   });
 
   describe('getEmbedSnippet()', () => {
-    it('returns a channel-scoped snippet for a web_chat channel', async () => {
+    it('returns a public_key-scoped snippet for a web_chat channel', async () => {
       const channel = {
         id: 'chan-1',
         business_id: 'biz-1',
+        public_key: 'wpk_abc123',
         channelType: WEB_CHAT_TYPE,
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -443,8 +472,9 @@ describe('ChannelsService', () => {
 
       expect(result.channel_id).toBe('chan-1');
       expect(result.business_id).toBe('biz-1');
-      expect(result.snippet).toContain('data-channel-id="chan-1"');
-      expect(result.snippet).toContain('data-business-id="biz-1"');
+      expect(result.snippet).toContain('data-public-key="wpk_abc123"');
+      expect(result.snippet).not.toContain('data-channel-id');
+      expect(result.snippet).not.toContain('data-business-id');
       expect(channelRepo.findOne).toHaveBeenCalledWith({
         where: { id: 'chan-1', business_id: 'biz-1' },
         relations: ['channelType'],
@@ -471,6 +501,20 @@ describe('ChannelsService', () => {
         BadRequestException,
       );
     });
+
+    it('throws BadRequestException when the web_chat channel has no public_key', async () => {
+      const channel = {
+        id: 'chan-3',
+        business_id: 'biz-1',
+        public_key: null,
+        channelType: WEB_CHAT_TYPE,
+      } as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      await expect(service.getEmbedSnippet('biz-1', 'chan-3')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
   });
 
   describe('update() — soft-disable via status', () => {
@@ -492,6 +536,145 @@ describe('ChannelsService', () => {
 
       expect(result.status).toBe(ChannelStatus.INACTIVE);
       expect(channelRepo.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rotatePublicKey()', () => {
+    it('generates a new public_key and clears public_key_revoked_at', async () => {
+      const channel = {
+        id: 'chan-9',
+        business_id: 'biz-1',
+        public_key: 'wpk_old',
+        public_key_revoked_at: null,
+        channelType: WEB_CHAT_TYPE,
+      } as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+      (channelRepo.save as jest.Mock).mockImplementation((c) =>
+        Promise.resolve(c),
+      );
+
+      const newKey = await service.rotatePublicKey('biz-1', 'chan-9');
+
+      expect(newKey).toMatch(/^wpk_/);
+      expect(newKey).not.toBe('wpk_old');
+      expect(channelRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          public_key: newKey,
+          public_key_revoked_at: null,
+        }),
+      );
+    });
+
+    it('throws BadRequestException for a non-web_chat channel', async () => {
+      const channel = {
+        id: 'chan-2',
+        business_id: 'biz-1',
+        channelType: FACEBOOK_TYPE,
+      } as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      await expect(
+        service.rotatePublicKey('biz-1', 'chan-2'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws NotFoundException when the channel does not belong to the business', async () => {
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.rotatePublicKey('biz-1', 'chan-missing'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('validateOriginAndGetChannel()', () => {
+    it('resolves the channel by public_key among non-revoked keys only', async () => {
+      const channel = {
+        id: 'chan-1',
+        business_id: 'biz-1',
+        allowed_origins: [],
+        channelType: WEB_CHAT_TYPE,
+      } as unknown as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      const result = await service.validateOriginAndGetChannel('wpk_abc');
+
+      expect(result).toBe(channel);
+      expect(channelRepo.findOne).toHaveBeenCalledWith({
+        where: { public_key: 'wpk_abc', public_key_revoked_at: IsNull() },
+        relations: ['channelType'],
+      });
+    });
+
+    it('throws UnauthorizedException when public_key is unknown or revoked', async () => {
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.validateOriginAndGetChannel('wpk_missing'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('allows any origin when allowed_origins is empty', async () => {
+      const channel = {
+        id: 'chan-1',
+        business_id: 'biz-1',
+        allowed_origins: [],
+        channelType: WEB_CHAT_TYPE,
+      } as unknown as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      await expect(
+        service.validateOriginAndGetChannel(
+          'wpk_abc',
+          'https://anything.example.net',
+        ),
+      ).resolves.toBe(channel);
+    });
+
+    it('allows the request when Origin matches an allowed origin', async () => {
+      const channel = {
+        id: 'chan-1',
+        business_id: 'biz-1',
+        allowed_origins: ['example.com'],
+        channelType: WEB_CHAT_TYPE,
+      } as unknown as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      await expect(
+        service.validateOriginAndGetChannel('wpk_abc', 'https://example.com'),
+      ).resolves.toBe(channel);
+    });
+
+    it('allows a subdomain of an allowed origin', async () => {
+      const channel = {
+        id: 'chan-1',
+        business_id: 'biz-1',
+        allowed_origins: ['example.com'],
+        channelType: WEB_CHAT_TYPE,
+      } as unknown as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      await expect(
+        service.validateOriginAndGetChannel(
+          'wpk_abc',
+          undefined,
+          'https://app.example.com/widget',
+        ),
+      ).resolves.toBe(channel);
+    });
+
+    it('throws UnauthorizedException when Origin does not match allowed_origins', async () => {
+      const channel = {
+        id: 'chan-1',
+        business_id: 'biz-1',
+        allowed_origins: ['example.com'],
+        channelType: WEB_CHAT_TYPE,
+      } as unknown as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      await expect(
+        service.validateOriginAndGetChannel('wpk_abc', 'https://evil.com'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 });

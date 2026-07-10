@@ -19,6 +19,7 @@ import { ChatGateway } from './chat.gateway';
 import { InternalCallbackController } from './internal-callback.controller';
 import { ChatRateLimitGuard } from './guards/chat-rate-limit.guard';
 import { AiModule } from '../ai/ai.module';
+import { WidgetSessionModule } from '@/modules/widget-session/widget-session.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AiModule } from '../ai/ai.module';
     BullModule.registerQueue({ name: AGENT_RESPONSE_QUEUE }),
     AiModule,
     ChannelsModule,
+    WidgetSessionModule,
   ],
   controllers: [ChatController, InternalCallbackController],
   providers: [ChatService, ChatGateway, ChatRateLimitGuard],

@@ -59,6 +59,7 @@ export class WebChatChannelProvider implements ChannelProvider {
     channelId: string,
     businessId: string,
     config: Record<string, unknown>,
+    publicKey?: string,
   ): Promise<ChannelSetupResult> {
     await Promise.resolve();
     const position = (config.position as string | undefined) ?? 'bottom-right';
@@ -75,14 +76,9 @@ export class WebChatChannelProvider implements ChannelProvider {
       greeting,
     };
 
-    const embedCode = buildEmbedSnippet({
-      channelId,
-      businessId,
-      position,
-      primaryColor,
-      name,
-      greeting,
-    });
+    const embedCode = publicKey
+      ? buildEmbedSnippet({ publicKey, position, primaryColor, name, greeting })
+      : undefined;
 
     return { config: resolvedConfig, embedCode };
   }

@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsUUID,
   IsMongoId,
   IsObject,
   MaxLength,
@@ -23,33 +22,19 @@ export class ChatRequestDto {
   @IsMongoId()
   conversation_id?: string;
 
-  @ApiProperty({
-    description:
-      'UUID of the target Business. Still required for traceability/analytics ' +
-      'and as a fallback when channel_id is not provided.',
-  })
-  @IsUUID()
-  business_id: string;
-
-  @ApiPropertyOptional({
-    description:
-      'UUID of the target Channel (channels.id). Takes priority over ' +
-      'business_id for resolving which web_chat channel handles the request.',
-  })
-  @IsOptional()
-  @IsUUID()
-  channel_id?: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   channel?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description:
+      'Visitor metadata for analytics only — identity (fingerprint) comes ' +
+      'from the signed widget session, not from here.',
+  })
   @IsOptional()
   @IsObject()
   visitor?: {
-    fingerprint?: string;
     page_url?: string;
     referrer?: string;
     user_agent?: string;

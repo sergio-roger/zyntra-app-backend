@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToOne,
@@ -24,6 +25,10 @@ export enum ChannelStatus {
   'channel_type_id',
   'name',
 ])
+@Index('idx_channels_public_key', ['public_key'], {
+  unique: true,
+  where: 'public_key_revoked_at IS NULL',
+})
 export class Channel {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -54,6 +59,20 @@ export class Channel {
 
   @Column({ type: 'jsonb', default: {} })
   config: Record<string, unknown>;
+
+  // Public, non-secret identifier embedded in the widget snippet; exchanged
+  // for a short-lived session JWT. NULL for non-web_chat channels.
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  public_key: string | null;
+
+  // Domains allowed to perform the public_key -> JWT exchange. Empty = no
+  // restriction (dev/testing only; the exchange endpoint logs a warning).
+  @Column({ type: 'text', array: true, default: '{}' })
+  allowed_origins: string[];
+
+  // Set to revoke public_key without deleting the row (key rotation).
+  @Column({ type: 'timestamptz', nullable: true })
+  public_key_revoked_at: Date | null;
 
   @CreateDateColumn()
   created_at: Date;

@@ -9,8 +9,7 @@ function escapeAttr(value: string): string {
 }
 
 export function buildEmbedSnippet(params: {
-  channelId: string;
-  businessId: string;
+  publicKey: string;
   cdnUrl?: string;
   position?: string;
   primaryColor?: string;
@@ -19,10 +18,7 @@ export function buildEmbedSnippet(params: {
 }): string {
   const cdnUrl = params.cdnUrl ?? process.env.WIDGET_CDN_URL ?? DEFAULT_CDN_URL;
 
-  const attrs = [
-    `data-channel-id="${escapeAttr(params.channelId)}"`,
-    `data-business-id="${escapeAttr(params.businessId)}"`,
-  ];
+  const attrs = [`data-public-key="${escapeAttr(params.publicKey)}"`];
   if (params.position !== undefined) {
     attrs.push(`data-position="${escapeAttr(params.position)}"`);
   }

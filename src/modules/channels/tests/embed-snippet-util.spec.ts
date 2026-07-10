@@ -5,33 +5,26 @@ describe('buildEmbedSnippet()', () => {
     delete process.env.WIDGET_CDN_URL;
   });
 
-  it('produces the expected tag with channel-id, business-id and defer', () => {
-    const snippet = buildEmbedSnippet({
-      channelId: 'chan-1',
-      businessId: 'biz-1',
-    });
+  it('produces the expected tag with public-key and defer', () => {
+    const snippet = buildEmbedSnippet({ publicKey: 'wpk_abc123' });
 
     expect(snippet).toBe(
       '<script src="https://cdn.zyntra.app/widget/v1.js" ' +
-        'data-channel-id="chan-1" data-business-id="biz-1" defer></script>',
+        'data-public-key="wpk_abc123" defer></script>',
     );
   });
 
-  it('places data-channel-id before data-business-id', () => {
-    const snippet = buildEmbedSnippet({
-      channelId: 'chan-1',
-      businessId: 'biz-1',
-    });
+  it('does not include business-id or channel-id attributes', () => {
+    const snippet = buildEmbedSnippet({ publicKey: 'wpk_abc123' });
 
-    expect(snippet.indexOf('data-channel-id')).toBeLessThan(
-      snippet.indexOf('data-business-id'),
-    );
+    expect(snippet).not.toContain('data-business-id');
+    expect(snippet).not.toContain('data-channel-id');
   });
 
   it('uses WIDGET_CDN_URL env var when set, over the default', () => {
     process.env.WIDGET_CDN_URL = 'https://cdn.example.com/w.js';
 
-    const snippet = buildEmbedSnippet({ channelId: 'c', businessId: 'b' });
+    const snippet = buildEmbedSnippet({ publicKey: 'wpk_x' });
 
     expect(snippet).toContain('src="https://cdn.example.com/w.js"');
   });
@@ -40,34 +33,33 @@ describe('buildEmbedSnippet()', () => {
     process.env.WIDGET_CDN_URL = 'https://cdn.example.com/w.js';
 
     const snippet = buildEmbedSnippet({
-      channelId: 'c',
-      businessId: 'b',
+      publicKey: 'wpk_x',
       cdnUrl: 'https://custom.cdn/x.js',
     });
 
     expect(snippet).toContain('src="https://custom.cdn/x.js"');
   });
 
-  it('escapes double quotes in channelId to prevent attribute breakout', () => {
+  it('escapes double quotes in publicKey to prevent attribute breakout', () => {
     const snippet = buildEmbedSnippet({
-      channelId: 'chan"onmouseover="alert(1)',
-      businessId: 'biz-1',
+      publicKey: 'wpk"onmouseover="alert(1)',
     });
 
-    expect(snippet).not.toContain('data-channel-id="chan"onmouseover="');
+    expect(snippet).not.toContain('data-public-key="wpk"onmouseover="');
     expect(snippet).toContain(
-      'data-channel-id="chan&quot;onmouseover=&quot;alert(1)"',
+      'data-public-key="wpk&quot;onmouseover=&quot;alert(1)"',
     );
   });
 
-  it('escapes angle brackets and ampersands in either id', () => {
+  it('escapes angle brackets and ampersands in the greeting', () => {
     const snippet = buildEmbedSnippet({
-      channelId: '<img src=x onerror=alert(1)>',
-      businessId: 'a&b',
+      publicKey: 'wpk_x',
+      greeting: '<img src=x onerror=alert(1)> & hola',
     });
 
     expect(snippet).not.toContain('<img');
-    expect(snippet).toContain('&lt;img src=x onerror=alert(1)&gt;');
-    expect(snippet).toContain('data-business-id="a&amp;b"');
+    expect(snippet).toContain(
+      'data-greeting="&lt;img src=x onerror=alert(1)&gt; &amp; hola"',
+    );
   });
 });

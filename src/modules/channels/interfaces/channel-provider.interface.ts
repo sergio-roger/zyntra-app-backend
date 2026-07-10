@@ -19,6 +19,7 @@ export interface ChannelProvider {
     channelId: string,
     businessId: string,
     config: Record<string, unknown>,
+    publicKey?: string,
   ): Promise<ChannelSetupResult>;
 
   /** Map an incoming raw webhook payload to a normalised IncomingMessage. */

@@ -1,4 +1,5 @@
 import { REDIS_CLIENT } from '@common/redis/redis.constants';
+import type { RequestWithWidgetSession } from '@/modules/widget-session/interfaces/request-with-widget-session.interface';
 import {
   CanActivate,
   ExecutionContext,
@@ -6,16 +7,10 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Request } from 'express';
 import type Redis from 'ioredis';
-
-interface ChatRequestBody {
-  channel_id?: string;
-  business_id?: string;
-  visitor?: { fingerprint?: string };
-}
 
 @Injectable()
 export class ChatRateLimitGuard implements CanActivate {
@@ -31,16 +26,18 @@ export class ChatRateLimitGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest<Request>();
-    const body = (req.body ?? {}) as ChatRequestBody;
+    const req = context
+      .switchToHttp()
+      .getRequest<RequestWithWidgetSession>();
 
-    const scope = body.channel_id ?? body.business_id;
-    if (!scope) return true; // let DTO validation reject the missing id
+    // WidgetSessionGuard must run before this guard (see @UseGuards order on
+    // the route) and always sets req.widgetSession or throws.
+    if (!req.widgetSession) {
+      throw new UnauthorizedException('widget session inválida o expirada');
+    }
 
-    const forwardedFor = req.headers['x-forwarded-for'];
-    const ip = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
-    const visitor = body.visitor?.fingerprint ?? ip ?? 'anonymous';
-
+    const scope = req.widgetSession.channelId;
+    const visitor = req.widgetSession.visitorFingerprint;
     const key = `ratelimit:chat:${scope}:${visitor}`;
     const count = await this.redis.incr(key);
     if (count === 1) {

@@ -9,17 +9,23 @@ import {
 import { ChannelProviderFactory } from '@/modules/channels/providers/channel-provider.factory';
 import { buildEmbedSnippet } from '@/modules/channels/utils/embed-snippet.util';
 import { encryptCredentials } from '@/modules/channels/utils/crypto.util';
+import { isOriginAllowed } from '@/modules/channels/utils/origin.util';
+import { generatePublicKey } from '@/modules/channels/utils/public-key.util';
 import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
 @Injectable()
 export class ChannelsService {
+  private readonly logger = new Logger(ChannelsService.name);
+
   constructor(
     @InjectRepository(ChannelType)
     private readonly channelTypeRepo: Repository<ChannelType>,
@@ -71,10 +77,16 @@ export class ChannelsService {
       status: ChannelStatus.ACTIVE,
       agent_id: null,
       config,
+      public_key: channelType.key === 'web_chat' ? generatePublicKey() : null,
     });
     await this.channelRepo.save(channel);
 
-    const setupResult = await provider.setup(channel.id, businessId, config);
+    const setupResult = await provider.setup(
+      channel.id,
+      businessId,
+      config,
+      channel.public_key ?? undefined,
+    );
 
     // Update config with whatever setup returned (e.g. embedCode baked in)
     channel.config = setupResult.config;
@@ -154,11 +166,13 @@ export class ChannelsService {
         'El snippet de embed solo aplica a canales de tipo web_chat',
       );
     }
+    if (!channel.public_key) {
+      throw new BadRequestException('Este canal no tiene un public_key generado');
+    }
 
     const config = channel.config ?? {};
     const snippet = buildEmbedSnippet({
-      channelId: channel.id,
-      businessId: channel.business_id,
+      publicKey: channel.public_key,
       position: config.position as string | undefined,
       primaryColor: config.primaryColor as string | undefined,
       name: config.name as string | undefined,
@@ -191,5 +205,54 @@ export class ChannelsService {
     if (requestBusinessId !== paramBusinessId) {
       throw new ForbiddenException('No tienes acceso a este recurso');
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Widget public_key exchange support
+  // ---------------------------------------------------------------------------
+
+  /** Revokes the current public_key and generates a fresh one, in one write. */
+  async rotatePublicKey(businessId: string, channelId: string): Promise<string> {
+    const channel = await this.findOne(businessId, channelId);
+    if (channel.channelType.key !== 'web_chat') {
+      throw new BadRequestException(
+        'public_key solo aplica a canales de tipo web_chat',
+      );
+    }
+
+    channel.public_key = generatePublicKey();
+    channel.public_key_revoked_at = null;
+    await this.channelRepo.save(channel);
+    return channel.public_key;
+  }
+
+  /**
+   * Resolves a channel from its public_key and enforces allowed_origins.
+   * Used by the widget's public_key -> session JWT exchange.
+   */
+  async validateOriginAndGetChannel(
+    publicKey: string,
+    origin?: string,
+    referer?: string,
+  ): Promise<Channel> {
+    const channel = await this.channelRepo.findOne({
+      where: { public_key: publicKey, public_key_revoked_at: IsNull() },
+      relations: ['channelType'],
+    });
+    if (!channel) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const allowedOrigins = channel.allowed_origins ?? [];
+    if (allowedOrigins.length === 0) {
+      this.logger.warn(
+        `channel_id=${channel.id} has no allowed_origins configured; ` +
+          `allowing the public_key exchange from any origin`,
+      );
+    } else if (!isOriginAllowed(allowedOrigins, origin, referer)) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    return channel;
   }
 }

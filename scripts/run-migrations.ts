@@ -46,6 +46,7 @@ async function run() {
   await runMigration(c, '20260704_add_profile_fields_to_users.sql');
   await runMigration(c, '20260704_add_avatar_file_id_to_users.sql');
   await runMigration(c, '20260704_document_channels_multi_web_support.sql');
+  await runMigration(c, '20260709_add_widget_public_key_auth.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

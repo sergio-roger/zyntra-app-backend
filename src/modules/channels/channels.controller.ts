@@ -120,6 +120,26 @@ export class ChannelsController {
     return this.channelsService.getEmbedSnippet(businessId, channelId);
   }
 
+  @Post('businesses/:businessId/channels/:id/rotate-public-key')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Rota el public_key del canal (revoca el anterior de inmediato)',
+  })
+  @ApiOkResponse({ description: 'Nuevo public_key generado' })
+  async rotatePublicKey(
+    @Req() req: RequestWithUser,
+    @Param('businessId', ParseUUIDPipe) businessId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    this.channelsService.assertOwnership(req.user.businessId, businessId);
+    const publicKey = await this.channelsService.rotatePublicKey(
+      businessId,
+      id,
+    );
+    return { public_key: publicKey };
+  }
+
   @Post('businesses/:businessId/channels/:id/agent')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(HttpStatus.OK)
