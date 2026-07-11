@@ -187,12 +187,14 @@ export class ChatService {
       };
     }
 
-    // 4b. No agent assigned → wait for a human to reply, no automatic message.
+    // 4b. No agent assigned → a human must reply manually from the inbox.
+    // Nothing is queued to produce an automatic reply, so tell the widget
+    // not to wait on one (it would otherwise spin forever).
     return {
       id: crypto.randomUUID(),
       conversation_id: conversationIdStr,
       message: '',
-      pending: true,
+      pending: false,
       created_at: now,
     };
   }

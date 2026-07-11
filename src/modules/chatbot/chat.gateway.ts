@@ -167,6 +167,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { ok: true };
   }
 
+  /** Relays real-time typing presence to the other side of a conversation (visitor <-> agent). */
+  @SubscribeMessage('conversation:typing')
+  handleTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { conversationId: string; isTyping: boolean },
+  ) {
+    if (!payload?.conversationId) return;
+    const ctx = client.data as SocketContext;
+    client.to(`conversation:${payload.conversationId}`).emit('conversation:typing', {
+      conversation_id: payload.conversationId,
+      from: ctx.kind,
+      isTyping: !!payload.isTyping,
+    });
+  }
+
   // ─── Visitor-initiated chat (replaces the old REST /chat/chat) ─────────────
 
   @SubscribeMessage('conversation:send-message')
