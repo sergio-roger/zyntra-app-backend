@@ -149,11 +149,11 @@ describe('Channel constraint: FK on channel_type_id', () => {
 
     await expect(
       channelRepo.save({
-        business_id: 'biz-uuid',
-        channel_type_id: '00000000-0000-0000-0000-000000000000',
+        businessId: 'biz-uuid',
+        channelTypeId: '00000000-0000-0000-0000-000000000000',
         name: 'My Channel',
         status: ChannelStatus.ACTIVE,
-        agent_id: null,
+        agentId: null,
         config: {},
       } as Channel),
     ).rejects.toThrow('foreign key constraint');
@@ -180,8 +180,8 @@ describe('Channel constraint: uq_channel_per_business_type_name', () => {
       .mockRejectedValueOnce(uniqueError);
 
     const payload = {
-      business_id: 'biz-1',
-      channel_type_id: 'ct-1',
+      businessId: 'biz-1',
+      channelTypeId: 'ct-1',
       name: 'Principal',
     } as Channel;
 
@@ -207,7 +207,7 @@ describe('Channel constraint: uq_channel_per_business_type_name allows multiple 
       .mockResolvedValueOnce({ id: 'c1', name: 'Sitio principal' })
       .mockResolvedValueOnce({ id: 'c2', name: 'Landing campaña verano' });
 
-    const base = { business_id: 'biz-1', channel_type_id: 'ct-web' };
+    const base = { businessId: 'biz-1', channelTypeId: 'ct-web' };
 
     await expect(
       channelRepo.save({ ...base, name: 'Sitio principal' } as Channel),

@@ -89,6 +89,28 @@ export class ChatController {
     return this.chatService.getConversationDetail(businessId, id);
   }
 
+  @Post('conversations/:id/messages')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Un agente humano envía un mensaje manual a la conversación',
+  })
+  @ApiCreatedResponse({ description: 'Mensaje guardado y emitido por socket' })
+  async sendAgentMessage(
+    @Req() req: RequestWithUser,
+    @Param('id') conversationId: string,
+    @Body('content') content: string,
+  ): Promise<{ id: string; createdAt: string }> {
+    const businessId = req.user.businessId;
+    if (!businessId)
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.chatService.sendAgentMessage(
+      businessId,
+      conversationId,
+      content,
+    );
+  }
+
   @Patch('conversations/:id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

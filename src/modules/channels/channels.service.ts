@@ -30,13 +30,13 @@ import { IsNull, Repository } from 'typeorm';
  */
 function originColumnsFromConfig(config: Record<string, unknown>) {
   return {
-    allowed_origins: Array.isArray(config.allowedDomains)
+    allowedOrigins: Array.isArray(config.allowedDomains)
       ? (config.allowedDomains as string[])
       : [],
-    blocked_origins: Array.isArray(config.blockedDomains)
+    blockedOrigins: Array.isArray(config.blockedDomains)
       ? (config.blockedDomains as string[])
       : [],
-    allow_insecure_origins: config.allowInsecureDomains === true,
+    allowInsecureOrigins: config.allowInsecureDomains === true,
   };
 }
 
@@ -89,13 +89,13 @@ export class ChannelsService {
     provider.validateConfig(config);
 
     const channel = this.channelRepo.create({
-      business_id: businessId,
-      channel_type_id: channelType.id,
+      businessId: businessId,
+      channelTypeId: channelType.id,
       name: dto.name,
       status: ChannelStatus.ACTIVE,
-      agent_id: null,
+      agentId: null,
       config,
-      public_key: channelType.key === 'web_chat' ? generatePublicKey() : null,
+      publicKey: channelType.key === 'web_chat' ? generatePublicKey() : null,
       ...originColumnsFromConfig(config),
     });
     await this.channelRepo.save(channel);
@@ -104,7 +104,7 @@ export class ChannelsService {
       channel.id,
       businessId,
       config,
-      channel.public_key ?? undefined,
+      channel.publicKey ?? undefined,
     );
 
     // Update config with whatever setup returned (e.g. embedCode baked in)
@@ -127,15 +127,15 @@ export class ChannelsService {
 
   async findAll(businessId: string) {
     return this.channelRepo.find({
-      where: { business_id: businessId },
+      where: { businessId: businessId },
       relations: ['channelType'],
-      order: { created_at: 'DESC' },
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(businessId: string, channelId: string) {
     const channel = await this.channelRepo.findOne({
-      where: { id: channelId, business_id: businessId },
+      where: { id: channelId, businessId: businessId },
       relations: ['channelType'],
     });
     if (!channel) throw new NotFoundException('Canal no encontrado');
@@ -168,13 +168,13 @@ export class ChannelsService {
   async assignAgent(businessId: string, channelId: string, agentId: string) {
     const channel = await this.findOne(businessId, channelId);
 
-    channel.agent_id = agentId;
+    channel.agentId = agentId;
     return this.channelRepo.save(channel);
   }
 
   async unassignAgent(businessId: string, channelId: string) {
     const channel = await this.findOne(businessId, channelId);
-    channel.agent_id = null;
+    channel.agentId = null;
     return this.channelRepo.save(channel);
   }
 
@@ -186,24 +186,24 @@ export class ChannelsService {
         'El snippet de embed solo aplica a canales de tipo web_chat',
       );
     }
-    if (!channel.public_key) {
+    if (!channel.publicKey) {
       throw new BadRequestException('Este canal no tiene un public_key generado');
     }
 
-    const snippet = buildEmbedSnippet({ publicKey: channel.public_key });
+    const snippet = buildEmbedSnippet({ publicKey: channel.publicKey });
 
     return {
       channel_id: channel.id,
-      business_id: channel.business_id,
+      business_id: channel.businessId,
       snippet,
     };
   }
 
   async findAllByBusiness(businessId: string): Promise<Channel[]> {
     return this.channelRepo.find({
-      where: { business_id: businessId, channelType: { key: 'web_chat' } },
+      where: { businessId: businessId, channelType: { key: 'web_chat' } },
       relations: ['channelType'],
-      order: { created_at: 'DESC' },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -233,10 +233,10 @@ export class ChannelsService {
       );
     }
 
-    channel.public_key = generatePublicKey();
-    channel.public_key_revoked_at = null;
+    channel.publicKey = generatePublicKey();
+    channel.publicKeyRevokedAt = null;
     await this.channelRepo.save(channel);
-    return channel.public_key;
+    return channel.publicKey;
   }
 
   /**
@@ -249,16 +249,16 @@ export class ChannelsService {
     referer?: string,
   ): Promise<Channel> {
     const channel = await this.channelRepo.findOne({
-      where: { public_key: publicKey, public_key_revoked_at: IsNull() },
+      where: { publicKey: publicKey, publicKeyRevokedAt: IsNull() },
       relations: ['channelType'],
     });
     if (!channel) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const allowedOrigins = channel.allowed_origins ?? [];
-    const blockedOrigins = channel.blocked_origins ?? [];
-    const allowInsecure = channel.allow_insecure_origins === true;
+    const allowedOrigins = channel.allowedOrigins ?? [];
+    const blockedOrigins = channel.blockedOrigins ?? [];
+    const allowInsecure = channel.allowInsecureOrigins === true;
 
     if (allowInsecure) {
       this.logger.warn(

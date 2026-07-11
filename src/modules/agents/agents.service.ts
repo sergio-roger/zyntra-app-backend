@@ -70,7 +70,7 @@ export class AgentsService {
 
     // Block deletion if agent is assigned to at least one active channel
     const assignedChannel = await this.channelRepo.findOne({
-      where: { business_id: businessId, agent_id: agentId },
+      where: { businessId: businessId, agentId: agentId },
     });
     if (assignedChannel) {
       throw new ConflictException(

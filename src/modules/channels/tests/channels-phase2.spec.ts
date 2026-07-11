@@ -333,7 +333,7 @@ describe('ChannelsService', () => {
       });
 
       expect(channelRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ public_key: expect.stringMatching(/^wpk_/) }),
+        expect.objectContaining({ publicKey: expect.stringMatching(/^wpk_/) }),
       );
     });
 
@@ -392,7 +392,7 @@ describe('ChannelsService', () => {
     it('removes the channel and returns success', async () => {
       const channel = {
         id: 'c1',
-        business_id: 'biz-1',
+        businessId: 'biz-1',
         channelType: WEB_CHAT_TYPE,
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -408,13 +408,13 @@ describe('ChannelsService', () => {
       const channels = [
         {
           id: 'c1',
-          business_id: 'biz-1',
+          businessId: 'biz-1',
           name: 'Sitio principal',
           channelType: WEB_CHAT_TYPE,
         },
         {
           id: 'c2',
-          business_id: 'biz-1',
+          businessId: 'biz-1',
           name: 'Landing campaña verano',
           channelType: WEB_CHAT_TYPE,
         },
@@ -425,9 +425,9 @@ describe('ChannelsService', () => {
 
       expect(result).toHaveLength(2);
       expect(channelRepo.find).toHaveBeenCalledWith({
-        where: { business_id: 'biz-1', channelType: { key: 'web_chat' } },
+        where: { businessId: 'biz-1', channelType: { key: 'web_chat' } },
         relations: ['channelType'],
-        order: { created_at: 'DESC' },
+        order: { createdAt: 'DESC' },
       });
     });
 
@@ -441,7 +441,7 @@ describe('ChannelsService', () => {
         [FindManyOptions<Channel>]
       >;
       const call = findMock.mock.calls[0][0];
-      expect((call.where as { business_id: string }).business_id).toBe('biz-2');
+      expect((call.where as { businessId: string }).businessId).toBe('biz-2');
     });
   });
 
@@ -449,7 +449,7 @@ describe('ChannelsService', () => {
     it('resolves a channel by id alone, without requiring business_id', async () => {
       const channel = {
         id: 'chan-9',
-        business_id: 'biz-1',
+        businessId: 'biz-1',
         name: 'Landing campaña verano',
         channelType: WEB_CHAT_TYPE,
       } as Channel;
@@ -475,7 +475,7 @@ describe('ChannelsService', () => {
     it('still resolves a channel whose status is INACTIVE (soft-disable does not break existing references)', async () => {
       const inactiveChannel = {
         id: 'chan-9',
-        business_id: 'biz-1',
+        businessId: 'biz-1',
         status: ChannelStatus.INACTIVE,
         channelType: WEB_CHAT_TYPE,
       } as Channel;
@@ -491,8 +491,8 @@ describe('ChannelsService', () => {
     it('returns a public_key-scoped snippet for a web_chat channel', async () => {
       const channel = {
         id: 'chan-1',
-        business_id: 'biz-1',
-        public_key: 'wpk_abc123',
+        businessId: 'biz-1',
+        publicKey: 'wpk_abc123',
         channelType: WEB_CHAT_TYPE,
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -505,7 +505,7 @@ describe('ChannelsService', () => {
       expect(result.snippet).not.toContain('data-channel-id');
       expect(result.snippet).not.toContain('data-business-id');
       expect(channelRepo.findOne).toHaveBeenCalledWith({
-        where: { id: 'chan-1', business_id: 'biz-1' },
+        where: { id: 'chan-1', businessId: 'biz-1' },
         relations: ['channelType'],
       });
     });
@@ -521,7 +521,7 @@ describe('ChannelsService', () => {
     it('throws BadRequestException for a non-web_chat channel', async () => {
       const channel = {
         id: 'chan-2',
-        business_id: 'biz-1',
+        businessId: 'biz-1',
         channelType: FACEBOOK_TYPE,
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -534,8 +534,8 @@ describe('ChannelsService', () => {
     it('throws BadRequestException when the web_chat channel has no public_key', async () => {
       const channel = {
         id: 'chan-3',
-        business_id: 'biz-1',
-        public_key: null,
+        businessId: 'biz-1',
+        publicKey: null,
         channelType: WEB_CHAT_TYPE,
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -550,7 +550,7 @@ describe('ChannelsService', () => {
     it('sets status to INACTIVE without deleting the row', async () => {
       const channel = {
         id: 'chan-9',
-        business_id: 'biz-1',
+        businessId: 'biz-1',
         status: ChannelStatus.ACTIVE,
         channelType: WEB_CHAT_TYPE,
       } as Channel;
@@ -572,9 +572,9 @@ describe('ChannelsService', () => {
     it('generates a new public_key and clears public_key_revoked_at', async () => {
       const channel = {
         id: 'chan-9',
-        business_id: 'biz-1',
-        public_key: 'wpk_old',
-        public_key_revoked_at: null,
+        businessId: 'biz-1',
+        publicKey: 'wpk_old',
+        publicKeyRevokedAt: null,
         channelType: WEB_CHAT_TYPE,
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -588,8 +588,8 @@ describe('ChannelsService', () => {
       expect(newKey).not.toBe('wpk_old');
       expect(channelRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          public_key: newKey,
-          public_key_revoked_at: null,
+          publicKey: newKey,
+          publicKeyRevokedAt: null,
         }),
       );
     });
@@ -597,7 +597,7 @@ describe('ChannelsService', () => {
     it('throws BadRequestException for a non-web_chat channel', async () => {
       const channel = {
         id: 'chan-2',
-        business_id: 'biz-1',
+        businessId: 'biz-1',
         channelType: FACEBOOK_TYPE,
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -620,8 +620,8 @@ describe('ChannelsService', () => {
     it('resolves the channel by public_key among non-revoked keys only', async () => {
       const channel = {
         id: 'chan-1',
-        business_id: 'biz-1',
-        allowed_origins: [],
+        businessId: 'biz-1',
+        allowedOrigins: [],
         channelType: WEB_CHAT_TYPE,
       } as unknown as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -630,7 +630,7 @@ describe('ChannelsService', () => {
 
       expect(result).toBe(channel);
       expect(channelRepo.findOne).toHaveBeenCalledWith({
-        where: { public_key: 'wpk_abc', public_key_revoked_at: IsNull() },
+        where: { publicKey: 'wpk_abc', publicKeyRevokedAt: IsNull() },
         relations: ['channelType'],
       });
     });
@@ -646,8 +646,8 @@ describe('ChannelsService', () => {
     it('allows any origin when allowed_origins is empty', async () => {
       const channel = {
         id: 'chan-1',
-        business_id: 'biz-1',
-        allowed_origins: [],
+        businessId: 'biz-1',
+        allowedOrigins: [],
         channelType: WEB_CHAT_TYPE,
       } as unknown as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -663,8 +663,8 @@ describe('ChannelsService', () => {
     it('allows the request when Origin matches an allowed origin', async () => {
       const channel = {
         id: 'chan-1',
-        business_id: 'biz-1',
-        allowed_origins: ['example.com'],
+        businessId: 'biz-1',
+        allowedOrigins: ['example.com'],
         channelType: WEB_CHAT_TYPE,
       } as unknown as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -677,8 +677,8 @@ describe('ChannelsService', () => {
     it('allows a subdomain of an allowed origin', async () => {
       const channel = {
         id: 'chan-1',
-        business_id: 'biz-1',
-        allowed_origins: ['example.com'],
+        businessId: 'biz-1',
+        allowedOrigins: ['example.com'],
         channelType: WEB_CHAT_TYPE,
       } as unknown as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -695,8 +695,8 @@ describe('ChannelsService', () => {
     it('throws UnauthorizedException when Origin does not match allowed_origins', async () => {
       const channel = {
         id: 'chan-1',
-        business_id: 'biz-1',
-        allowed_origins: ['example.com'],
+        businessId: 'biz-1',
+        allowedOrigins: ['example.com'],
         channelType: WEB_CHAT_TYPE,
       } as unknown as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -709,9 +709,9 @@ describe('ChannelsService', () => {
     it('throws UnauthorizedException when Origin matches blocked_origins', () => {
       const channel = {
         id: 'chan-1',
-        business_id: 'biz-1',
-        allowed_origins: [],
-        blocked_origins: ['evil.com'],
+        businessId: 'biz-1',
+        allowedOrigins: [],
+        blockedOrigins: ['evil.com'],
         channelType: WEB_CHAT_TYPE,
       } as unknown as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
@@ -724,10 +724,10 @@ describe('ChannelsService', () => {
     it('allows a blocked origin to be bypassed by allow_insecure_origins', async () => {
       const channel = {
         id: 'chan-1',
-        business_id: 'biz-1',
-        allowed_origins: [],
-        blocked_origins: ['evil.com'],
-        allow_insecure_origins: true,
+        businessId: 'biz-1',
+        allowedOrigins: [],
+        blockedOrigins: ['evil.com'],
+        allowInsecureOrigins: true,
         channelType: WEB_CHAT_TYPE,
       } as unknown as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);

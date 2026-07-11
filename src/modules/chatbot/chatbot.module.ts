@@ -20,6 +20,7 @@ import { InternalCallbackController } from './internal-callback.controller';
 import { ChatRateLimitGuard } from './guards/chat-rate-limit.guard';
 import { AiModule } from '../ai/ai.module';
 import { WidgetSessionModule } from '@/modules/widget-session/widget-session.module';
+import { MessageEncryptionService } from './services/message-encryption.service';
 
 @Module({
   imports: [
@@ -40,7 +41,12 @@ import { WidgetSessionModule } from '@/modules/widget-session/widget-session.mod
     WidgetSessionModule,
   ],
   controllers: [ChatController, InternalCallbackController],
-  providers: [ChatService, ChatGateway, ChatRateLimitGuard],
+  providers: [
+    ChatService,
+    ChatGateway,
+    ChatRateLimitGuard,
+    MessageEncryptionService,
+  ],
   exports: [ChatService],
 })
 export class ChatbotModule {}

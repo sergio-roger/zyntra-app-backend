@@ -20,6 +20,8 @@ interface SocketContext {
   businessId: string;
   /** Channel the visitor's widget session is scoped to (visitors only). */
   channelId?: string;
+  /** Anonymous visitor identity from the signed widget session (visitors only). */
+  visitorFingerprint?: string;
   /** Set for visitors as soon as they identify a conversation. */
   conversationId?: string;
   /** Business id from JWT (agents only). */
@@ -80,6 +82,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         kind: 'visitor',
         businessId: payload.businessId,
         channelId: payload.channelId,
+        visitorFingerprint: payload.visitorFingerprint,
         conversationId,
       };
       client.data = ctx;
@@ -193,7 +196,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     businessId: string,
     conversationId: string,
     message: string,
-    role: 'user' | 'assistant',
+    role: 'user' | 'assistant' | 'agent',
   ) {
     const payload = {
       conversation_id: conversationId,

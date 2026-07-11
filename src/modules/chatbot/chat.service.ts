@@ -30,6 +30,7 @@ import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget
 import { ChatGateway } from './chat.gateway';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
 import { LeadCaptureDto } from './dto/lead-capture.dto';
+import { MessageEncryptionService } from './services/message-encryption.service';
 
 export const AGENT_RESPONSE_QUEUE = 'agent-response';
 
@@ -57,6 +58,7 @@ export class ChatService {
     private readonly chatGateway: ChatGateway,
     private readonly config: ConfigService,
     private readonly widgetSessionService: WidgetSessionService,
+    private readonly messageEncryption: MessageEncryptionService,
   ) {
     this.serviceToken = config.get<string>('SERVICE_TOKEN', '');
   }
@@ -86,7 +88,7 @@ export class ChatService {
     // 1. Load the channel fresh (status/agent_id may have changed since the
     // session token was issued) — identity comes from the verified token.
     const channel = await this.getActiveChannel(widgetSession.channelId);
-    const effectiveBusinessId = channel.business_id;
+    const effectiveBusinessId = channel.businessId;
 
     // 2. Find or create conversation (keyed by channel + visitor fingerprint)
     const fingerprint = widgetSession.visitorFingerprint;
@@ -142,14 +144,14 @@ export class ChatService {
     const now = new Date().toISOString();
 
     // 4a. Agent assigned → enqueue job for agent-service
-    if (channel.agent_id) {
+    if (channel.agentId) {
       const jobId = `${conversationIdStr}-${Date.now()}`;
       await this.agentQueue.add(
         'agent-response',
         {
           conversationId: conversationIdStr,
           channelId: channel.id,
-          agentId: channel.agent_id,
+          agentId: channel.agentId,
           businessId: effectiveBusinessId,
           jobId,
         },
@@ -296,9 +298,53 @@ export class ChatService {
       messages: messages.map((m) => ({
         id: m._id.toString(),
         role: m.role,
-        content: m.content,
+        content:
+          m.role === 'agent'
+            ? this.messageEncryption.decrypt(m.content)
+            : m.content,
         created_at: m.createdAt?.toISOString(),
       })),
+    };
+  }
+
+  /**
+   * Manual message from a human agent (dashboard), separate from the
+   * AI/bot pipeline in processChat(). Content is encrypted at rest — only
+   * 'agent' messages are, so getConversationDetail() decrypts selectively.
+   */
+  async sendAgentMessage(
+    businessId: string,
+    conversationId: string,
+    content: string,
+  ): Promise<{ id: string; createdAt: string }> {
+    const conversation = await this.conversationModel.findById(conversationId);
+    if (!conversation || conversation.business_id !== businessId) {
+      throw new NotFoundException('Conversación no encontrada');
+    }
+
+    const encrypted = this.messageEncryption.encrypt(content);
+    const message = (await this.messageModel.create({
+      conversation_id: conversationId,
+      role: 'agent',
+      content: encrypted,
+      channel: conversation.channel,
+    })) as unknown as { _id: Types.ObjectId; createdAt: Date };
+
+    await this.conversationModel.updateOne(
+      { _id: conversation._id },
+      { last_message_at: new Date() },
+    );
+
+    this.chatGateway.emitNewMessage(
+      businessId,
+      conversationId,
+      content,
+      'agent',
+    );
+
+    return {
+      id: message._id.toString(),
+      createdAt: message.createdAt.toISOString(),
     };
   }
 
@@ -359,7 +405,7 @@ export class ChatService {
 
     const visitorFingerprint = fp ?? crypto.randomUUID();
     const sessionToken = this.widgetSessionService.sign({
-      businessId: channel.business_id,
+      businessId: channel.businessId,
       channelId: channel.id,
       visitorFingerprint,
     });
@@ -383,7 +429,7 @@ export class ChatService {
     }
 
     const channel = await this.getActiveChannel(widgetSession.channelId);
-    const businessId = channel.business_id;
+    const businessId = channel.businessId;
 
     const existing = email
       ? await this.contactsRepo.findOne({ where: { businessId, email } })

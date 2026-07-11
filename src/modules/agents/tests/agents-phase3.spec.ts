@@ -163,7 +163,7 @@ describe('AgentsService', () => {
       (agentRepo.findOne as jest.Mock).mockResolvedValue(makeAgent());
       (channelRepo.findOne as jest.Mock).mockResolvedValue({
         id: 'chan-1',
-        agent_id: 'agent-1',
+        agentId: 'agent-1',
       }); // assigned!
 
       await expect(service.remove('biz-1', 'agent-1')).rejects.toThrow(

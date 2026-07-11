@@ -73,8 +73,8 @@ const makeGateway = () => ({
 
 const WEB_CHAT_CHANNEL: Partial<Channel> = {
   id: 'chan-web-1',
-  business_id: 'biz-1',
-  agent_id: null,
+  businessId: 'biz-1',
+  agentId: null,
   status: ChannelStatus.ACTIVE,
   config: {},
   channelType: { key: 'web_chat' } as any,
@@ -82,7 +82,7 @@ const WEB_CHAT_CHANNEL: Partial<Channel> = {
 
 const WEB_CHAT_CHANNEL_WITH_AGENT: Partial<Channel> = {
   ...WEB_CHAT_CHANNEL,
-  agent_id: 'agent-uuid-1',
+  agentId: 'agent-uuid-1',
 };
 
 const WIDGET_SESSION: WidgetSessionPayload = {

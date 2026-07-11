@@ -8,7 +8,7 @@ export class Message {
   @Prop({ required: true, index: true })
   conversation_id: string;
 
-  @Prop({ required: true, enum: ['user', 'assistant', 'system'] })
+  @Prop({ required: true, enum: ['user', 'assistant', 'system', 'agent'] })
   role: string;
 
   @Prop({ required: true })

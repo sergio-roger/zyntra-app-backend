@@ -62,7 +62,7 @@ export class WidgetSessionGuard implements CanActivate {
 
       const nowSec = Math.floor(Date.now() / 1000);
       req.widgetSession = {
-        businessId: channel.business_id,
+        businessId: channel.businessId,
         channelId: channel.id,
         visitorFingerprint: `legacy:${req.ip ?? 'unknown'}`,
         iat: nowSec,
