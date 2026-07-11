@@ -176,6 +176,7 @@ describe('ChatService.processChat() — channel WITH agent', () => {
     const fakeConv = {
       id: 'conv-123',
       businessId: 'biz-1',
+      assignedTo: 'agent-uuid-1',
     };
     (conversationRepo.create as jest.Mock).mockReturnValue(fakeConv);
     (messageRepo.create as jest.Mock).mockReturnValue({});

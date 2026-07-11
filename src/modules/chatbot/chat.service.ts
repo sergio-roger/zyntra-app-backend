@@ -165,8 +165,8 @@ export class ChatService {
 
     const now = new Date().toISOString();
 
-    // 4a. Agent assigned → enqueue job for agent-service
-    if (channel.agentId) {
+    // 4a. Agent assigned to the conversation → enqueue job for agent-service
+    if (channel.agentId && conversation.assignedTo === channel.agentId) {
       const jobId = `${conversationIdStr}-${Date.now()}`;
       await this.agentQueue.add(
         'agent-response',
