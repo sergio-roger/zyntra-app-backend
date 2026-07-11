@@ -71,9 +71,7 @@ describe('isOriginAllowed()', () => {
 
   it('allows a domain not present in blockedDomains when there is no allowlist', () => {
     expect(
-      isOriginAllowed(undefined, 'https://safe.com', undefined, [
-        'evil.com',
-      ]),
+      isOriginAllowed(undefined, 'https://safe.com', undefined, ['evil.com']),
     ).toBe(true);
   });
 
@@ -90,8 +88,8 @@ describe('isOriginAllowed()', () => {
   });
 
   it('allowInsecureDomains bypasses even a completely missing Origin/Referer', () => {
-    expect(isOriginAllowed(['example.com'], undefined, undefined, [], true)).toBe(
-      true,
-    );
+    expect(
+      isOriginAllowed(['example.com'], undefined, undefined, [], true),
+    ).toBe(true);
   });
 });

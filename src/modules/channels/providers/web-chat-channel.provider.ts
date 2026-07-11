@@ -14,14 +14,19 @@ export class WebChatChannelProvider implements ChannelProvider {
   validateConfig(config: Record<string, unknown>): void {
     const errors: string[] = [];
 
-    const { position, primaryColor, allowedDomains, blockedDomains, allowInsecureDomains } =
-      config as {
-        position?: string;
-        primaryColor?: string;
-        allowedDomains?: unknown;
-        blockedDomains?: unknown;
-        allowInsecureDomains?: unknown;
-      };
+    const {
+      position,
+      primaryColor,
+      allowedDomains,
+      blockedDomains,
+      allowInsecureDomains,
+    } = config as {
+      position?: string;
+      primaryColor?: string;
+      allowedDomains?: unknown;
+      blockedDomains?: unknown;
+      allowInsecureDomains?: unknown;
+    };
 
     if (
       position !== undefined &&

@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
@@ -6,14 +9,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { getQueueToken } from '@nestjs/bullmq';
+import { JwtService } from '@nestjs/jwt';
 import { ObjectLiteral, Repository } from 'typeorm';
 
 import { ChatService, AGENT_RESPONSE_QUEUE } from '../chat.service';
-import { Conversation } from '../schemas/conversation.schema';
-import { Message } from '../schemas/message.schema';
+import { Conversation } from '../entities/conversation.entity';
+import { Message } from '../entities/message.entity';
 import { Contact } from '@crm/entities/contact.entity';
 import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
 import {
@@ -24,33 +27,32 @@ import { ChannelsService } from '@/modules/channels/channels.service';
 import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
 import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
 import { ChatGateway } from '../chat.gateway';
+import { MessageEncryptionService } from '../services/message-encryption.service';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-const makeRepo = <T extends ObjectLiteral>() =>
-  ({
+const makeRepo = <T extends ObjectLiteral>() => {
+  const mockQueryBuilder = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    getOne: jest.fn().mockResolvedValue(null),
+  };
+  return {
     findOne: jest.fn(),
+    findOneBy: jest.fn(),
     find: jest.fn(),
-    save: jest.fn(),
-    create: jest.fn((v: unknown) => v as T),
+    save: jest.fn((v) => Promise.resolve(v)),
+    create: jest.fn(
+      (v: any) => ({ id: 'conv-mock-123', ...v }) as unknown as T,
+    ),
     remove: jest.fn(),
-  }) as unknown as Repository<T>;
-
-const makeMongoModel = () => ({
-  findById: jest.fn(),
-  findOne: jest.fn(),
-  find: jest.fn().mockReturnValue({
-    sort: jest.fn().mockReturnValue({
-      limit: jest
-        .fn()
-        .mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }),
-    }),
-  }),
-  create: jest.fn(),
-  updateOne: jest.fn().mockResolvedValue({}),
-  lean: jest.fn(),
-});
+    softRemove: jest.fn().mockResolvedValue({ success: true }),
+    update: jest.fn().mockResolvedValue({}),
+    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    _queryBuilder: mockQueryBuilder,
+  } as any;
+};
 
 const makeQueue = () => ({
   add: jest.fn().mockResolvedValue({ id: 'job-1' }),
@@ -97,8 +99,8 @@ const WIDGET_SESSION: WidgetSessionPayload = {
 // Setup
 // ---------------------------------------------------------------------------
 let service: ChatService;
-let conversationModel: ReturnType<typeof makeMongoModel>;
-let messageModel: ReturnType<typeof makeMongoModel>;
+let conversationRepo: ReturnType<typeof makeRepo>;
+let messageRepo: ReturnType<typeof makeRepo>;
 let contactsRepo: Repository<Contact>;
 let stageRepo: Repository<LifecycleStage>;
 let channelsService: ReturnType<typeof makeChannelsService>;
@@ -107,8 +109,8 @@ let agentQueue: ReturnType<typeof makeQueue>;
 let gateway: ReturnType<typeof makeGateway>;
 
 async function buildModule() {
-  conversationModel = makeMongoModel();
-  messageModel = makeMongoModel();
+  conversationRepo = makeRepo<Conversation>();
+  messageRepo = makeRepo<Message>();
   contactsRepo = makeRepo<Contact>();
   stageRepo = makeRepo<LifecycleStage>();
   channelsService = makeChannelsService();
@@ -120,10 +122,13 @@ async function buildModule() {
     providers: [
       ChatService,
       {
-        provide: getModelToken(Conversation.name),
-        useValue: conversationModel,
+        provide: getRepositoryToken(Conversation),
+        useValue: conversationRepo,
       },
-      { provide: getModelToken(Message.name), useValue: messageModel },
+      {
+        provide: getRepositoryToken(Message),
+        useValue: messageRepo,
+      },
       { provide: getRepositoryToken(Contact), useValue: contactsRepo },
       { provide: getRepositoryToken(LifecycleStage), useValue: stageRepo },
       { provide: ChannelsService, useValue: channelsService },
@@ -135,6 +140,20 @@ async function buildModule() {
         useValue: {
           get: (key: string, fallback = '') =>
             key === 'SERVICE_TOKEN' ? 'test-token' : fallback,
+        },
+      },
+      {
+        provide: MessageEncryptionService,
+        useValue: {
+          encrypt: jest.fn((v: string) => `enc_${v}`),
+          decrypt: jest.fn((v: string) => v.replace(/^enc_/, '')),
+        },
+      },
+      {
+        provide: JwtService,
+        useValue: {
+          sign: jest.fn().mockReturnValue('signed-jwt'),
+          verify: jest.fn().mockReturnValue({}),
         },
       },
     ],
@@ -153,13 +172,13 @@ describe('ChatService.processChat() — channel WITH agent', () => {
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
       WEB_CHAT_CHANNEL_WITH_AGENT,
     );
-    (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
+    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(null);
     const fakeConv = {
-      _id: { toString: () => 'conv-123' },
-      business_id: 'biz-1',
+      id: 'conv-123',
+      businessId: 'biz-1',
     };
-    (conversationModel.create as jest.Mock).mockResolvedValue(fakeConv);
-    (messageModel.create as jest.Mock).mockResolvedValue({});
+    (conversationRepo.create as jest.Mock).mockReturnValue(fakeConv);
+    (messageRepo.create as jest.Mock).mockReturnValue({});
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -185,8 +204,8 @@ describe('ChatService.processChat() — channel WITH agent', () => {
 
   it('persists user message before enqueuing', async () => {
     await service.processChat({ message: 'Test' }, WIDGET_SESSION);
-    expect(messageModel.create).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'user', content: 'Test' }),
+    expect(messageRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'user', contentEncrypted: 'enc_Test' }),
     );
   });
 
@@ -206,13 +225,13 @@ describe('ChatService.processChat() — channel WITHOUT agent', () => {
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
       WEB_CHAT_CHANNEL,
     ); // no agent_id
-    (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
+    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(null);
     const fakeConv = {
-      _id: { toString: () => 'conv-456' },
-      business_id: 'biz-1',
+      id: 'conv-456',
+      businessId: 'biz-1',
     };
-    (conversationModel.create as jest.Mock).mockResolvedValue(fakeConv);
-    (messageModel.create as jest.Mock).mockResolvedValue({});
+    (conversationRepo.create as jest.Mock).mockReturnValue(fakeConv);
+    (messageRepo.create as jest.Mock).mockReturnValue({});
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -251,29 +270,32 @@ describe('ChatService: findOrCreate conversation', () => {
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
       WEB_CHAT_CHANNEL,
     );
-    (messageModel.create as jest.Mock).mockResolvedValue({});
+    (messageRepo.create as jest.Mock).mockReturnValue({});
   });
 
   afterEach(() => jest.clearAllMocks());
 
   it('reuses an existing open conversation with same fingerprint', async () => {
     const existingConv = {
-      _id: { toString: () => 'conv-existing' },
-      business_id: 'biz-1',
+      id: 'conv-existing',
+      businessId: 'biz-1',
     };
-    (conversationModel.findOne as jest.Mock).mockResolvedValue(existingConv);
+    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(existingConv);
+    (conversationRepo._queryBuilder.getOne as jest.Mock).mockResolvedValue(
+      existingConv,
+    );
     const session = { ...WIDGET_SESSION, visitorFingerprint: 'fp-same' };
 
     const r1 = await service.processChat({ message: 'first' }, session);
 
     // Second call with same fingerprint but no conversation_id
-    (conversationModel.findOne as jest.Mock).mockResolvedValue(existingConv);
+    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(existingConv);
     const r2 = await service.processChat({ message: 'second' }, session);
 
     expect(r1.conversation_id).toBe('conv-existing');
     expect(r2.conversation_id).toBe('conv-existing');
     // create() should NOT have been called since we found an existing conversation
-    expect(conversationModel.create).not.toHaveBeenCalled();
+    expect(conversationRepo.create).not.toHaveBeenCalled();
   });
 });
 
@@ -290,7 +312,7 @@ describe('ChatService.handleAgentCallback()', () => {
   it('throws UnauthorizedException with invalid service token', async () => {
     await expect(
       service.handleAgentCallback({
-        conversationId: '507f1f77bcf86cd799439011',
+        conversationId: '507f1f77-bcf8-6cd7-9943-9011a5c0e5a0',
         businessId: 'biz-1',
         jobId: 'job-1',
         reply: 'Hello',
@@ -300,40 +322,40 @@ describe('ChatService.handleAgentCallback()', () => {
   });
 
   it('persists assistant message and emits socket event', async () => {
-    (messageModel.findOne as jest.Mock).mockResolvedValue(null); // no duplicate
-    (messageModel.create as jest.Mock).mockResolvedValue({});
+    (messageRepo.findOne as jest.Mock).mockResolvedValue(null); // no duplicate
+    (messageRepo.create as jest.Mock).mockReturnValue({});
 
     await service.handleAgentCallback({
-      conversationId: '507f1f77bcf86cd799439011',
+      conversationId: '507f1f77-bcf8-6cd7-9943-9011a5c0e5a0',
       businessId: 'biz-1',
       jobId: 'job-unique-1',
       reply: 'Respuesta del agente',
       serviceToken: 'test-token',
     });
 
-    expect(messageModel.create).toHaveBeenCalledWith(
+    expect(messageRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
         role: 'assistant',
-        content: 'Respuesta del agente',
-        job_id: 'job-unique-1',
+        contentEncrypted: 'enc_Respuesta del agente',
+        jobId: 'job-unique-1',
       }),
     );
     expect(gateway.emitNewMessage).toHaveBeenCalledWith(
       'biz-1',
-      '507f1f77bcf86cd799439011',
+      '507f1f77-bcf8-6cd7-9943-9011a5c0e5a0',
       'Respuesta del agente',
       'assistant',
     );
   });
 
-  it('is idempotent: duplicate job_id does not create a second message', async () => {
-    // Simulates an existing message with the same job_id
-    (messageModel.findOne as jest.Mock).mockResolvedValue({
-      job_id: 'job-dup',
+  it('is idempotent: duplicate jobId does not create a second message', async () => {
+    // Simulates an existing message with the same jobId
+    (messageRepo.findOneBy as jest.Mock).mockResolvedValue({
+      jobId: 'job-dup',
     });
 
     const result = await service.handleAgentCallback({
-      conversationId: '507f1f77bcf86cd799439011',
+      conversationId: '507f1f77-bcf8-6cd7-9943-9011a5c0e5a0',
       businessId: 'biz-1',
       jobId: 'job-dup',
       reply: 'Second attempt',
@@ -341,7 +363,7 @@ describe('ChatService.handleAgentCallback()', () => {
     });
 
     expect(result).toEqual({ ok: true, duplicate: true });
-    expect(messageModel.create).not.toHaveBeenCalled();
+    expect(messageRepo.create).not.toHaveBeenCalled();
     expect(gateway.emitNewMessage).not.toHaveBeenCalled();
   });
 });
@@ -357,36 +379,44 @@ describe('ChatService.updateConversationStatus()', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('throws NotFoundException when conversation not found', async () => {
-    (conversationModel.findById as jest.Mock).mockResolvedValue(null);
+    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(null);
     await expect(
-      service.updateConversationStatus('biz-1', 'bad-id', 'closed'),
+      service.updateConversationStatus(
+        'biz-1',
+        '507f1f77-bcf8-6cd7-9943-9011a5c0e5a0',
+        'closed',
+      ),
     ).rejects.toThrow(NotFoundException);
   });
 
   it('throws BadRequestException for invalid status', async () => {
-    (conversationModel.findById as jest.Mock).mockResolvedValue({
-      _id: 'conv-1',
-      business_id: 'biz-1',
+    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue({
+      id: 'conv-1',
+      businessId: 'biz-1',
     });
     await expect(
-      service.updateConversationStatus('biz-1', 'conv-1', 'invalid-status'),
+      service.updateConversationStatus(
+        'biz-1',
+        '507f1f77-bcf8-6cd7-9943-9011a5c0e5a0',
+        'invalid-status',
+      ),
     ).rejects.toThrow(BadRequestException);
   });
 
   it('updates status and emits socket event', async () => {
-    const conv = { _id: { toString: () => 'conv-1' }, business_id: 'biz-1' };
-    (conversationModel.findById as jest.Mock).mockResolvedValue(conv);
+    const conv = { id: 'conv-1', businessId: 'biz-1' };
+    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(conv);
 
     const result = await service.updateConversationStatus(
       'biz-1',
-      'conv-1',
+      '507f1f77-bcf8-6cd7-9943-9011a5c0e5a0',
       'closed',
     );
 
     expect(result).toEqual({ success: true, status: 'closed' });
     expect(gateway.emitConversationStatusChanged).toHaveBeenCalledWith(
       'biz-1',
-      'conv-1',
+      '507f1f77-bcf8-6cd7-9943-9011a5c0e5a0',
       'closed',
     );
   });
@@ -398,12 +428,12 @@ describe('ChatService.updateConversationStatus()', () => {
 describe('ChatService.processChat() — channel lookup', () => {
   beforeEach(async () => {
     await buildModule();
-    (conversationModel.findOne as jest.Mock).mockResolvedValue(null);
-    (conversationModel.create as jest.Mock).mockResolvedValue({
-      _id: { toString: () => 'conv-res' },
-      business_id: 'biz-1',
+    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(null);
+    (conversationRepo.create as jest.Mock).mockReturnValue({
+      id: 'conv-res',
+      businessId: 'biz-1',
     });
-    (messageModel.create as jest.Mock).mockResolvedValue({});
+    (messageRepo.create as jest.Mock).mockReturnValue({});
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -415,9 +445,7 @@ describe('ChatService.processChat() — channel lookup', () => {
 
     await service.processChat({ message: 'hola' }, WIDGET_SESSION);
 
-    expect(channelsService.findByChannelId).toHaveBeenCalledWith(
-      'chan-web-1',
-    );
+    expect(channelsService.findByChannelId).toHaveBeenCalledWith('chan-web-1');
   });
 
   it('throws NotFoundException when the channel does not resolve', async () => {
@@ -536,9 +564,9 @@ describe('ChatService.captureLead()', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  it('throws BadRequestException when neither email nor phone is provided', async () => {
+  it('throws BadRequestException when name, email and phone are not provided', async () => {
     await expect(
-      service.captureLead({ name: 'Visitante' } as any, WIDGET_SESSION),
+      service.captureLead({} as any, WIDGET_SESSION),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -563,8 +591,8 @@ describe('ChatService.captureLead()', () => {
       }),
     );
     expect(result).toEqual({
-      success: true,
-      contact_id: 'contact-1',
+      captured: true,
+      contactId: 'contact-1',
       message: 'Lead capturado',
     });
   });
@@ -584,8 +612,8 @@ describe('ChatService.captureLead()', () => {
     );
 
     expect(result).toEqual({
-      success: true,
-      contact_id: 'contact-existing',
+      captured: true,
+      contactId: 'contact-existing',
       message: 'Lead actualizado',
     });
     expect(contactsRepo.create).not.toHaveBeenCalled();

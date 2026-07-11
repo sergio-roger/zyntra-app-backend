@@ -26,9 +26,7 @@ export class ChatRateLimitGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context
-      .switchToHttp()
-      .getRequest<RequestWithWidgetSession>();
+    const req = context.switchToHttp().getRequest<RequestWithWidgetSession>();
 
     // WidgetSessionGuard must run before this guard (see @UseGuards order on
     // the route) and always sets req.widgetSession or throws.

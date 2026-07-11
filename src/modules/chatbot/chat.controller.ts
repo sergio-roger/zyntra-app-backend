@@ -1,3 +1,5 @@
+import type { RequestWithWidgetSession } from '@/modules/widget-session/interfaces/request-with-widget-session.interface';
+import { WidgetSessionGuard } from '@/modules/widget-session/widget-session.guard';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { ChatService } from '@chatbot/chat.service';
 import { ChatRequestDto, ChatResponseDto } from '@chatbot/dto/chat.dto';
@@ -5,8 +7,6 @@ import { LeadCaptureDto } from '@chatbot/dto/lead-capture.dto';
 import { ChatRateLimitGuard } from '@chatbot/guards/chat-rate-limit.guard';
 import { Public } from '@common/decorators/public.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
-import type { RequestWithWidgetSession } from '@/modules/widget-session/interfaces/request-with-widget-session.interface';
-import { WidgetSessionGuard } from '@/modules/widget-session/widget-session.guard';
 import {
   Body,
   Controller,
@@ -68,9 +68,7 @@ export class ChatController {
       'Emite un token corto para autenticar la conexión WebSocket del agente',
   })
   @ApiOkResponse({ description: 'Token de vida corta (15m)' })
-  async getSocketToken(
-    @Req() req: RequestWithUser,
-  ): Promise<{ token: string }> {
+  getSocketToken(@Req() req: RequestWithUser): { token: string } {
     const businessId = req.user.businessId;
     if (!businessId)
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);

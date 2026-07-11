@@ -34,9 +34,7 @@ export class WidgetSessionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context
-      .switchToHttp()
-      .getRequest<RequestWithWidgetSession>();
+    const req = context.switchToHttp().getRequest<RequestWithWidgetSession>();
 
     const token = req.headers['x-widget-session'];
     if (token && !Array.isArray(token)) {

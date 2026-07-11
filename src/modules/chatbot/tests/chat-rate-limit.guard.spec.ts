@@ -62,30 +62,34 @@ describe('ChatRateLimitGuard', () => {
   it('throws 429 once the count exceeds the configured max', async () => {
     redis.incr.mockResolvedValue(4);
 
+    await expect(guard.canActivate(makeContext(SESSION))).rejects.toMatchObject(
+      {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+      },
+    );
     await expect(
       guard.canActivate(makeContext(SESSION)),
-    ).rejects.toMatchObject({
-      status: HttpStatus.TOO_MANY_REQUESTS,
-    });
-    await expect(guard.canActivate(makeContext(SESSION))).rejects.toBeInstanceOf(
-      HttpException,
-    );
+    ).rejects.toBeInstanceOf(HttpException);
   });
 
   it('scopes the rate-limit key by channelId + visitorFingerprint from the widget session', async () => {
     redis.incr.mockResolvedValue(1);
 
     await guard.canActivate(
-      makeContext({ ...SESSION, channelId: 'chan-2', visitorFingerprint: 'fp-2' }),
+      makeContext({
+        ...SESSION,
+        channelId: 'chan-2',
+        visitorFingerprint: 'fp-2',
+      }),
     );
 
     expect(redis.incr).toHaveBeenCalledWith('ratelimit:chat:chan-2:fp-2');
   });
 
   it('throws UnauthorizedException when widgetSession is missing (WidgetSessionGuard did not run)', async () => {
-    await expect(
-      guard.canActivate(makeContext(undefined)),
-    ).rejects.toThrow('widget session inválida o expirada');
+    await expect(guard.canActivate(makeContext(undefined))).rejects.toThrow(
+      'widget session inválida o expirada',
+    );
     expect(redis.incr).not.toHaveBeenCalled();
   });
 });

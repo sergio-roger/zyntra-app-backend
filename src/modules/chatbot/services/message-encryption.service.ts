@@ -17,9 +17,7 @@ export class MessageEncryptionService {
     if (!raw) throw new Error('MESSAGE_ENCRYPTION_KEY env var not set');
     this.key = Buffer.from(raw, 'hex');
     if (this.key.length !== 32) {
-      throw new Error(
-        'MESSAGE_ENCRYPTION_KEY must be 32 bytes (64 hex chars)',
-      );
+      throw new Error('MESSAGE_ENCRYPTION_KEY must be 32 bytes (64 hex chars)');
     }
   }
 

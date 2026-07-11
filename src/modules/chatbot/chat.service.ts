@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
@@ -105,9 +105,10 @@ export class ChatService {
     const fingerprint = widgetSession.visitorFingerprint;
     const isUuid = (val: string) => UUID_RE.test(val);
 
-    let conversation = conversation_id && isUuid(conversation_id)
-      ? await this.conversationRepo.findOneBy({ id: conversation_id })
-      : null;
+    let conversation =
+      conversation_id && isUuid(conversation_id)
+        ? await this.conversationRepo.findOneBy({ id: conversation_id })
+        : null;
 
     if (!conversation || conversation.businessId !== effectiveBusinessId) {
       if (!conversation_id) {
@@ -287,7 +288,7 @@ export class ChatService {
       unreadOnly?: boolean;
     } = {},
   ) {
-    const where: any = { businessId };
+    const where: FindOptionsWhere<Conversation> = { businessId };
     if (filters.channelId) where.channelId = filters.channelId;
     if (filters.status) where.status = filters.status;
     if (filters.assignedToUserId) where.assignedTo = filters.assignedToUserId;

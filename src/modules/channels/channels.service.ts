@@ -181,7 +181,9 @@ export class ChannelsService {
       );
     }
     if (!channel.publicKey) {
-      throw new BadRequestException('Este canal no tiene un public_key generado');
+      throw new BadRequestException(
+        'Este canal no tiene un public_key generado',
+      );
     }
 
     const snippet = buildEmbedSnippet({ publicKey: channel.publicKey });
@@ -219,7 +221,10 @@ export class ChannelsService {
   // ---------------------------------------------------------------------------
 
   /** Revokes the current public_key and generates a fresh one, in one write. */
-  async rotatePublicKey(businessId: string, channelId: string): Promise<string> {
+  async rotatePublicKey(
+    businessId: string,
+    channelId: string,
+  ): Promise<string> {
     const channel = await this.findOne(businessId, channelId);
     if (channel.channelType.key !== 'web_chat') {
       throw new BadRequestException(

@@ -32,6 +32,7 @@ const makeRepo = <T extends ObjectLiteral>() =>
     save: jest.fn(),
     create: jest.fn((v: unknown) => v as T),
     remove: jest.fn(),
+    softRemove: jest.fn().mockResolvedValue({ success: true }),
   }) as unknown as Repository<T>;
 
 const WEB_CHAT_TYPE: ChannelType = {
@@ -602,9 +603,9 @@ describe('ChannelsService', () => {
       } as Channel;
       (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
 
-      await expect(
-        service.rotatePublicKey('biz-1', 'chan-2'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.rotatePublicKey('biz-1', 'chan-2')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws NotFoundException when the channel does not belong to the business', async () => {
