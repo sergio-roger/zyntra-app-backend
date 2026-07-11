@@ -11,6 +11,8 @@ import { ContactSource } from '@crm/enums/contact-source.enum';
 import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -31,10 +33,6 @@ import { MessageEncryptionService } from './services/message-encryption.service'
 
 export const AGENT_RESPONSE_QUEUE = 'agent-response';
 
-/** Fallback message when no agent is assigned to a channel. */
-const FALLBACK_MESSAGE =
-  'Gracias por tu mensaje. Un agente te responderá pronto.';
-
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
@@ -52,6 +50,7 @@ export class ChatService {
     private readonly channelsService: ChannelsService,
     @InjectQueue(AGENT_RESPONSE_QUEUE)
     private agentQueue: Queue,
+    @Inject(forwardRef(() => ChatGateway))
     private readonly chatGateway: ChatGateway,
     private readonly config: ConfigService,
     private readonly widgetSessionService: WidgetSessionService,
@@ -196,39 +195,12 @@ export class ChatService {
       };
     }
 
-    // 4b. No agent → return fallback message and mark conversation unattended
-    const customFallback =
-      typeof channel.config?.fallbackMessage === 'string'
-        ? channel.config.fallbackMessage
-        : FALLBACK_MESSAGE;
-
-    const encryptedFallback = this.messageEncryption.encrypt(customFallback);
-    const fallbackMsg = this.messageRepo.create({
-      conversationId: conversationIdStr,
-      role: 'assistant',
-      contentEncrypted: encryptedFallback,
-      channel: 'web_chat',
-    });
-    await this.messageRepo.save(fallbackMsg);
-
-    await this.conversationRepo.update(conversation.id, {
-      status: 'open',
-      lastMessageAt: new Date(),
-      lastMessageRole: 'assistant',
-    });
-
-    this.chatGateway.emitNewMessage(
-      effectiveBusinessId,
-      conversationIdStr,
-      customFallback,
-      'assistant',
-    );
-
+    // 4b. No agent assigned → wait for a human to reply, no automatic message.
     return {
       id: crypto.randomUUID(),
       conversation_id: conversationIdStr,
-      message: customFallback,
-      pending: false,
+      message: '',
+      pending: true,
       created_at: now,
     };
   }

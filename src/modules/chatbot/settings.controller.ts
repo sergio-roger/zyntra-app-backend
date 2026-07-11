@@ -27,7 +27,7 @@ export class SettingsController {
     const enabled = await this.settingsService.getInboxSoundEnabled(
       business.id,
     );
-    return { data: { enabled } };
+    return { enabled };
   }
 
   @Put('inbox-sound')
@@ -43,6 +43,6 @@ export class SettingsController {
       business.id,
       dto.enabled,
     );
-    return { data: { enabled } };
+    return { enabled };
   }
 }

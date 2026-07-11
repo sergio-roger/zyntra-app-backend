@@ -34,9 +34,17 @@ export class ChatRateLimitGuard implements CanActivate {
       throw new UnauthorizedException('widget session inválida o expirada');
     }
 
-    const scope = req.widgetSession.channelId;
-    const visitor = req.widgetSession.visitorFingerprint;
-    const key = `ratelimit:chat:${scope}:${visitor}`;
+    await this.consume(
+      req.widgetSession.channelId,
+      req.widgetSession.visitorFingerprint,
+    );
+
+    return true;
+  }
+
+  /** Reused directly by ChatGateway's socket handlers, outside the HTTP guard pipeline. */
+  async consume(channelId: string, visitorFingerprint: string): Promise<void> {
+    const key = `ratelimit:chat:${channelId}:${visitorFingerprint}`;
     const count = await this.redis.incr(key);
     if (count === 1) {
       await this.redis.expire(key, this.windowSec);
@@ -48,7 +56,5 @@ export class ChatRateLimitGuard implements CanActivate {
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
-
-    return true;
   }
 }

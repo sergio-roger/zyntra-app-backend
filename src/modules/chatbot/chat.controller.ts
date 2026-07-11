@@ -1,10 +1,5 @@
-import type { RequestWithWidgetSession } from '@/modules/widget-session/interfaces/request-with-widget-session.interface';
-import { WidgetSessionGuard } from '@/modules/widget-session/widget-session.guard';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { ChatService } from '@chatbot/chat.service';
-import { ChatRequestDto, ChatResponseDto } from '@chatbot/dto/chat.dto';
-import { LeadCaptureDto } from '@chatbot/dto/lead-capture.dto';
-import { ChatRateLimitGuard } from '@chatbot/guards/chat-rate-limit.guard';
 import { Public } from '@common/decorators/public.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 import {
@@ -16,7 +11,6 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
-  Logger,
   Param,
   Patch,
   Post,
@@ -35,8 +29,6 @@ import {
 @ApiTags('Chat')
 @Controller('chat')
 export class ChatController {
-  private readonly logger = new Logger(ChatController.name);
-
   constructor(private readonly chatService: ChatService) {}
 
   @Public()
@@ -181,34 +173,5 @@ export class ChatController {
     if (!businessId)
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.chatService.updateConversationStatus(businessId, id, status);
-  }
-
-  @Public()
-  @UseGuards(WidgetSessionGuard, ChatRateLimitGuard)
-  @Post('chat')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Envía un mensaje de chat' })
-  @ApiOkResponse({ description: 'AI response message' })
-  async chat(
-    @Body() request: ChatRequestDto,
-    @Req() req: RequestWithWidgetSession,
-    @Headers('x-forwarded-for') ip?: string,
-  ): Promise<ChatResponseDto> {
-    this.logger.debug(
-      `chat message received: business_id=${req.widgetSession.businessId} channel_id=${req.widgetSession.channelId} conversation_id=${request.conversation_id ?? 'new'} channel=${request.channel ?? 'web'} length=${request.message.length} ip=${ip ?? 'unknown'} legacy_auth=${req.widgetSession.legacy ?? false}`,
-    );
-    return this.chatService.processChat(request, req.widgetSession, ip);
-  }
-
-  @Public()
-  @UseGuards(WidgetSessionGuard)
-  @Post('lead-capture')
-  @ApiOperation({ summary: 'Captura un lead desde el chat' })
-  @ApiCreatedResponse({ description: 'Lead captured' })
-  async leadCapture(
-    @Body() dto: LeadCaptureDto,
-    @Req() req: RequestWithWidgetSession,
-  ) {
-    return this.chatService.captureLead(dto, req.widgetSession);
   }
 }

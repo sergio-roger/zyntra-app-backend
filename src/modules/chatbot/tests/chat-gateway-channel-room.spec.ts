@@ -1,4 +1,6 @@
 import { ChatGateway } from '../chat.gateway';
+import { ChatService } from '../chat.service';
+import { ChatRateLimitGuard } from '../guards/chat-rate-limit.guard';
 import { JwtService } from '@nestjs/jwt';
 import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
 import { UnauthorizedException } from '@nestjs/common';
@@ -31,6 +33,8 @@ describe('ChatGateway.handleConnection() — widget session (visitor)', () => {
     gateway = new ChatGateway(
       jwtService as unknown as JwtService,
       widgetSessionService as unknown as WidgetSessionService,
+      {} as unknown as ChatService,
+      {} as unknown as ChatRateLimitGuard,
     );
   });
 
@@ -101,6 +105,8 @@ describe('ChatGateway.handleConnection() — agent (staff JWT)', () => {
     gateway = new ChatGateway(
       jwtService as unknown as JwtService,
       widgetSessionService as unknown as WidgetSessionService,
+      {} as unknown as ChatService,
+      {} as unknown as ChatRateLimitGuard,
     );
   });
 

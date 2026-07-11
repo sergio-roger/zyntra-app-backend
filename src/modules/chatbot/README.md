@@ -41,12 +41,14 @@ unset/empty `allowedDomains` means no restriction (matches
 
 ## Rate limiting
 
-`POST /chat/chat` is public and unauthenticated, so it's guarded by
-`ChatRateLimitGuard` (`src/modules/chatbot/guards/chat-rate-limit.guard.ts`):
-a fixed Redis window keyed by `(channel_id ?? business_id) + visitor
-fingerprint` (falling back to `x-forwarded-for` if no fingerprint is sent).
-Defaults: 20 requests / 60s, configurable via `CHAT_RATE_LIMIT_MAX` and
-`CHAT_RATE_LIMIT_WINDOW_SEC`. Exceeding it returns `429`.
+Sending a chat message is rate-limited via `ChatRateLimitGuard`
+(`src/modules/chatbot/guards/chat-rate-limit.guard.ts`), whose core check
+(`consume(channelId, visitorFingerprint)`) is called both from the guard (for
+any remaining HTTP routes) and directly from `ChatGateway`'s
+`conversation:send-message` socket handler: a fixed Redis window keyed by
+`channelId:visitorFingerprint`. Defaults: 20 requests / 60s, configurable via
+`CHAT_RATE_LIMIT_MAX` and `CHAT_RATE_LIMIT_WINDOW_SEC`. Exceeding it returns
+`{ ok: false, error: 'rate_limited' }` in the socket ack.
 
 ## WebSocket gateway (`/chat` namespace)
 
@@ -68,21 +70,24 @@ it (`emitNewMessage` etc. still target `business:{id}` /
 | Response (legacy business) | `ChatbotConfig` fields (`name`, `welcome_message`, `tone`, `locale`, `theme`, `is_active`) | unchanged |
 | Domain check | none | `403` if `Origin`/`Referer` isn't in the resolved channel's `allowedDomains` |
 
-### `POST /chat/chat`
+### `POST /chat/chat` and `POST /chat/lead-capture` — removed
 
-| | Before | After |
+Both REST routes were removed. After the widget exchanges its `public_key`
+for a session via `GET /chat/public-config` (still REST, since it's what
+authenticates the socket), everything else happens over the `/chat`
+Socket.IO namespace:
+
+| Old REST route | Socket event | Handler |
 |---|---|---|
-| Body | `{ message, business_id?, conversation_id?, channel?, visitor? }` | `{ message, business_id, channel_id?, conversation_id?, channel?, visitor? }` — `business_id` is now validated as required by the DTO |
-| Channel resolution | single `findOne({ business_id, channelType: 'web_chat' })`, arbitrary pick if duplicates existed | `channel_id` → `business_id` fallback → legacy, per rules above |
-| Domain check | none | `403` on disallowed `Origin`/`Referer` |
-| Rate limit | none | `429` after `CHAT_RATE_LIMIT_MAX` requests per `CHAT_RATE_LIMIT_WINDOW_SEC` |
+| `POST /chat/chat` | `conversation:send-message` | `ChatGateway.handleSendMessage` → `ChatService.processChat` (unchanged) |
+| `POST /chat/lead-capture` | `conversation:capture-lead` | `ChatGateway.handleCaptureLead` → `ChatService.captureLead` (unchanged) |
 
-### `POST /chat/lead-capture`
-
-| | Before | After |
-|---|---|---|
-| Body | `{ business_id, name, email?, phone?, conversation_id? }` | adds optional `channel_id` |
-| Domain check | none | `403` on disallowed `Origin`/`Referer` (skipped for legacy businesses) |
+Both handlers rebuild the `WidgetSessionPayload` from the visitor socket's
+`client.data` (populated at `handleConnection` from the same signed session
+token the old `WidgetSessionGuard` verified), so `processChat`/`captureLead`
+themselves needed no changes — only their caller moved from an HTTP
+controller to the gateway. Both acks return `{ ok: false, error }` on
+failure instead of throwing an HTTP status.
 
 ### WebSocket `auth` payload (visitor/widget flow)
 
