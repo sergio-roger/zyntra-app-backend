@@ -19,10 +19,3 @@ export interface SendMessagePayload {
   message: string;
   visitor?: { page_url?: string; referrer?: string; user_agent?: string };
 }
-
-export interface CaptureLeadPayload {
-  conversationId?: string;
-  name: string;
-  email?: string;
-  phone?: string;
-}

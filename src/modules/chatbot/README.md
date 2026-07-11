@@ -70,24 +70,23 @@ it (`emitNewMessage` etc. still target `business:{id}` /
 | Response (legacy business) | `ChatbotConfig` fields (`name`, `welcome_message`, `tone`, `locale`, `theme`, `is_active`) | unchanged |
 | Domain check | none | `403` if `Origin`/`Referer` isn't in the resolved channel's `allowedDomains` |
 
-### `POST /chat/chat` and `POST /chat/lead-capture` — removed
+### `POST /chat/chat` — removed
 
-Both REST routes were removed. After the widget exchanges its `public_key`
-for a session via `GET /chat/public-config` (still REST, since it's what
-authenticates the socket), everything else happens over the `/chat`
-Socket.IO namespace:
-
-| Old REST route | Socket event | Handler |
-|---|---|---|
-| `POST /chat/chat` | `conversation:send-message` | `ChatGateway.handleSendMessage` → `ChatService.processChat` (unchanged) |
-| `POST /chat/lead-capture` | `conversation:capture-lead` | `ChatGateway.handleCaptureLead` → `ChatService.captureLead` (unchanged) |
-
-Both handlers rebuild the `WidgetSessionPayload` from the visitor socket's
+The REST route was removed. After the widget exchanges its `public_key` for
+a session via `GET /chat/public-config` (still REST, since it's what
+authenticates the socket), sending a message happens over the `/chat`
+Socket.IO namespace instead: `conversation:send-message` →
+`ChatGateway.handleSendMessage` → `ChatService.processChat` (unchanged). The
+handler rebuilds the `WidgetSessionPayload` from the visitor socket's
 `client.data` (populated at `handleConnection` from the same signed session
-token the old `WidgetSessionGuard` verified), so `processChat`/`captureLead`
-themselves needed no changes — only their caller moved from an HTTP
-controller to the gateway. Both acks return `{ ok: false, error }` on
-failure instead of throwing an HTTP status.
+token the old `WidgetSessionGuard` verified), so `processChat` itself needed
+no changes — only its caller moved from an HTTP controller to the gateway.
+The ack returns `{ ok: false, error }` on failure instead of throwing an HTTP
+status.
+
+Lead capture (`POST /chat/lead-capture`, `ChatService.captureLead`) was
+removed entirely, not ported to a socket event — the widget no longer
+collects contact info from the chat.
 
 ### WebSocket `auth` payload (visitor/widget flow)
 

@@ -6,8 +6,6 @@ import {
 import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
 import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
 import { UUID_RE } from '@common/constants/regex.constants';
-import { Contact } from '@crm/entities/contact.entity';
-import { ContactSource } from '@crm/enums/contact-source.enum';
 import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
@@ -23,10 +21,8 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
 import { ChatGateway } from './chat.gateway';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
-import { LeadCaptureDto } from './dto/lead-capture.dto';
 import { Conversation } from './entities/conversation.entity';
 import { Message } from './entities/message.entity';
 import { MessageEncryptionService } from './services/message-encryption.service';
@@ -43,10 +39,6 @@ export class ChatService {
     private conversationRepo: Repository<Conversation>,
     @InjectRepository(Message)
     private messageRepo: Repository<Message>,
-    @InjectRepository(Contact)
-    private contactsRepo: Repository<Contact>,
-    @InjectRepository(LifecycleStage)
-    private stageRepo: Repository<LifecycleStage>,
     private readonly channelsService: ChannelsService,
     @InjectQueue(AGENT_RESPONSE_QUEUE)
     private agentQueue: Queue,
@@ -488,63 +480,6 @@ export class ChatService {
       primaryColor: (cfg?.primaryColor as string) ?? '#6366f1',
       greeting: (cfg?.greeting as string) ?? '',
       status,
-    };
-  }
-
-  async captureLead(dto: LeadCaptureDto, widgetSession: WidgetSessionPayload) {
-    const { name, email, phone } = dto;
-    if (!email && !phone) {
-      throw new BadRequestException('Email o phone requerido');
-    }
-
-    const channel = await this.getActiveChannel(widgetSession.channelId);
-    const businessId = channel.businessId;
-
-    const existing = email
-      ? await this.contactsRepo.findOne({ where: { businessId, email } })
-      : await this.contactsRepo.findOne({ where: { businessId, phone } });
-
-    let contactId: string;
-    let message: string;
-
-    if (existing) {
-      existing.name = name;
-      if (phone) existing.phone = phone;
-      existing.lastActivityAt = new Date();
-      await this.contactsRepo.save(existing);
-      contactId = existing.id;
-      message = 'Lead actualizado';
-    } else {
-      const defaultStage = await this.stageRepo.findOne({
-        where: { business_id: businessId, is_default: true },
-      });
-
-      const contact = this.contactsRepo.create({
-        businessId,
-        name,
-        email: email ?? null,
-        phone: phone ?? null,
-        source: ContactSource.WEB_CHAT,
-        lifecycleStageId: defaultStage?.id ?? null,
-        channelId: channel.id,
-        lastActivityAt: new Date(),
-      });
-      await this.contactsRepo.save(contact);
-      contactId = contact.id;
-      message = 'Lead capturado';
-    }
-
-    if (dto.conversation_id) {
-      await this.conversationRepo.update(
-        { id: dto.conversation_id, businessId },
-        { contactId },
-      );
-    }
-
-    return {
-      captured: true,
-      contactId,
-      message,
     };
   }
 

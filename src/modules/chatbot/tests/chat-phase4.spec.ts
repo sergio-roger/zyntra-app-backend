@@ -12,13 +12,11 @@ import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { getQueueToken } from '@nestjs/bullmq';
 import { JwtService } from '@nestjs/jwt';
-import { ObjectLiteral, Repository } from 'typeorm';
+import { ObjectLiteral } from 'typeorm';
 
 import { ChatService, AGENT_RESPONSE_QUEUE } from '../chat.service';
 import { Conversation } from '../entities/conversation.entity';
 import { Message } from '../entities/message.entity';
-import { Contact } from '@crm/entities/contact.entity';
-import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
 import {
   Channel,
   ChannelStatus,
@@ -101,8 +99,6 @@ const WIDGET_SESSION: WidgetSessionPayload = {
 let service: ChatService;
 let conversationRepo: ReturnType<typeof makeRepo>;
 let messageRepo: ReturnType<typeof makeRepo>;
-let contactsRepo: Repository<Contact>;
-let stageRepo: Repository<LifecycleStage>;
 let channelsService: ReturnType<typeof makeChannelsService>;
 let widgetSessionService: ReturnType<typeof makeWidgetSessionService>;
 let agentQueue: ReturnType<typeof makeQueue>;
@@ -111,8 +107,6 @@ let gateway: ReturnType<typeof makeGateway>;
 async function buildModule() {
   conversationRepo = makeRepo<Conversation>();
   messageRepo = makeRepo<Message>();
-  contactsRepo = makeRepo<Contact>();
-  stageRepo = makeRepo<LifecycleStage>();
   channelsService = makeChannelsService();
   widgetSessionService = makeWidgetSessionService();
   agentQueue = makeQueue();
@@ -129,8 +123,6 @@ async function buildModule() {
         provide: getRepositoryToken(Message),
         useValue: messageRepo,
       },
-      { provide: getRepositoryToken(Contact), useValue: contactsRepo },
-      { provide: getRepositoryToken(LifecycleStage), useValue: stageRepo },
       { provide: ChannelsService, useValue: channelsService },
       { provide: getQueueToken(AGENT_RESPONSE_QUEUE), useValue: agentQueue },
       { provide: ChatGateway, useValue: gateway },
@@ -549,74 +541,5 @@ describe('ChatService.exchangeWidgetSession()', () => {
     await expect(service.exchangeWidgetSession('wpk_bad')).rejects.toThrow(
       UnauthorizedException,
     );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Suite 8 – captureLead()
-// ---------------------------------------------------------------------------
-describe('ChatService.captureLead()', () => {
-  beforeEach(async () => {
-    await buildModule();
-    (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
-      WEB_CHAT_CHANNEL,
-    );
-  });
-
-  afterEach(() => jest.clearAllMocks());
-
-  it('throws BadRequestException when name, email and phone are not provided', async () => {
-    await expect(
-      service.captureLead({} as any, WIDGET_SESSION),
-    ).rejects.toThrow(BadRequestException);
-  });
-
-  it('creates a new contact scoped to the widgetSession businessId/channelId', async () => {
-    (contactsRepo.findOne as jest.Mock).mockResolvedValue(null);
-    (stageRepo.findOne as jest.Mock).mockResolvedValue({ id: 'stage-1' });
-    (contactsRepo.save as jest.Mock).mockImplementation((c: any) => {
-      c.id = 'contact-1';
-      return Promise.resolve(c);
-    });
-
-    const result = await service.captureLead(
-      { name: 'Visitante', email: 'a@b.com' } as any,
-      WIDGET_SESSION,
-    );
-
-    expect(contactsRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        businessId: 'biz-1',
-        channelId: 'chan-web-1',
-        email: 'a@b.com',
-      }),
-    );
-    expect(result).toEqual({
-      captured: true,
-      contactId: 'contact-1',
-      message: 'Lead capturado',
-    });
-  });
-
-  it('updates an existing contact instead of creating a duplicate', async () => {
-    (contactsRepo.findOne as jest.Mock).mockResolvedValue({
-      id: 'contact-existing',
-      name: 'Old name',
-    });
-    (contactsRepo.save as jest.Mock).mockImplementation((c: any) =>
-      Promise.resolve(c),
-    );
-
-    const result = await service.captureLead(
-      { name: 'Nuevo nombre', email: 'a@b.com' } as any,
-      WIDGET_SESSION,
-    );
-
-    expect(result).toEqual({
-      captured: true,
-      contactId: 'contact-existing',
-      message: 'Lead actualizado',
-    });
-    expect(contactsRepo.create).not.toHaveBeenCalled();
   });
 });

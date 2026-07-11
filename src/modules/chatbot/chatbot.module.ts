@@ -3,9 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { Contact } from '@crm/entities/contact.entity';
 import { Business } from '../auth/entities/business.entity';
-import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
 import { ChannelsModule } from '@/modules/channels/channels.module';
 import { Conversation } from './entities/conversation.entity';
 import { Message } from './entities/message.entity';
@@ -23,14 +21,7 @@ import { MessageEncryptionService } from './services/message-encryption.service'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Contact,
-      Business,
-      LifecycleStage,
-      Conversation,
-      Message,
-      Setting,
-    ]),
+    TypeOrmModule.forFeature([Business, Conversation, Message, Setting]),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

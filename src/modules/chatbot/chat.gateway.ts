@@ -167,7 +167,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { ok: true };
   }
 
-  // ─── Visitor-initiated chat (replaces the old REST /chat/chat + lead-capture) ──
+  // ─── Visitor-initiated chat (replaces the old REST /chat/chat) ─────────────
 
   @SubscribeMessage('conversation:send-message')
   async handleSendMessage(
@@ -229,39 +229,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('conversation:capture-lead')
-  async handleCaptureLead(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: CaptureLeadPayload,
-  ): Promise<{ ok: boolean; contactId?: string; error?: string }> {
-    const ctx = client.data as SocketContext;
-    if (ctx.kind !== 'visitor') return { ok: false, error: 'forbidden' };
-
-    if (!payload?.name || (!payload.email && !payload.phone)) {
-      return { ok: false, error: 'invalid_payload' };
-    }
-
-    try {
-      const result = await this.chatService.captureLead(
-        {
-          name: payload.name,
-          email: payload.email,
-          phone: payload.phone,
-          conversation_id: payload.conversationId,
-        },
-        this.toWidgetSessionPayload(ctx),
-      );
-
-      this.emitLeadCaptured(ctx.businessId, result.contactId, payload.name);
-
-      return { ok: true, contactId: result.contactId };
-    } catch (e) {
-      this.logger.warn(`capture-lead failed: ${(e as Error).message}`);
-      return { ok: false, error: 'processing_failed' };
-    }
-  }
-
-  /** Adapts a visitor socket's context to the payload shape processChat/captureLead expect. */
+  /** Adapts a visitor socket's context to the payload shape processChat expects. */
   private toWidgetSessionPayload(ctx: SocketContext): WidgetSessionPayload {
     return {
       businessId: ctx.businessId,
@@ -296,16 +264,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .to(`conversation:${conversationId}`)
       .to(`business:${businessId}`)
       .emit('conversation:new-message', payload);
-  }
-
-  emitLeadCaptured(businessId: string, contactId: string, name: string) {
-    void this.server
-      .to(`business:${businessId}`)
-      .emit('conversation:lead-captured', {
-        contact_id: contactId,
-        name,
-        timestamp: new Date().toISOString(),
-      });
   }
 
   emitConversationStatusChanged(
