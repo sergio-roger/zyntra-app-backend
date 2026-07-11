@@ -2,7 +2,6 @@ import {
   IsString,
   IsEmail,
   IsOptional,
-  IsMongoId,
   IsUUID,
   MaxLength,
   MinLength,
@@ -47,9 +46,9 @@ export class LeadCaptureDto {
   name: string;
 
   @ApiPropertyOptional({
-    description: 'Mongo ObjectId of the related conversation (24 hex chars)',
+    description: 'UUID of the related conversation',
   })
   @IsOptional()
-  @IsMongoId()
+  @IsUUID()
   conversation_id?: string;
 }

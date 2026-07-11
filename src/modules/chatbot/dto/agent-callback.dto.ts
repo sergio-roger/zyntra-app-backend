@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsMongoId,
+  IsUUID,
   IsNumber,
   IsOptional,
   IsString,
@@ -10,7 +10,7 @@ import {
 
 export class AgentCallbackDto {
   @ApiProperty()
-  @IsMongoId()
+  @IsUUID()
   conversationId: string;
 
   @ApiProperty()

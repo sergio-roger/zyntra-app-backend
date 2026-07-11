@@ -206,8 +206,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
     void this.server
       .to(`conversation:${conversationId}`)
-      .emit('conversation:new-message', payload);
-    void this.server
       .to(`business:${businessId}`)
       .emit('conversation:new-message', payload);
   }
@@ -234,8 +232,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
     void this.server
       .to(`conversation:${conversationId}`)
-      .emit('conversation:status-changed', payload);
-    void this.server
       .to(`business:${businessId}`)
       .emit('conversation:status-changed', payload);
   }

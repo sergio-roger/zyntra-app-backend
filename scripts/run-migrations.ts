@@ -52,6 +52,7 @@ async function run() {
   await runMigration(c, '20260711_update_messaging_conversations.sql');
   await runMigration(c, '20260711_add_deleted_at_to_channels.sql');
   await runMigration(c, '20260711_make_channels_unique_partial.sql');
+  await runMigration(c, '20260711_create_settings.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

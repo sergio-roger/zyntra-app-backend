@@ -1,3 +1,14 @@
+import { ChannelsService } from '@/modules/channels/channels.service';
+import {
+  Channel,
+  ChannelStatus,
+} from '@/modules/channels/entities/channel.entity';
+import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
+import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
+import { UUID_RE } from '@common/constants/regex.constants';
+import { Contact } from '@crm/entities/contact.entity';
+import { ContactSource } from '@crm/enums/contact-source.enum';
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   Injectable,
@@ -5,29 +16,18 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Conversation } from './entities/conversation.entity';
-import { Message } from './entities/message.entity';
-import { Contact } from '@crm/entities/contact.entity';
-import { ContactSource } from '@crm/enums/contact-source.enum';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Queue } from 'bullmq';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
-import {
-  Channel,
-  ChannelStatus,
-} from '@/modules/channels/entities/channel.entity';
-import { ChannelsService } from '@/modules/channels/channels.service';
-import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
-import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
 import { ChatGateway } from './chat.gateway';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
 import { LeadCaptureDto } from './dto/lead-capture.dto';
+import { Conversation } from './entities/conversation.entity';
+import { Message } from './entities/message.entity';
 import { MessageEncryptionService } from './services/message-encryption.service';
-import { UUID_RE } from '@common/constants/regex.constants';
 
 export const AGENT_RESPONSE_QUEUE = 'agent-response';
 
@@ -162,6 +162,13 @@ export class ChatService {
       lastMessageAt: new Date(),
       lastMessageRole: 'user',
     });
+
+    this.chatGateway.emitNewMessage(
+      effectiveBusinessId,
+      conversationIdStr,
+      message,
+      'user',
+    );
 
     const now = new Date().toISOString();
 
@@ -499,6 +506,7 @@ export class ChatService {
     });
 
     const cfg = channel.config as Record<string, unknown>;
+    const status = this.getEffectiveWidgetStatus(cfg);
     return {
       sessionToken,
       expiresIn: WidgetSessionService.EXPIRES_IN_SECONDS,
@@ -507,6 +515,7 @@ export class ChatService {
       position: (cfg?.position as string) ?? 'bottom-right',
       primaryColor: (cfg?.primaryColor as string) ?? '#6366f1',
       greeting: (cfg?.greeting as string) ?? '',
+      status,
     };
   }
 
@@ -565,5 +574,52 @@ export class ChatService {
       contactId,
       message,
     };
+  }
+
+  private getNowInTimezone(timezone: string): { day: string; time: string } {
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).formatToParts(new Date());
+
+      const weekday = parts.find((p) => p.type === 'weekday')?.value ?? 'Mon';
+      const hour = parts.find((p) => p.type === 'hour')?.value ?? '00';
+      const minute = parts.find((p) => p.type === 'minute')?.value ?? '00';
+
+      const WEEKDAY_TO_DAY_KEY: Record<string, string> = {
+        Mon: 'mon', Tue: 'tue', Wed: 'wed', Thu: 'thu', Fri: 'fri', Sat: 'sat', Sun: 'sun'
+      };
+      return { day: WEEKDAY_TO_DAY_KEY[weekday] ?? 'mon', time: `${hour}:${minute}` };
+    } catch {
+      const now = new Date();
+      const weekday = now.toLocaleDateString('en-US', { weekday: 'short' });
+      const time = now.toTimeString().slice(0, 5);
+      const WEEKDAY_TO_DAY_KEY: Record<string, string> = {
+        Mon: 'mon', Tue: 'tue', Wed: 'wed', Thu: 'thu', Fri: 'fri', Sat: 'sat', Sun: 'sun'
+      };
+      return { day: WEEKDAY_TO_DAY_KEY[weekday] ?? 'mon', time };
+    }
+  }
+
+  private isWithinBusinessHours(businessHours: any): boolean {
+    if (!businessHours) return true;
+    if (businessHours.is24x7) return true;
+
+    const { day, time } = this.getNowInTimezone(businessHours.timezone || 'UTC');
+    const entry = businessHours.schedule?.find((d: any) => d.day === day);
+    if (!entry || !entry.enabled) return false;
+
+    return time >= entry.from && time < entry.to;
+  }
+
+  getEffectiveWidgetStatus(cfg: any): string {
+    const mode = cfg?.availabilityMode ?? 'manual';
+    const manual = cfg?.manualStatus ?? 'available';
+    if (mode === 'manual') return manual;
+    return this.isWithinBusinessHours(cfg?.businessHours) ? 'available' : 'offline';
   }
 }

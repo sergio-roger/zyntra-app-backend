@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsMongoId,
   IsObject,
   IsUUID,
   MaxLength,
@@ -37,10 +36,10 @@ export class ChatRequestDto {
   channel_id?: string;
 
   @ApiPropertyOptional({
-    description: 'Mongo ObjectId of an existing conversation (24 hex chars)',
+    description: 'UUID of an existing conversation',
   })
   @IsOptional()
-  @IsMongoId()
+  @IsUUID()
   conversation_id?: string;
 
   @ApiPropertyOptional()
