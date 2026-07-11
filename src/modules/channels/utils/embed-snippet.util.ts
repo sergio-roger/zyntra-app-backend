@@ -8,29 +8,17 @@ function escapeAttr(value: string): string {
     .replace(/>/g, '&gt;');
 }
 
+/**
+ * The widget only needs the public key to boot: it exchanges it for a
+ * session token + full personalization config via GET /chat/public-config.
+ * Position/color/name/greeting live in channel.config and must not be
+ * duplicated into the embed snippet.
+ */
 export function buildEmbedSnippet(params: {
   publicKey: string;
   cdnUrl?: string;
-  position?: string;
-  primaryColor?: string;
-  name?: string;
-  greeting?: string;
 }): string {
   const cdnUrl = params.cdnUrl ?? process.env.WIDGET_CDN_URL ?? DEFAULT_CDN_URL;
 
-  const attrs = [`data-public-key="${escapeAttr(params.publicKey)}"`];
-  if (params.position !== undefined) {
-    attrs.push(`data-position="${escapeAttr(params.position)}"`);
-  }
-  if (params.primaryColor !== undefined) {
-    attrs.push(`data-primary-color="${escapeAttr(params.primaryColor)}"`);
-  }
-  if (params.name !== undefined) {
-    attrs.push(`data-name="${escapeAttr(params.name)}"`);
-  }
-  if (params.greeting !== undefined) {
-    attrs.push(`data-greeting="${escapeAttr(params.greeting)}"`);
-  }
-
-  return `<script src="${escapeAttr(cdnUrl)}" ${attrs.join(' ')} defer></script>`;
+  return `<script src="${escapeAttr(cdnUrl)}" data-public-key="${escapeAttr(params.publicKey)}" defer></script>`;
 }

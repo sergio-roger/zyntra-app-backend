@@ -164,19 +164,21 @@ describe('WebChatChannelProvider.setup()', () => {
     expect(result.embedCode).toContain('data-public-key="wpk_abc123"');
   });
 
-  it('returns embedCode with correct position data attribute', async () => {
+  it('resolves the given position into config (personalization comes from the API, not the snippet)', async () => {
     const result = await provider.setup(
       'c',
       'b',
       { position: 'bottom-left' },
       'wpk_x',
     );
-    expect(result.embedCode).toContain('data-position="bottom-left"');
+    expect(result.config.position).toBe('bottom-left');
+    expect(result.embedCode).not.toContain('data-position');
   });
 
   it('uses default position bottom-right when not provided', async () => {
     const result = await provider.setup('c', 'b', {}, 'wpk_x');
-    expect(result.embedCode).toContain('data-position="bottom-right"');
+    expect(result.config.position).toBe('bottom-right');
+    expect(result.embedCode).not.toContain('data-position');
   });
 
   it('omits embedCode when no publicKey is given', async () => {

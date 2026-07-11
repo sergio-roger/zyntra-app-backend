@@ -65,20 +65,19 @@ export class WebChatChannelProvider implements ChannelProvider {
     const position = (config.position as string | undefined) ?? 'bottom-right';
     const primaryColor =
       (config.primaryColor as string | undefined) ?? '#6366f1';
-    const name = (config.name as string | undefined) ?? 'Asistente';
+    const assistantName =
+      (config.assistantName as string | undefined) ?? 'Asistente';
     const greeting = (config.greeting as string | undefined) ?? '';
 
     const resolvedConfig = {
       ...config,
       position,
       primaryColor,
-      name,
+      assistantName,
       greeting,
     };
 
-    const embedCode = publicKey
-      ? buildEmbedSnippet({ publicKey, position, primaryColor, name, greeting })
-      : undefined;
+    const embedCode = publicKey ? buildEmbedSnippet({ publicKey }) : undefined;
 
     return { config: resolvedConfig, embedCode };
   }

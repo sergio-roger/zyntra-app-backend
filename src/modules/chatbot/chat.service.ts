@@ -368,7 +368,7 @@ export class ChatService {
     return {
       sessionToken,
       expiresIn: WidgetSessionService.EXPIRES_IN_SECONDS,
-      name: (cfg?.name as string) ?? 'Asistente',
+      name: (cfg?.assistantName as string) ?? 'Asistente',
       theme: (cfg?.theme as string) ?? 'auto',
       position: (cfg?.position as string) ?? 'bottom-right',
       primaryColor: (cfg?.primaryColor as string) ?? '#6366f1',

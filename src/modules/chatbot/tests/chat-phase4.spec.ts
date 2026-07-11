@@ -461,7 +461,7 @@ describe('ChatService.exchangeWidgetSession()', () => {
       channelsService.validateOriginAndGetChannel as jest.Mock
     ).mockResolvedValue({
       ...WEB_CHAT_CHANNEL,
-      config: { name: 'Bot', greeting: 'Hola!' },
+      config: { assistantName: 'Bot', greeting: 'Hola!' },
     });
 
     const result = await service.exchangeWidgetSession(

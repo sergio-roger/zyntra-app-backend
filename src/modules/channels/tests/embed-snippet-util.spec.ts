@@ -5,7 +5,7 @@ describe('buildEmbedSnippet()', () => {
     delete process.env.WIDGET_CDN_URL;
   });
 
-  it('produces the expected tag with public-key and defer', () => {
+  it('produces the expected tag with only src and public-key', () => {
     const snippet = buildEmbedSnippet({ publicKey: 'wpk_abc123' });
 
     expect(snippet).toBe(
@@ -14,9 +14,13 @@ describe('buildEmbedSnippet()', () => {
     );
   });
 
-  it('does not include business-id or channel-id attributes', () => {
+  it('does not include position, color, name or greeting attributes', () => {
     const snippet = buildEmbedSnippet({ publicKey: 'wpk_abc123' });
 
+    expect(snippet).not.toContain('data-position');
+    expect(snippet).not.toContain('data-primary-color');
+    expect(snippet).not.toContain('data-name');
+    expect(snippet).not.toContain('data-greeting');
     expect(snippet).not.toContain('data-business-id');
     expect(snippet).not.toContain('data-channel-id');
   });
@@ -48,18 +52,6 @@ describe('buildEmbedSnippet()', () => {
     expect(snippet).not.toContain('data-public-key="wpk"onmouseover="');
     expect(snippet).toContain(
       'data-public-key="wpk&quot;onmouseover=&quot;alert(1)"',
-    );
-  });
-
-  it('escapes angle brackets and ampersands in the greeting', () => {
-    const snippet = buildEmbedSnippet({
-      publicKey: 'wpk_x',
-      greeting: '<img src=x onerror=alert(1)> & hola',
-    });
-
-    expect(snippet).not.toContain('<img');
-    expect(snippet).toContain(
-      'data-greeting="&lt;img src=x onerror=alert(1)&gt; &amp; hola"',
     );
   });
 });

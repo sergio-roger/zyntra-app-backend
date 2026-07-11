@@ -170,14 +170,7 @@ export class ChannelsService {
       throw new BadRequestException('Este canal no tiene un public_key generado');
     }
 
-    const config = channel.config ?? {};
-    const snippet = buildEmbedSnippet({
-      publicKey: channel.public_key,
-      position: config.position as string | undefined,
-      primaryColor: config.primaryColor as string | undefined,
-      name: config.name as string | undefined,
-      greeting: config.greeting as string | undefined,
-    });
+    const snippet = buildEmbedSnippet({ publicKey: channel.public_key });
 
     return {
       channel_id: channel.id,
