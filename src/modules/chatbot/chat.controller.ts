@@ -119,7 +119,7 @@ export class ChatController {
     @Headers('x-forwarded-for') ip?: string,
   ): Promise<ChatResponseDto> {
     this.logger.debug(
-      `chat message received: business_id=${req.widgetSession.businessId} channel_id=${req.widgetSession.channelId} conversation_id=${request.conversation_id ?? 'new'} channel=${request.channel ?? 'web'} length=${request.message.length} ip=${ip ?? 'unknown'}`,
+      `chat message received: business_id=${req.widgetSession.businessId} channel_id=${req.widgetSession.channelId} conversation_id=${request.conversation_id ?? 'new'} channel=${request.channel ?? 'web'} length=${request.message.length} ip=${ip ?? 'unknown'} legacy_auth=${req.widgetSession.legacy ?? false}`,
     );
     return this.chatService.processChat(request, req.widgetSession, ip);
   }
