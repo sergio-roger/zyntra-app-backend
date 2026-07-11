@@ -48,6 +48,10 @@ async function run() {
   await runMigration(c, '20260704_document_channels_multi_web_support.sql');
   await runMigration(c, '20260709_add_widget_public_key_auth.sql');
   await runMigration(c, '20260710_add_blocked_and_insecure_origins.sql');
+  await runMigration(c, '20260710_create_messaging_schema.sql');
+  await runMigration(c, '20260711_update_messaging_conversations.sql');
+  await runMigration(c, '20260711_add_deleted_at_to_channels.sql');
+  await runMigration(c, '20260711_make_channels_unique_partial.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

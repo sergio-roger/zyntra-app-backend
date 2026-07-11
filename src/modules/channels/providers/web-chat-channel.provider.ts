@@ -5,11 +5,9 @@ import {
   IncomingMessage,
 } from '@/modules/channels/interfaces/channel-provider.interface';
 import { buildEmbedSnippet } from '@/modules/channels/utils/embed-snippet.util';
+import { HEX_COLOR_RE, DOMAIN_RE } from '@common/constants/regex.constants';
 
 const VALID_POSITIONS = ['bottom-left', 'bottom-right'] as const;
-const HEX_COLOR_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
-const DOMAIN_RE =
-  /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 
 @Injectable()
 export class WebChatChannelProvider implements ChannelProvider {

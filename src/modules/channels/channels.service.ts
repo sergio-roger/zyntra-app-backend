@@ -22,12 +22,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 
-/**
- * Projects the widget domain-security fields the wizard writes to
- * `config.{allowedDomains,blockedDomains,allowInsecureDomains}` onto the
- * dedicated `channels` columns that `validateOriginAndGetChannel()` actually
- * enforces against Origin/Referer.
- */
 function originColumnsFromConfig(config: Record<string, unknown>) {
   return {
     allowedOrigins: Array.isArray(config.allowedDomains)
@@ -161,7 +155,7 @@ export class ChannelsService {
 
   async remove(businessId: string, channelId: string) {
     const channel = await this.findOne(businessId, channelId);
-    await this.channelRepo.remove(channel);
+    await this.channelRepo.softRemove(channel);
     return { success: true };
   }
 

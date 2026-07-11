@@ -55,6 +55,25 @@ export class Conversation {
   @Column({ name: 'ended_at', type: 'timestamptz', nullable: true })
   endedAt: Date | null;
 
+  @Column({ name: 'assigned_to', type: 'varchar', length: 100, nullable: true })
+  assignedTo: string | null;
+
+  @Column({
+    name: 'assigned_to_name',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  assignedToName: string | null;
+
+  @Column({
+    name: 'last_message_role',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  lastMessageRole: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -20,11 +21,6 @@ export enum ChannelStatus {
 }
 
 @Entity({ name: 'channels', schema: 'public' })
-@Unique('uq_channel_per_business_type_name', [
-  'businessId',
-  'channelTypeId',
-  'name',
-])
 @Index('idx_channels_public_key', ['publicKey'], {
   unique: true,
   where: 'public_key_revoked_at IS NULL',
@@ -108,6 +104,9 @@ export class Channel {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 
   @OneToOne(() => ChannelCredential, (cc) => cc.channel, {
     cascade: true,

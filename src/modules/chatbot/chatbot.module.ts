@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
@@ -8,11 +7,8 @@ import { Contact } from '@crm/entities/contact.entity';
 import { Business } from '../auth/entities/business.entity';
 import { LifecycleStage } from '../lifecycle/entities/lifecycle-stage.entity';
 import { ChannelsModule } from '@/modules/channels/channels.module';
-import {
-  Conversation,
-  ConversationSchema,
-} from './schemas/conversation.schema';
-import { Message, MessageSchema } from './schemas/message.schema';
+import { Conversation } from './entities/conversation.entity';
+import { Message } from './entities/message.entity';
 import { ChatService, AGENT_RESPONSE_QUEUE } from './chat.service';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
@@ -24,10 +20,12 @@ import { MessageEncryptionService } from './services/message-encryption.service'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Contact, Business, LifecycleStage]),
-    MongooseModule.forFeature([
-      { name: Conversation.name, schema: ConversationSchema },
-      { name: Message.name, schema: MessageSchema },
+    TypeOrmModule.forFeature([
+      Contact,
+      Business,
+      LifecycleStage,
+      Conversation,
+      Message,
     ]),
     JwtModule.registerAsync({
       inject: [ConfigService],
