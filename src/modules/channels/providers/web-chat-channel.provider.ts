@@ -16,11 +16,14 @@ export class WebChatChannelProvider implements ChannelProvider {
   validateConfig(config: Record<string, unknown>): void {
     const errors: string[] = [];
 
-    const { position, primaryColor, allowedDomains } = config as {
-      position?: string;
-      primaryColor?: string;
-      allowedDomains?: unknown;
-    };
+    const { position, primaryColor, allowedDomains, blockedDomains, allowInsecureDomains } =
+      config as {
+        position?: string;
+        primaryColor?: string;
+        allowedDomains?: unknown;
+        blockedDomains?: unknown;
+        allowInsecureDomains?: unknown;
+      };
 
     if (
       position !== undefined &&
@@ -48,6 +51,28 @@ export class WebChatChannelProvider implements ChannelProvider {
           );
         }
       }
+    }
+
+    if (blockedDomains !== undefined) {
+      if (!Array.isArray(blockedDomains)) {
+        errors.push('blockedDomains debe ser un array');
+      } else {
+        const invalid = (blockedDomains as unknown[]).filter(
+          (d) => typeof d !== 'string' || !DOMAIN_RE.test(d as string),
+        );
+        if (invalid.length > 0) {
+          errors.push(
+            `blockedDomains contiene dominios inválidos: ${invalid.join(', ')}`,
+          );
+        }
+      }
+    }
+
+    if (
+      allowInsecureDomains !== undefined &&
+      typeof allowInsecureDomains !== 'boolean'
+    ) {
+      errors.push('allowInsecureDomains debe ser un booleano');
     }
 
     if (errors.length > 0) {

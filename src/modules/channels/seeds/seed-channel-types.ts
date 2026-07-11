@@ -31,6 +31,14 @@ const WEB_CHAT_SCHEMA = {
       type: 'array',
       items: { type: 'string', format: 'hostname' },
     },
+    blockedDomains: {
+      type: 'array',
+      items: { type: 'string', format: 'hostname' },
+    },
+    allowInsecureDomains: {
+      type: 'boolean',
+      default: false,
+    },
   },
   additionalProperties: false,
 };

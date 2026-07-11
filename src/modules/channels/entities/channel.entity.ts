@@ -70,6 +70,16 @@ export class Channel {
   @Column({ type: 'text', array: true, default: '{}' })
   allowed_origins: string[];
 
+  // Domains explicitly denied, checked before allowed_origins. Ignored when
+  // allow_insecure_origins is true.
+  @Column({ type: 'text', array: true, default: '{}' })
+  blocked_origins: string[];
+
+  // Escape hatch: bypasses allowed_origins/blocked_origins entirely and
+  // permits the exchange from any origin.
+  @Column({ type: 'boolean', default: false })
+  allow_insecure_origins: boolean;
+
   // Set to revoke public_key without deleting the row (key rotation).
   @Column({ type: 'timestamptz', nullable: true })
   public_key_revoked_at: Date | null;

@@ -46,4 +46,52 @@ describe('isOriginAllowed()', () => {
   it('rejects when Origin/Referer are malformed URLs', () => {
     expect(isOriginAllowed(['example.com'], 'not-a-url')).toBe(false);
   });
+
+  it('rejects a domain present in blockedDomains even with no allowlist', () => {
+    expect(
+      isOriginAllowed(undefined, 'https://evil.com', undefined, ['evil.com']),
+    ).toBe(false);
+  });
+
+  it('rejects a subdomain of a blocked domain', () => {
+    expect(
+      isOriginAllowed(undefined, 'https://widget.evil.com', undefined, [
+        'evil.com',
+      ]),
+    ).toBe(false);
+  });
+
+  it('blockedDomains takes priority even if the domain is also allowlisted', () => {
+    expect(
+      isOriginAllowed(['example.com'], 'https://example.com', undefined, [
+        'example.com',
+      ]),
+    ).toBe(false);
+  });
+
+  it('allows a domain not present in blockedDomains when there is no allowlist', () => {
+    expect(
+      isOriginAllowed(undefined, 'https://safe.com', undefined, [
+        'evil.com',
+      ]),
+    ).toBe(true);
+  });
+
+  it('allowInsecureDomains bypasses both the allowlist and the blocklist', () => {
+    expect(
+      isOriginAllowed(
+        ['example.com'],
+        'https://evil.com',
+        undefined,
+        ['evil.com'],
+        true,
+      ),
+    ).toBe(true);
+  });
+
+  it('allowInsecureDomains bypasses even a completely missing Origin/Referer', () => {
+    expect(isOriginAllowed(['example.com'], undefined, undefined, [], true)).toBe(
+      true,
+    );
+  });
 });

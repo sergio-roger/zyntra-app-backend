@@ -34,6 +34,14 @@ const CHANNEL_TYPES_SEED = [
           type: 'array',
           items: { type: 'string', format: 'hostname' },
         },
+        blockedDomains: {
+          type: 'array',
+          items: { type: 'string', format: 'hostname' },
+        },
+        allowInsecureDomains: {
+          type: 'boolean',
+          default: false,
+        },
       },
       additionalProperties: false,
     },

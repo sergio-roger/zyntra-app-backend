@@ -142,6 +142,33 @@ describe('WebChatChannelProvider.validateConfig()', () => {
       provider.validateConfig({ allowedDomains: ['not_a_domain!'] }),
     ).toThrow(BadRequestException);
   });
+
+  it('passes with valid blockedDomains and allowInsecureDomains', () => {
+    expect(() =>
+      provider.validateConfig({
+        blockedDomains: ['evil.com'],
+        allowInsecureDomains: false,
+      }),
+    ).not.toThrow();
+  });
+
+  it('rejects blockedDomains that is not an array', () => {
+    expect(() =>
+      provider.validateConfig({ blockedDomains: 'evil.com' }),
+    ).toThrow(BadRequestException);
+  });
+
+  it('rejects blockedDomains with malformed domain', () => {
+    expect(() =>
+      provider.validateConfig({ blockedDomains: ['not_a_domain!'] }),
+    ).toThrow(BadRequestException);
+  });
+
+  it('rejects allowInsecureDomains that is not a boolean', () => {
+    expect(() =>
+      provider.validateConfig({ allowInsecureDomains: 'yes' }),
+    ).toThrow(BadRequestException);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -677,6 +704,37 @@ describe('ChannelsService', () => {
       await expect(
         service.validateOriginAndGetChannel('wpk_abc', 'https://evil.com'),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when Origin matches blocked_origins', () => {
+      const channel = {
+        id: 'chan-1',
+        business_id: 'biz-1',
+        allowed_origins: [],
+        blocked_origins: ['evil.com'],
+        channelType: WEB_CHAT_TYPE,
+      } as unknown as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      return expect(
+        service.validateOriginAndGetChannel('wpk_abc', 'https://evil.com'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('allows a blocked origin to be bypassed by allow_insecure_origins', async () => {
+      const channel = {
+        id: 'chan-1',
+        business_id: 'biz-1',
+        allowed_origins: [],
+        blocked_origins: ['evil.com'],
+        allow_insecure_origins: true,
+        channelType: WEB_CHAT_TYPE,
+      } as unknown as Channel;
+      (channelRepo.findOne as jest.Mock).mockResolvedValue(channel);
+
+      await expect(
+        service.validateOriginAndGetChannel('wpk_abc', 'https://evil.com'),
+      ).resolves.toBe(channel);
     });
   });
 });

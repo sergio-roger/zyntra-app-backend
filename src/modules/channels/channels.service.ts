@@ -22,6 +22,24 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 
+/**
+ * Projects the widget domain-security fields the wizard writes to
+ * `config.{allowedDomains,blockedDomains,allowInsecureDomains}` onto the
+ * dedicated `channels` columns that `validateOriginAndGetChannel()` actually
+ * enforces against Origin/Referer.
+ */
+function originColumnsFromConfig(config: Record<string, unknown>) {
+  return {
+    allowed_origins: Array.isArray(config.allowedDomains)
+      ? (config.allowedDomains as string[])
+      : [],
+    blocked_origins: Array.isArray(config.blockedDomains)
+      ? (config.blockedDomains as string[])
+      : [],
+    allow_insecure_origins: config.allowInsecureDomains === true,
+  };
+}
+
 @Injectable()
 export class ChannelsService {
   private readonly logger = new Logger(ChannelsService.name);
@@ -78,6 +96,7 @@ export class ChannelsService {
       agent_id: null,
       config,
       public_key: channelType.key === 'web_chat' ? generatePublicKey() : null,
+      ...originColumnsFromConfig(config),
     });
     await this.channelRepo.save(channel);
 
@@ -134,6 +153,7 @@ export class ChannelsService {
       );
       provider.validateConfig(dto.config);
       channel.config = dto.config;
+      Object.assign(channel, originColumnsFromConfig(dto.config));
     }
 
     return this.channelRepo.save(channel);
@@ -237,12 +257,28 @@ export class ChannelsService {
     }
 
     const allowedOrigins = channel.allowed_origins ?? [];
-    if (allowedOrigins.length === 0) {
+    const blockedOrigins = channel.blocked_origins ?? [];
+    const allowInsecure = channel.allow_insecure_origins === true;
+
+    if (allowInsecure) {
+      this.logger.warn(
+        `channel_id=${channel.id} has allow_insecure_origins=true; ` +
+          `allowing the public_key exchange from any origin`,
+      );
+    } else if (allowedOrigins.length === 0 && blockedOrigins.length === 0) {
       this.logger.warn(
         `channel_id=${channel.id} has no allowed_origins configured; ` +
           `allowing the public_key exchange from any origin`,
       );
-    } else if (!isOriginAllowed(allowedOrigins, origin, referer)) {
+    } else if (
+      !isOriginAllowed(
+        allowedOrigins,
+        origin,
+        referer,
+        blockedOrigins,
+        allowInsecure,
+      )
+    ) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
