@@ -281,6 +281,7 @@ export class ChatService {
       status: c.status,
       channel: c.channel,
       channelId: c.channel_id,
+      contactId: c.contact_id ?? null,
       startedAt: c.started_at?.toISOString(),
       lastMessageAt: c.last_message_at?.toISOString(),
       contactName: c.visitor?.name || 'Visitante anónimo',
@@ -308,6 +309,7 @@ export class ChatService {
       status: conversation.status,
       channel: conversation.channel,
       channelId: conversation.channel_id,
+      contactId: conversation.contact_id ?? null,
       startedAt: conversation.started_at?.toISOString(),
       contactName: conversation.visitor?.name || 'Visitante anónimo',
       visitor: conversation.visitor,
@@ -451,34 +453,49 @@ export class ChatService {
       ? await this.contactsRepo.findOne({ where: { businessId, email } })
       : await this.contactsRepo.findOne({ where: { businessId, phone } });
 
+    let contactId: string;
+    let message: string;
+
     if (existing) {
       existing.name = name;
       if (phone) existing.phone = phone;
       existing.lastActivityAt = new Date();
       await this.contactsRepo.save(existing);
-      return {
-        success: true,
-        contact_id: existing.id,
-        message: 'Lead actualizado',
-      };
+      contactId = existing.id;
+      message = 'Lead actualizado';
+    } else {
+      const defaultStage = await this.stageRepo.findOne({
+        where: { business_id: businessId, is_default: true },
+      });
+
+      const contact = this.contactsRepo.create({
+        businessId,
+        name,
+        email: email ?? null,
+        phone: phone ?? null,
+        source: ContactSource.WEB_CHAT,
+        lifecycleStageId: defaultStage?.id ?? null,
+        channelId: channel.id,
+        lastActivityAt: new Date(),
+      });
+      await this.contactsRepo.save(contact);
+      contactId = contact.id;
+      message = 'Lead capturado';
     }
 
-    const defaultStage = await this.stageRepo.findOne({
-      where: { business_id: businessId, is_default: true },
-    });
+    // Links the Postgres Contact back onto the Mongo conversation so the
+    // inbox can resolve tags/custom fields for this thread. dto.conversation_id
+    // was previously accepted but silently ignored — this was a real gap.
+    if (dto.conversation_id) {
+      await this.conversationModel.updateOne(
+        {
+          _id: new Types.ObjectId(dto.conversation_id),
+          business_id: businessId,
+        },
+        { contact_id: contactId },
+      );
+    }
 
-    const contact = this.contactsRepo.create({
-      businessId,
-      name,
-      email: email ?? null,
-      phone: phone ?? null,
-      source: ContactSource.WEB_CHAT,
-      lifecycleStageId: defaultStage?.id ?? null,
-      channelId: channel.id,
-      lastActivityAt: new Date(),
-    });
-
-    await this.contactsRepo.save(contact);
-    return { success: true, contact_id: contact.id, message: 'Lead capturado' };
+    return { success: true, contact_id: contactId, message };
   }
 }
