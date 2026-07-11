@@ -12,6 +12,7 @@ import { Repository } from 'typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import {
   Conversation,
   ConversationDocument,
@@ -59,8 +60,22 @@ export class ChatService {
     private readonly config: ConfigService,
     private readonly widgetSessionService: WidgetSessionService,
     private readonly messageEncryption: MessageEncryptionService,
+    private readonly jwtService: JwtService,
   ) {
     this.serviceToken = config.get<string>('SERVICE_TOKEN', '');
+  }
+
+  /**
+   * Short-lived token so the admin panel can authenticate the /chat socket.
+   * The panel's own session is an httpOnly cookie (unreadable by JS) — this
+   * mints a bearer token ChatGateway's agent path can verify, using the same
+   * secret/payload shape (sub/business_id) as the staff login JWT.
+   */
+  signSocketToken(userId: string, businessId: string): string {
+    return this.jwtService.sign(
+      { sub: userId, business_id: businessId },
+      { expiresIn: '15m' },
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -265,10 +280,10 @@ export class ChatService {
       id: c._id.toString(),
       status: c.status,
       channel: c.channel,
-      channel_id: c.channel_id,
-      started_at: c.started_at?.toISOString(),
-      last_message_at: c.last_message_at?.toISOString(),
-      contact_name: c.visitor?.name || 'Visitante anónimo',
+      channelId: c.channel_id,
+      startedAt: c.started_at?.toISOString(),
+      lastMessageAt: c.last_message_at?.toISOString(),
+      contactName: c.visitor?.name || 'Visitante anónimo',
     }));
   }
 
@@ -292,8 +307,9 @@ export class ChatService {
       id: conversation._id.toString(),
       status: conversation.status,
       channel: conversation.channel,
-      channel_id: conversation.channel_id,
-      started_at: conversation.started_at?.toISOString(),
+      channelId: conversation.channel_id,
+      startedAt: conversation.started_at?.toISOString(),
+      contactName: conversation.visitor?.name || 'Visitante anónimo',
       visitor: conversation.visitor,
       messages: messages.map((m) => ({
         id: m._id.toString(),
@@ -302,7 +318,7 @@ export class ChatService {
           m.role === 'agent'
             ? this.messageEncryption.decrypt(m.content)
             : m.content,
-        created_at: m.createdAt?.toISOString(),
+        createdAt: m.createdAt?.toISOString(),
       })),
     };
   }

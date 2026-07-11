@@ -59,6 +59,23 @@ export class ChatController {
     );
   }
 
+  @Post('socket-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Emite un token corto para autenticar la conexión WebSocket del agente',
+  })
+  @ApiOkResponse({ description: 'Token de vida corta (15m)' })
+  async getSocketToken(
+    @Req() req: RequestWithUser,
+  ): Promise<{ token: string }> {
+    const businessId = req.user.businessId;
+    if (!businessId)
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return { token: this.chatService.signSocketToken(req.user.id, businessId) };
+  }
+
   @Get('conversations')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

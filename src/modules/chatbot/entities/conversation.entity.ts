@@ -1,3 +1,8 @@
+import { Channel } from '@/modules/channels/entities/channel.entity';
+import {
+  ConversationMeta,
+  ConversationVisitor,
+} from '@chatbot/interfaces/conversation.interface';
 import {
   Column,
   CreateDateColumn,
@@ -8,11 +13,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Channel } from '@/modules/channels/entities/channel.entity';
-import {
-  ConversationMeta,
-  ConversationVisitor,
-} from '@chatbot/interfaces/conversation.interface';
 
 @Entity({ name: 'conversations', schema: 'messaging' })
 @Index('idx_conv_business_last_msg', ['businessId', 'lastMessageAt'])

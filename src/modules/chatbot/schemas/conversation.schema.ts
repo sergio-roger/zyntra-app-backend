@@ -13,7 +13,7 @@ export class Conversation {
 
   @Prop({
     required: true,
-    enum: ['web', 'whatsapp', 'instagram', 'email'],
+    enum: ['web', 'web_chat', 'whatsapp', 'instagram', 'email'],
     default: 'web',
   })
   channel: string;
