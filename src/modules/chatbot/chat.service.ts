@@ -153,7 +153,7 @@ export class ChatService {
 
     await this.conversationModel.updateOne(
       { _id: conversation._id },
-      { last_message_at: new Date() },
+      { last_message_at: new Date(), last_message_role: 'user' },
     );
 
     const now = new Date().toISOString();
@@ -192,7 +192,11 @@ export class ChatService {
 
     await this.conversationModel.updateOne(
       { _id: conversation._id },
-      { status: 'open', last_message_at: new Date() },
+      {
+        status: 'open',
+        last_message_at: new Date(),
+        last_message_role: 'assistant',
+      },
     );
 
     this.chatGateway.emitNewMessage(
@@ -246,7 +250,7 @@ export class ChatService {
 
     await this.conversationModel.updateOne(
       { _id: new Types.ObjectId(conversationId) },
-      { last_message_at: new Date() },
+      { last_message_at: new Date(), last_message_role: 'assistant' },
     );
 
     this.chatGateway.emitNewMessage(
@@ -264,11 +268,18 @@ export class ChatService {
   // ---------------------------------------------------------------------------
   async getConversations(
     businessId: string,
-    filters: { channelId?: string; status?: string } = {},
+    filters: {
+      channelId?: string;
+      status?: string;
+      assignedToUserId?: string;
+      unreadOnly?: boolean;
+    } = {},
   ) {
     const query: Record<string, unknown> = { business_id: businessId };
     if (filters.channelId) query['channel_id'] = filters.channelId;
     if (filters.status) query['status'] = filters.status;
+    if (filters.assignedToUserId) query['assigned_to'] = filters.assignedToUserId;
+    if (filters.unreadOnly) query['last_message_role'] = 'user';
 
     const conversations = await this.conversationModel
       .find(query)
@@ -285,6 +296,10 @@ export class ChatService {
       startedAt: c.started_at?.toISOString(),
       lastMessageAt: c.last_message_at?.toISOString(),
       contactName: c.visitor?.name || 'Visitante anónimo',
+      assignedTo: c.assigned_to
+        ? { id: c.assigned_to, name: c.assigned_to_name }
+        : null,
+      unread: c.last_message_role === 'user',
     }));
   }
 
@@ -312,6 +327,10 @@ export class ChatService {
       contactId: conversation.contact_id ?? null,
       startedAt: conversation.started_at?.toISOString(),
       contactName: conversation.visitor?.name || 'Visitante anónimo',
+      assignedTo: conversation.assigned_to
+        ? { id: conversation.assigned_to, name: conversation.assigned_to_name }
+        : null,
+      unread: conversation.last_message_role === 'user',
       visitor: conversation.visitor,
       messages: messages.map((m) => ({
         id: m._id.toString(),
@@ -350,7 +369,7 @@ export class ChatService {
 
     await this.conversationModel.updateOne(
       { _id: conversation._id },
-      { last_message_at: new Date() },
+      { last_message_at: new Date(), last_message_role: 'agent' },
     );
 
     this.chatGateway.emitNewMessage(
@@ -364,6 +383,39 @@ export class ChatService {
       id: message._id.toString(),
       createdAt: message.createdAt.toISOString(),
     };
+  }
+
+  /** Agent self-assign ("claim") / release, backing the "Míos" inbox tab. */
+  async assignConversationToSelf(
+    businessId: string,
+    conversationId: string,
+    user: { id: string; name: string },
+  ) {
+    const conversation = await this.conversationModel.findById(conversationId);
+    if (!conversation || conversation.business_id !== businessId) {
+      throw new NotFoundException('Conversación no encontrada');
+    }
+
+    await this.conversationModel.updateOne(
+      { _id: conversation._id },
+      { assigned_to: user.id, assigned_to_name: user.name },
+    );
+
+    return { success: true, assignedTo: { id: user.id, name: user.name } };
+  }
+
+  async unassignConversation(businessId: string, conversationId: string) {
+    const conversation = await this.conversationModel.findById(conversationId);
+    if (!conversation || conversation.business_id !== businessId) {
+      throw new NotFoundException('Conversación no encontrada');
+    }
+
+    await this.conversationModel.updateOne(
+      { _id: conversation._id },
+      { assigned_to: null, assigned_to_name: null },
+    );
+
+    return { success: true };
   }
 
   async updateConversationStatus(

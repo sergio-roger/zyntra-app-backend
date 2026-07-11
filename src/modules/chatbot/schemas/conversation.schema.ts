@@ -53,6 +53,19 @@ export class Conversation {
   // Added Phase 4: links conversation to a Channel entity (PostgreSQL UUID)
   @Prop({ index: true })
   channel_id: string;
+
+  // Agent (security.users UUID) that claimed this conversation. Name is
+  // denormalized at assignment time to avoid a Postgres join on every list read.
+  @Prop({ type: String, default: null, index: true })
+  assigned_to: string | null;
+
+  @Prop({ type: String, default: null })
+  assigned_to_name: string | null;
+
+  // Role of the most recent message, kept in sync on every message write so
+  // "unread" (last message came from the visitor, unanswered) is a flat read.
+  @Prop()
+  last_message_role: string;
 }
 
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);

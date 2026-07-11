@@ -10,6 +10,7 @@ import { WidgetSessionGuard } from '@/modules/widget-session/widget-session.guar
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   HttpCode,
@@ -85,11 +86,18 @@ export class ChatController {
     @Req() req: RequestWithUser,
     @Query('channelId') channelId?: string,
     @Query('status') status?: string,
+    @Query('assignedToMe') assignedToMe?: string,
+    @Query('unread') unread?: string,
   ) {
     const businessId = req.user.businessId;
     if (!businessId)
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.chatService.getConversations(businessId, { channelId, status });
+    return this.chatService.getConversations(businessId, {
+      channelId,
+      status,
+      assignedToUserId: assignedToMe === 'true' ? req.user.id : undefined,
+      unreadOnly: unread === 'true',
+    });
   }
 
   @Get('conversations/:id')
@@ -126,6 +134,37 @@ export class ChatController {
       conversationId,
       content,
     );
+  }
+
+  @Post('conversations/:id/assign')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'El agente autenticado se asigna la conversación' })
+  async assignConversation(
+    @Req() req: RequestWithUser,
+    @Param('id') id: string,
+  ) {
+    const businessId = req.user.businessId;
+    if (!businessId)
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.chatService.assignConversationToSelf(businessId, id, {
+      id: req.user.id,
+      name: req.user.name,
+    });
+  }
+
+  @Delete('conversations/:id/assign')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Quita la asignación de la conversación' })
+  async unassignConversation(
+    @Req() req: RequestWithUser,
+    @Param('id') id: string,
+  ) {
+    const businessId = req.user.businessId;
+    if (!businessId)
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.chatService.unassignConversation(businessId, id);
   }
 
   @Patch('conversations/:id/status')
