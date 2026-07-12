@@ -92,4 +92,8 @@ describe('isOriginAllowed()', () => {
       isOriginAllowed(['example.com'], undefined, undefined, [], true),
     ).toBe(true);
   });
+
+  it('ignores non-string entries in allowedDomains', () => {
+    expect(isOriginAllowed([123, null, {}], 'https://example.com')).toBe(false);
+  });
 });
