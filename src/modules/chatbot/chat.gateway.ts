@@ -70,6 +70,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         conversationId,
       };
       client.data = ctx;
+      void client.join(`business:${payload.businessId}`);
       void client.join(`channel:${payload.channelId}`);
       if (conversationId) this.attachToConversation(client, conversationId);
       return;

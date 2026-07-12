@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
@@ -204,7 +203,18 @@ describe('ChatService.processChat() — channel WITH agent', () => {
 
   it('does NOT emit socket message synchronously (waits for callback)', async () => {
     await service.processChat({ message: 'Test' }, WIDGET_SESSION);
-    expect(gateway.emitNewMessage).not.toHaveBeenCalled();
+    expect(gateway.emitNewMessage).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      'assistant',
+    );
+    expect(gateway.emitNewMessage).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      'agent',
+    );
   });
 });
 

@@ -42,8 +42,9 @@ export class WidgetSessionGuard implements CanActivate {
       return true;
     }
 
-    const legacyBusinessId = req.body?.business_id;
-    const legacyChannelId = req.body?.channel_id;
+    const body = req.body as Record<string, unknown> | undefined;
+    const legacyBusinessId = body?.business_id;
+    const legacyChannelId = body?.channel_id;
     if (
       typeof legacyBusinessId === 'string' &&
       typeof legacyChannelId === 'string'

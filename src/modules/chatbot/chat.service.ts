@@ -190,10 +190,29 @@ export class ChatService {
     // 4b. No agent assigned → a human must reply manually from the inbox.
     // Nothing is queued to produce an automatic reply, so tell the widget
     // not to wait on one (it would otherwise spin forever).
+    const fallbackMessage =
+      'Gracias por escribirnos. Un agente se pondrá en contacto contigo pronto.';
+    const encryptedAssistantMsg =
+      this.messageEncryption.encrypt(fallbackMessage);
+    const assistantMsg = this.messageRepo.create({
+      conversationId: conversationIdStr,
+      role: 'assistant',
+      contentEncrypted: encryptedAssistantMsg,
+      channel: 'web_chat',
+    });
+    await this.messageRepo.save(assistantMsg);
+
+    this.chatGateway.emitNewMessage(
+      effectiveBusinessId,
+      conversationIdStr,
+      fallbackMessage,
+      'assistant',
+    );
+
     return {
       id: crypto.randomUUID(),
       conversation_id: conversationIdStr,
-      message: '',
+      message: fallbackMessage,
       pending: false,
       created_at: now,
     };
@@ -452,9 +471,6 @@ export class ChatService {
       throw new BadRequestException('public_key es requerido');
     }
 
-    // Resolves the channel and enforces allowed_origins in one step; throws
-    // UnauthorizedException (generic) if the key is unknown/revoked or the
-    // origin isn't allowlisted.
     const channel = await this.channelsService.validateOriginAndGetChannel(
       publicKey,
       origin,
@@ -500,35 +516,76 @@ export class ChatService {
       const minute = parts.find((p) => p.type === 'minute')?.value ?? '00';
 
       const WEEKDAY_TO_DAY_KEY: Record<string, string> = {
-        Mon: 'mon', Tue: 'tue', Wed: 'wed', Thu: 'thu', Fri: 'fri', Sat: 'sat', Sun: 'sun'
+        Mon: 'mon',
+        Tue: 'tue',
+        Wed: 'wed',
+        Thu: 'thu',
+        Fri: 'fri',
+        Sat: 'sat',
+        Sun: 'sun',
       };
-      return { day: WEEKDAY_TO_DAY_KEY[weekday] ?? 'mon', time: `${hour}:${minute}` };
+      return {
+        day: WEEKDAY_TO_DAY_KEY[weekday] ?? 'mon',
+        time: `${hour}:${minute}`,
+      };
     } catch {
       const now = new Date();
       const weekday = now.toLocaleDateString('en-US', { weekday: 'short' });
       const time = now.toTimeString().slice(0, 5);
       const WEEKDAY_TO_DAY_KEY: Record<string, string> = {
-        Mon: 'mon', Tue: 'tue', Wed: 'wed', Thu: 'thu', Fri: 'fri', Sat: 'sat', Sun: 'sun'
+        Mon: 'mon',
+        Tue: 'tue',
+        Wed: 'wed',
+        Thu: 'thu',
+        Fri: 'fri',
+        Sat: 'sat',
+        Sun: 'sun',
       };
       return { day: WEEKDAY_TO_DAY_KEY[weekday] ?? 'mon', time };
     }
   }
 
-  private isWithinBusinessHours(businessHours: any): boolean {
+  private isWithinBusinessHours(businessHours?: {
+    is24x7?: boolean;
+    timezone?: string;
+    schedule?: Array<{
+      day: string;
+      enabled: boolean;
+      from: string;
+      to: string;
+    }>;
+  }): boolean {
     if (!businessHours) return true;
     if (businessHours.is24x7) return true;
 
-    const { day, time } = this.getNowInTimezone(businessHours.timezone || 'UTC');
-    const entry = businessHours.schedule?.find((d: any) => d.day === day);
+    const { day, time } = this.getNowInTimezone(
+      businessHours.timezone || 'UTC',
+    );
+    const entry = businessHours.schedule?.find((d) => d.day === day);
     if (!entry || !entry.enabled) return false;
 
     return time >= entry.from && time < entry.to;
   }
 
-  getEffectiveWidgetStatus(cfg: any): string {
+  getEffectiveWidgetStatus(cfg: {
+    availabilityMode?: string;
+    manualStatus?: string;
+    businessHours?: {
+      is24x7?: boolean;
+      timezone?: string;
+      schedule?: Array<{
+        day: string;
+        enabled: boolean;
+        from: string;
+        to: string;
+      }>;
+    };
+  }): string {
     const mode = cfg?.availabilityMode ?? 'manual';
     const manual = cfg?.manualStatus ?? 'available';
     if (mode === 'manual') return manual;
-    return this.isWithinBusinessHours(cfg?.businessHours) ? 'available' : 'offline';
+    return this.isWithinBusinessHours(cfg?.businessHours)
+      ? 'available'
+      : 'offline';
   }
 }

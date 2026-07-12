@@ -334,6 +334,7 @@ describe('ChannelsService', () => {
       });
 
       expect(channelRepo.create).toHaveBeenCalledWith(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         expect.objectContaining({ publicKey: expect.stringMatching(/^wpk_/) }),
       );
     });
