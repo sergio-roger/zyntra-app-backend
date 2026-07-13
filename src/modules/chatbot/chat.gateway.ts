@@ -1,23 +1,23 @@
+import { ChatService } from '@/modules/chatbot/chat.service';
+import { ChatRateLimitGuard } from '@/modules/chatbot/guards/chat-rate-limit.guard';
 import {
-  WebSocketGateway,
-  WebSocketServer,
+  SendMessagePayload,
+  SocketContext,
+} from '@/modules/chatbot/interfaces/chat-gateway.interface';
+import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
+import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
+import { forwardRef, Inject, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
-  MessageBody,
-  ConnectedSocket,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
-import { forwardRef, Inject, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
-import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
-import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
-import {
-  SocketContext,
-  SendMessagePayload,
-} from '@/modules/chatbot/interfaces/chat-gateway.interface';
-import { ChatService } from './chat.service';
-import { ChatRateLimitGuard } from './guards/chat-rate-limit.guard';
 
 @WebSocketGateway({
   namespace: '/chat',
