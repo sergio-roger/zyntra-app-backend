@@ -367,44 +367,63 @@ export class CrmSeeder implements Seeder {
       const usersDomain = entry.adminUser.email.split('@')[1];
 
       // 1. Create Extra Users
-      const extraUser1 = await userRepo.save(
-        userRepo.create({
-          businessId: business.id,
-          firstName: 'Vendedor',
-          lastName: 'Especialista',
-          name: 'Vendedor Especialista',
-          email: `ventas1@${usersDomain}`,
-          jobTitle: 'Consultor de Ventas Outbound',
-          avatarUrl:
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-          avatarFileId: null,
-          passwordHash: passwordHash,
-          role: UserRole.AGENT,
-          status: UserStatus.ACTIVE,
-          isActive: true,
-          isAccountActivated: true,
-          activatedAt: new Date(),
-        }),
-      );
-      const extraUser2 = await userRepo.save(
-        userRepo.create({
-          businessId: business.id,
-          firstName: 'Soporte',
-          lastName: 'Nivel 1',
-          name: 'Soporte Nivel 1',
-          email: `soporte1@${usersDomain}`,
-          jobTitle: 'Especialista de Soporte Técnico',
-          avatarUrl:
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-          avatarFileId: null,
-          passwordHash: passwordHash,
-          role: UserRole.AGENT,
-          status: UserStatus.ACTIVE,
-          isActive: true,
-          isAccountActivated: true,
-          activatedAt: new Date(),
-        }),
-      );
+      let extraUser1 = await userRepo.findOne({
+        where: { businessId: business.id, email: `ventas1@${usersDomain}` },
+      });
+      if (!extraUser1) {
+        extraUser1 = await userRepo.save(
+          userRepo.create({
+            businessId: business.id,
+            firstName: 'Vendedor',
+            lastName: 'Especialista',
+            name: 'Vendedor Especialista',
+            email: `ventas1@${usersDomain}`,
+            jobTitle: 'Consultor de Ventas Outbound',
+            avatarUrl:
+              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+            avatarFileId: null,
+            passwordHash: passwordHash,
+            role: UserRole.AGENT,
+            status: UserStatus.ACTIVE,
+            isActive: true,
+            isAccountActivated: true,
+            activatedAt: new Date(),
+          }),
+        );
+        console.log(`  ✅ Extra user created: ventas1@${usersDomain}`);
+      } else {
+        console.log(`  ℹ️  Extra user already exists: ventas1@${usersDomain}`);
+      }
+
+      let extraUser2 = await userRepo.findOne({
+        where: { businessId: business.id, email: `soporte1@${usersDomain}` },
+      });
+      if (!extraUser2) {
+        extraUser2 = await userRepo.save(
+          userRepo.create({
+            businessId: business.id,
+            firstName: 'Soporte',
+            lastName: 'Nivel 1',
+            name: 'Soporte Nivel 1',
+            email: `soporte1@${usersDomain}`,
+            jobTitle: 'Especialista de Soporte Técnico',
+            avatarUrl:
+              'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+            avatarFileId: null,
+            passwordHash: passwordHash,
+            role: UserRole.AGENT,
+            status: UserStatus.ACTIVE,
+            isActive: true,
+            isAccountActivated: true,
+            activatedAt: new Date(),
+          }),
+        );
+        console.log(`  ✅ Extra user created: soporte1@${usersDomain}`);
+      } else {
+        console.log(
+          `  ℹ️  Extra user already exists: soporte1@${usersDomain}`,
+        );
+      }
 
       const allBusinessUsers = [
         adminUser,

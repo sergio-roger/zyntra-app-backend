@@ -50,6 +50,9 @@ export const PLANS_DATA = [
       settings_channels: ModuleAccessLevel.LOCKED,
       settings_my_channels: ModuleAccessLevel.LOCKED,
       settings_agents: ModuleAccessLevel.LOCKED,
+      automations: ModuleAccessLevel.LOCKED,
+      automations_workflows: ModuleAccessLevel.LOCKED,
+      automations_agents: ModuleAccessLevel.LOCKED,
     },
   },
   {
@@ -87,6 +90,9 @@ export const PLANS_DATA = [
       analytics: ModuleAccessLevel.FULL,
       billing: ModuleAccessLevel.FULL,
       settings: ModuleAccessLevel.FULL,
+      automations: ModuleAccessLevel.FULL,
+      automations_workflows: ModuleAccessLevel.LOCKED,
+      automations_agents: ModuleAccessLevel.FULL,
     },
   },
   {
@@ -122,6 +128,9 @@ export const PLANS_DATA = [
       analytics: ModuleAccessLevel.FULL,
       billing: ModuleAccessLevel.FULL,
       settings: ModuleAccessLevel.FULL,
+      automations: ModuleAccessLevel.FULL,
+      automations_workflows: ModuleAccessLevel.FULL,
+      automations_agents: ModuleAccessLevel.FULL,
     },
   },
 ];

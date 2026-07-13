@@ -157,6 +157,23 @@ export class ChatController {
     return this.chatService.unassignConversation(businessId, id);
   }
 
+  @Patch('conversations/:id/read')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Marca los mensajes del visitante como leídos (limpia el badge)',
+  })
+  async markConversationAsRead(
+    @Req() req: RequestWithUser,
+    @Param('id') id: string,
+  ) {
+    const businessId = req.user.businessId;
+    if (!businessId)
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.chatService.markConversationAsRead(businessId, id);
+  }
+
   @Patch('conversations/:id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

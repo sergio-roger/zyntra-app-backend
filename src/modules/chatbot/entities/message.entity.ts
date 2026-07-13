@@ -47,6 +47,11 @@ export class Message {
   @Column({ name: 'job_id', type: 'varchar', length: 100, nullable: true })
   jobId: string | null;
 
+  // Only meaningful for role='user' messages — whether an agent has seen it.
+  // Bot/agent messages are inserted with this already true (see chat.service.ts).
+  @Column({ name: 'is_read', type: 'boolean', default: false })
+  isRead: boolean;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

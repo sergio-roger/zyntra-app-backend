@@ -111,6 +111,14 @@ export const MENUS_DATA = [
     description:
       'Configuraciones generales de la plataforma, perfiles, canales y seguridad.',
   },
+  {
+    key: 'automations',
+    label: 'Automatizaciones',
+    path: '/automations',
+    parent_key: null,
+    description:
+      'Creación y gestión de flujos automatizados y agentes de automatización.',
+  },
   // Dashboard subitems
   {
     key: 'dashboard_home',
@@ -435,6 +443,22 @@ export const MENUS_DATA = [
     path: '/settings/agents',
     parent_key: 'settings_business',
     description: null,
+  },
+  // Automatizaciones subitems
+  {
+    key: 'automations_workflows',
+    label: 'Workflows',
+    path: '/automations/workflows',
+    parent_key: 'automations',
+    description: 'Constructor y gestión de flujos de trabajo automatizados.',
+  },
+  {
+    key: 'automations_agents',
+    label: 'Agentes',
+    path: '/automations/agents',
+    parent_key: 'automations',
+    description:
+      'Configuración de agentes automatizados dentro de los flujos de trabajo.',
   },
 ];
 

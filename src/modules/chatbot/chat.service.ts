@@ -230,6 +230,7 @@ export class ChatService {
       jobId,
       tokensUsed,
       model,
+      isRead: true,
     });
     await this.messageRepo.save(msg);
 
@@ -272,18 +273,68 @@ export class ChatService {
       take: 100,
     });
 
-    return conversations.map((c) => ({
-      id: c.id,
-      status: c.status,
-      channel: c.channel,
-      channelId: c.channelId,
-      contactId: c.contactId ?? null,
-      startedAt: c.startedAt?.toISOString(),
-      lastMessageAt: c.lastMessageAt?.toISOString(),
-      contactName: c.visitor?.name || 'Visitante anónimo',
-      assignedTo: this.shapeAssignee(c),
-      unread: c.lastMessageRole === 'user',
-    }));
+    const conversationIds = conversations.map((c) => c.id);
+    const { lastMessageByConversation, unreadCountByConversation } =
+      await this.getConversationMessageSummaries(conversationIds);
+
+    return conversations.map((c) => {
+      const unreadCount = unreadCountByConversation.get(c.id) ?? 0;
+      return {
+        id: c.id,
+        status: c.status,
+        channel: c.channel,
+        channelId: c.channelId,
+        contactId: c.contactId ?? null,
+        startedAt: c.startedAt?.toISOString(),
+        lastMessageAt: c.lastMessageAt?.toISOString(),
+        contactName: c.visitor?.name || 'Visitante anónimo',
+        assignedTo: this.shapeAssignee(c),
+        unread: unreadCount > 0,
+        unreadCount,
+        lastMessage: lastMessageByConversation.get(c.id) ?? null,
+      };
+    });
+  }
+
+  /**
+   * Batch-fetches the last message content (decrypted) and unread visitor
+   * message count per conversation, avoiding an N+1 query for the inbox list.
+   */
+  private async getConversationMessageSummaries(conversationIds: string[]) {
+    const lastMessageByConversation = new Map<string, string>();
+    const unreadCountByConversation = new Map<string, number>();
+    if (conversationIds.length === 0) {
+      return { lastMessageByConversation, unreadCountByConversation };
+    }
+
+    const lastMessages = await this.messageRepo
+      .createQueryBuilder('m')
+      .distinctOn(['m.conversation_id'])
+      .where('m.conversation_id IN (:...ids)', { ids: conversationIds })
+      .orderBy('m.conversation_id')
+      .addOrderBy('m.created_at', 'DESC')
+      .getMany();
+    for (const m of lastMessages) {
+      lastMessageByConversation.set(
+        m.conversationId,
+        this.messageEncryption.decrypt(m.contentEncrypted),
+      );
+    }
+
+    const unreadCounts = await this.messageRepo
+      .createQueryBuilder('m')
+      .select('m.conversation_id', 'conversationId')
+      .addSelect('COUNT(*)', 'count')
+      .where('m.conversation_id IN (:...ids)', { ids: conversationIds })
+      .andWhere('m.role = :role', { role: 'user' })
+      .andWhere('m.is_read = false')
+      .groupBy('m.conversation_id')
+      .getRawMany<{ conversationId: string; count: string }>();
+    for (const row of unreadCounts) {
+      unreadCountByConversation.set(row.conversationId, Number(row.count));
+    }
+
+    return { lastMessageByConversation, unreadCountByConversation };
   }
 
   async getConversationDetail(businessId: string, conversationId: string) {
@@ -302,6 +353,10 @@ export class ChatService {
       order: { createdAt: 'ASC' },
     });
 
+    const unreadCount = messages.filter(
+      (m) => m.role === 'user' && !m.isRead,
+    ).length;
+
     return {
       id: conversation.id,
       status: conversation.status,
@@ -311,15 +366,35 @@ export class ChatService {
       startedAt: conversation.startedAt?.toISOString(),
       contactName: conversation.visitor?.name || 'Visitante anónimo',
       assignedTo: this.shapeAssignee(conversation),
-      unread: conversation.lastMessageRole === 'user',
+      unread: unreadCount > 0,
+      unreadCount,
       visitor: conversation.visitor,
       messages: messages.map((m) => ({
         id: m.id,
         role: m.role,
         content: this.messageEncryption.decrypt(m.contentEncrypted),
         createdAt: m.createdAt?.toISOString(),
+        isRead: m.isRead,
       })),
     };
+  }
+
+  /**
+   * Marks every unread visitor message in a conversation as read. Called by
+   * the inbox when an agent opens the thread, so the unread badge clears.
+   */
+  async markConversationAsRead(businessId: string, conversationId: string) {
+    const conversation = await this.findConversationOrThrow(
+      businessId,
+      conversationId,
+    );
+
+    await this.messageRepo.update(
+      { conversationId: conversation.id, role: 'user', isRead: false },
+      { isRead: true },
+    );
+
+    return { success: true };
   }
 
   /**
@@ -343,6 +418,7 @@ export class ChatService {
       role: 'agent',
       contentEncrypted: encrypted,
       channel: conversation.channel,
+      isRead: true,
     });
     await this.messageRepo.save(message);
 
