@@ -1,18 +1,18 @@
 import {
+  ALLOWED_LOGO_MIME_TYPES,
+  MAX_LOGO_SIZE_BYTES,
+} from '@auth/constants/logo-storage.constants';
+import { UpdateCompanyDto } from '@auth/dto/update-company.dto';
+import { Business } from '@auth/entities/business.entity';
+import type { UploadableFile } from '@auth/interfaces/uploadable-file.interface';
+import { LogoStorageService } from '@auth/logo-storage.service';
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Business } from '@auth/entities/business.entity';
-import { UpdateCompanyDto } from '@auth/dto/update-company.dto';
-import {
-  ALLOWED_LOGO_MIME_TYPES,
-  LogoStorageService,
-  MAX_LOGO_SIZE_BYTES,
-} from '@auth/logo-storage.service';
-import type { UploadableFile } from '@auth/avatar-storage.service';
 
 @Injectable()
 export class CompanyService {

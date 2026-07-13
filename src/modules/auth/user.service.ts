@@ -1,14 +1,14 @@
 import { StorageClientService } from '@/storage-client/storage-client.service';
+import { AvatarStorageService } from '@auth/avatar-storage.service';
 import {
   ALLOWED_AVATAR_MIME_TYPES,
-  AvatarStorageService,
   MAX_AVATAR_SIZE_BYTES,
-  UploadableFile,
-} from '@auth/avatar-storage.service';
+} from '@auth/constants/avatar-storage.constants';
 import { ChangePasswordDto } from '@auth/dto/change-password.dto';
 import { UpdateProfileDto } from '@auth/dto/update-profile.dto';
 import { User } from '@auth/entities/user.entity';
 import { SelfProfile } from '@auth/interfaces/self-profile.interface';
+import { UploadableFile } from '@auth/interfaces/uploadable-file.interface';
 import { validateFile } from '@auth/utils/file-validation.util';
 import { hashPassword, verifyPassword } from '@auth/utils/password.util';
 import {

@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
-import { UploadableFile } from '@auth/avatar-storage.service';
 import { FileValidationOptions } from '@auth/interfaces/file-validation-options.interface';
+import { UploadableFile } from '@auth/interfaces/uploadable-file.interface';
 
 export function validateFile(
   file: UploadableFile | undefined,

@@ -1,4 +1,4 @@
-import { UploadableFile } from '@auth/avatar-storage.service';
+import { StorageClientService } from '@/storage-client/storage-client.service';
 import { RESET_TTL_MS } from '@auth/constants/auth.constants';
 import { ChangePasswordDto } from '@auth/dto/change-password.dto';
 import { LoginDto } from '@auth/dto/login.dto';
@@ -11,6 +11,7 @@ import { Role } from '@auth/entities/role.entity';
 import { User } from '@auth/entities/user.entity';
 import { JwtPayload } from '@auth/interfaces/jwt-payload.interface';
 import { MenuNode } from '@auth/interfaces/menu-node.interface';
+import { UploadableFile } from '@auth/interfaces/uploadable-file.interface';
 import { MenuService } from '@auth/menu.service';
 import { PermissionService } from '@auth/permission.service';
 import { RoleData, RoleService } from '@auth/role.service';
@@ -30,7 +31,6 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
-import { StorageClientService } from '@/storage-client/storage-client.service';
 
 @Injectable()
 export class AuthService {
