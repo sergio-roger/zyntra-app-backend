@@ -3,10 +3,17 @@ import {
   Channel,
   ChannelStatus,
 } from '@/modules/channels/entities/channel.entity';
+import { ChatGateway } from '@/modules/chatbot/chat.gateway';
+import {
+  ChatRequestDto,
+  ChatResponseDto,
+} from '@/modules/chatbot/dto/chat.dto';
+import { Conversation } from '@/modules/chatbot/entities/conversation.entity';
+import { Message } from '@/modules/chatbot/entities/message.entity';
+import { MessageEncryptionService } from '@/modules/chatbot/services/message-encryption.service';
 import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
 import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
 import { UUID_RE } from '@common/constants/regex.constants';
-import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   forwardRef,
@@ -19,15 +26,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Queue } from 'bullmq';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { ChatGateway } from './chat.gateway';
-import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
-import { Conversation } from './entities/conversation.entity';
-import { Message } from './entities/message.entity';
-import { MessageEncryptionService } from './services/message-encryption.service';
 
-export const AGENT_RESPONSE_QUEUE = 'agent-response';
+const SYSTEM_ASSIGNEE = { assignedTo: 'system', assignedToName: 'Sistema' };
 
 @Injectable()
 export class ChatService {
@@ -40,8 +41,6 @@ export class ChatService {
     @InjectRepository(Message)
     private messageRepo: Repository<Message>,
     private readonly channelsService: ChannelsService,
-    @InjectQueue(AGENT_RESPONSE_QUEUE)
-    private agentQueue: Queue,
     @Inject(forwardRef(() => ChatGateway))
     private readonly chatGateway: ChatGateway,
     private readonly config: ConfigService,
@@ -50,6 +49,29 @@ export class ChatService {
     private readonly jwtService: JwtService,
   ) {
     this.serviceToken = config.get<string>('SERVICE_TOKEN', '');
+  }
+
+  /**
+   * Shared lookup for conversation-scoped operations — resolves the
+   * conversation and enforces business ownership in one place.
+   */
+  private async findConversationOrThrow(
+    businessId: string,
+    conversationId: string,
+  ): Promise<Conversation> {
+    const conversation = await this.conversationRepo.findOneBy({
+      id: conversationId,
+    });
+    if (!conversation || conversation.businessId !== businessId) {
+      throw new NotFoundException('Conversación no encontrada');
+    }
+    return conversation;
+  }
+
+  private shapeAssignee(
+    c: Pick<Conversation, 'assignedTo' | 'assignedToName'>,
+  ) {
+    return c.assignedTo ? { id: c.assignedTo, name: c.assignedToName } : null;
   }
 
   /**
@@ -124,8 +146,7 @@ export class ChatService {
         status: 'open',
         startedAt: new Date(),
         lastMessageAt: new Date(),
-        assignedTo: 'system',
-        assignedToName: 'Sistema',
+        ...SYSTEM_ASSIGNEE,
         visitor: {
           fingerprint,
           ipHash: ip ?? '',
@@ -161,60 +182,19 @@ export class ChatService {
       'user',
     );
 
-    const now = new Date().toISOString();
-
-    // 4a. Agent assigned to the conversation → enqueue job for agent-service
-    if (channel.agentId && conversation.assignedTo === channel.agentId) {
-      const jobId = `${conversationIdStr}-${Date.now()}`;
-      await this.agentQueue.add(
-        'agent-response',
-        {
-          conversationId: conversationIdStr,
-          channelId: channel.id,
-          agentId: channel.agentId,
-          businessId: effectiveBusinessId,
-          jobId,
-        },
-        { jobId },
-      );
-
-      return {
-        id: crypto.randomUUID(),
-        conversation_id: conversationIdStr,
-        message: '',
-        pending: true,
-        created_at: now,
-      };
-    }
-
-    // 4b. No agent assigned → a human must reply manually from the inbox.
+    // 4. No agent assigned → a human must reply manually from the inbox.
     // Nothing is queued to produce an automatic reply, so tell the widget
-    // not to wait on one (it would otherwise spin forever).
-    const fallbackMessage =
-      'Gracias por escribirnos. Un agente se pondrá en contacto contigo pronto.';
-    const encryptedAssistantMsg =
-      this.messageEncryption.encrypt(fallbackMessage);
-    const assistantMsg = this.messageRepo.create({
-      conversationId: conversationIdStr,
-      role: 'assistant',
-      contentEncrypted: encryptedAssistantMsg,
-      channel: 'web_chat',
-    });
-    await this.messageRepo.save(assistantMsg);
-
-    this.chatGateway.emitNewMessage(
-      effectiveBusinessId,
-      conversationIdStr,
-      fallbackMessage,
-      'assistant',
-    );
-
+    // not to wait on one (it would otherwise spin forever). No canned
+    // message is injected here — that would fire on every single user
+    // message with no dedup, and falsely imply an assistant/bot replied
+    // when the channel has nothing configured to do so. A configurable
+    // away/quick-reply message is a separate, not-yet-built feature.
     return {
       id: crypto.randomUUID(),
       conversation_id: conversationIdStr,
-      message: fallbackMessage,
+      message: '',
       pending: false,
-      created_at: now,
+      created_at: new Date().toISOString(),
     };
   }
 
@@ -301,9 +281,7 @@ export class ChatService {
       startedAt: c.startedAt?.toISOString(),
       lastMessageAt: c.lastMessageAt?.toISOString(),
       contactName: c.visitor?.name || 'Visitante anónimo',
-      assignedTo: c.assignedTo
-        ? { id: c.assignedTo, name: c.assignedToName }
-        : null,
+      assignedTo: this.shapeAssignee(c),
       unread: c.lastMessageRole === 'user',
     }));
   }
@@ -314,12 +292,10 @@ export class ChatService {
       throw new NotFoundException('Conversación no encontrada');
     }
 
-    const conversation = await this.conversationRepo.findOneBy({
-      id: conversationId,
-    });
-    if (!conversation || conversation.businessId !== businessId) {
-      throw new NotFoundException('Conversación no encontrada');
-    }
+    const conversation = await this.findConversationOrThrow(
+      businessId,
+      conversationId,
+    );
 
     const messages = await this.messageRepo.find({
       where: { conversationId },
@@ -334,9 +310,7 @@ export class ChatService {
       contactId: conversation.contactId ?? null,
       startedAt: conversation.startedAt?.toISOString(),
       contactName: conversation.visitor?.name || 'Visitante anónimo',
-      assignedTo: conversation.assignedTo
-        ? { id: conversation.assignedTo, name: conversation.assignedToName }
-        : null,
+      assignedTo: this.shapeAssignee(conversation),
       unread: conversation.lastMessageRole === 'user',
       visitor: conversation.visitor,
       messages: messages.map((m) => ({
@@ -358,12 +332,10 @@ export class ChatService {
     conversationId: string,
     content: string,
   ): Promise<{ id: string; createdAt: string }> {
-    const conversation = await this.conversationRepo.findOneBy({
-      id: conversationId,
-    });
-    if (!conversation || conversation.businessId !== businessId) {
-      throw new NotFoundException('Conversación no encontrada');
-    }
+    const conversation = await this.findConversationOrThrow(
+      businessId,
+      conversationId,
+    );
 
     const encrypted = this.messageEncryption.encrypt(content);
     const message = this.messageRepo.create({
@@ -398,12 +370,10 @@ export class ChatService {
     conversationId: string,
     user: { id: string; name: string },
   ) {
-    const conversation = await this.conversationRepo.findOneBy({
-      id: conversationId,
-    });
-    if (!conversation || conversation.businessId !== businessId) {
-      throw new NotFoundException('Conversación no encontrada');
-    }
+    const conversation = await this.findConversationOrThrow(
+      businessId,
+      conversationId,
+    );
 
     await this.conversationRepo.update(conversation.id, {
       assignedTo: user.id,
@@ -414,17 +384,12 @@ export class ChatService {
   }
 
   async unassignConversation(businessId: string, conversationId: string) {
-    const conversation = await this.conversationRepo.findOneBy({
-      id: conversationId,
-    });
-    if (!conversation || conversation.businessId !== businessId) {
-      throw new NotFoundException('Conversación no encontrada');
-    }
+    const conversation = await this.findConversationOrThrow(
+      businessId,
+      conversationId,
+    );
 
-    await this.conversationRepo.update(conversation.id, {
-      assignedTo: 'system',
-      assignedToName: 'Sistema',
-    });
+    await this.conversationRepo.update(conversation.id, SYSTEM_ASSIGNEE);
 
     return { success: true };
   }
@@ -434,12 +399,10 @@ export class ChatService {
     conversationId: string,
     status: string,
   ) {
-    const conversation = await this.conversationRepo.findOneBy({
-      id: conversationId,
-    });
-    if (!conversation || conversation.businessId !== businessId) {
-      throw new NotFoundException('Conversación no encontrada');
-    }
+    const conversation = await this.findConversationOrThrow(
+      businessId,
+      conversationId,
+    );
 
     const allowed = ['open', 'closed', 'bot', 'human'];
     if (!allowed.includes(status)) {

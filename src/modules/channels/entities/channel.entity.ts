@@ -8,7 +8,6 @@ import {
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
-  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
@@ -21,11 +20,14 @@ export enum ChannelStatus {
 }
 
 @Entity({ name: 'channels', schema: 'public' })
-@Unique('uq_channel_per_business_type_name', [
+@Index('uq_channel_per_business_type_name', [
   'businessId',
   'channelTypeId',
   'name',
-])
+], {
+  unique: true,
+  where: 'deleted_at IS NULL',
+})
 @Index('idx_channels_public_key', ['publicKey'], {
   unique: true,
   where: 'public_key_revoked_at IS NULL',

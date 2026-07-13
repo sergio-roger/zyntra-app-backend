@@ -2,13 +2,12 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { BullModule } from '@nestjs/bullmq';
 import { Business } from '../auth/entities/business.entity';
 import { ChannelsModule } from '@/modules/channels/channels.module';
 import { Conversation } from './entities/conversation.entity';
 import { Message } from './entities/message.entity';
 import { Setting } from './entities/setting.entity';
-import { ChatService, AGENT_RESPONSE_QUEUE } from './chat.service';
+import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { SettingsController } from './settings.controller';
 import { SettingsService } from './settings.service';
@@ -28,7 +27,6 @@ import { MessageEncryptionService } from './services/message-encryption.service'
         secret: config.get<string>('JWT_SECRET') || 'dev_secret',
       }),
     }),
-    BullModule.registerQueue({ name: AGENT_RESPONSE_QUEUE }),
     AiModule,
     ChannelsModule,
     WidgetSessionModule,

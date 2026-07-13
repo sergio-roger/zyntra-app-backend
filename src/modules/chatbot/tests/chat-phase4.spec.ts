@@ -9,11 +9,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { getQueueToken } from '@nestjs/bullmq';
 import { JwtService } from '@nestjs/jwt';
 import { ObjectLiteral } from 'typeorm';
 
-import { ChatService, AGENT_RESPONSE_QUEUE } from '../chat.service';
+import { ChatService } from '../chat.service';
 import { Conversation } from '../entities/conversation.entity';
 import { Message } from '../entities/message.entity';
 import {
@@ -50,10 +49,6 @@ const makeRepo = <T extends ObjectLiteral>() => {
     _queryBuilder: mockQueryBuilder,
   } as any;
 };
-
-const makeQueue = () => ({
-  add: jest.fn().mockResolvedValue({ id: 'job-1' }),
-});
 
 const makeChannelsService = () => ({
   findByChannelId: jest.fn().mockResolvedValue(null),
@@ -100,7 +95,6 @@ let conversationRepo: ReturnType<typeof makeRepo>;
 let messageRepo: ReturnType<typeof makeRepo>;
 let channelsService: ReturnType<typeof makeChannelsService>;
 let widgetSessionService: ReturnType<typeof makeWidgetSessionService>;
-let agentQueue: ReturnType<typeof makeQueue>;
 let gateway: ReturnType<typeof makeGateway>;
 
 async function buildModule() {
@@ -108,7 +102,6 @@ async function buildModule() {
   messageRepo = makeRepo<Message>();
   channelsService = makeChannelsService();
   widgetSessionService = makeWidgetSessionService();
-  agentQueue = makeQueue();
   gateway = makeGateway();
 
   const module: TestingModule = await Test.createTestingModule({
@@ -123,7 +116,6 @@ async function buildModule() {
         useValue: messageRepo,
       },
       { provide: ChannelsService, useValue: channelsService },
-      { provide: getQueueToken(AGENT_RESPONSE_QUEUE), useValue: agentQueue },
       { provide: ChatGateway, useValue: gateway },
       { provide: WidgetSessionService, useValue: widgetSessionService },
       {
@@ -154,55 +146,47 @@ async function buildModule() {
 }
 
 // ---------------------------------------------------------------------------
-// Suite 1 – processChat() with agent assigned → enqueues BullMQ job
+// Suite 1 – processChat() never injects an automatic reply
 // ---------------------------------------------------------------------------
-describe('ChatService.processChat() — channel WITH agent', () => {
+describe('ChatService.processChat() — no automatic reply is ever injected', () => {
   beforeEach(async () => {
     await buildModule();
 
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
-      WEB_CHAT_CHANNEL_WITH_AGENT,
+      WEB_CHAT_CHANNEL,
     );
     (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(null);
-    const fakeConv = {
-      id: 'conv-123',
-      businessId: 'biz-1',
-      assignedTo: 'agent-uuid-1',
-    };
+    const fakeConv = { id: 'conv-456', businessId: 'biz-1' };
     (conversationRepo.create as jest.Mock).mockReturnValue(fakeConv);
     (messageRepo.create as jest.Mock).mockReturnValue({});
   });
 
   afterEach(() => jest.clearAllMocks());
 
-  it('adds a job to the agent-response queue', async () => {
+  it('returns immediately with no pending reply and an empty message', async () => {
     const result = await service.processChat(
       { message: 'Hola' },
       WIDGET_SESSION,
     );
-
-    expect(agentQueue.add).toHaveBeenCalledWith(
-      'agent-response',
-      expect.objectContaining({
-        conversationId: 'conv-123',
-        agentId: 'agent-uuid-1',
-        businessId: 'biz-1',
-      }),
-      expect.any(Object),
-    );
-    expect(result.pending).toBe(true);
+    expect(result.pending).toBe(false);
     expect(result.message).toBe('');
   });
 
-  it('persists user message before enqueuing', async () => {
+  it('persists the user message', async () => {
     await service.processChat({ message: 'Test' }, WIDGET_SESSION);
     expect(messageRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({ role: 'user', contentEncrypted: 'enc_Test' }),
     );
   });
 
-  it('does NOT emit socket message synchronously (waits for callback)', async () => {
+  it('only emits the user message over the socket, never an assistant/agent one', async () => {
     await service.processChat({ message: 'Test' }, WIDGET_SESSION);
+    expect(gateway.emitNewMessage).toHaveBeenCalledWith(
+      'biz-1',
+      'conv-456',
+      'Test',
+      'user',
+    );
     expect(gateway.emitNewMessage).not.toHaveBeenCalledWith(
       expect.any(String),
       expect.any(String),
@@ -216,51 +200,17 @@ describe('ChatService.processChat() — channel WITH agent', () => {
       'agent',
     );
   });
-});
 
-// ---------------------------------------------------------------------------
-// Suite 2 – processChat() with NO agent → returns fallback
-// ---------------------------------------------------------------------------
-describe('ChatService.processChat() — channel WITHOUT agent', () => {
-  beforeEach(async () => {
-    await buildModule();
-
+  it('behaves the same even when the channel has an agentId (no code path consumes it yet)', async () => {
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
-      WEB_CHAT_CHANNEL,
-    ); // no agent_id
-    (conversationRepo.findOneBy as jest.Mock).mockResolvedValue(null);
-    const fakeConv = {
-      id: 'conv-456',
-      businessId: 'biz-1',
-    };
-    (conversationRepo.create as jest.Mock).mockReturnValue(fakeConv);
-    (messageRepo.create as jest.Mock).mockReturnValue({});
-  });
-
-  afterEach(() => jest.clearAllMocks());
-
-  it('returns fallback message without pending flag', async () => {
+      WEB_CHAT_CHANNEL_WITH_AGENT,
+    );
     const result = await service.processChat(
       { message: 'Hola' },
       WIDGET_SESSION,
     );
-    expect(result.message).toBeTruthy();
     expect(result.pending).toBe(false);
-  });
-
-  it('does NOT enqueue a BullMQ job', async () => {
-    await service.processChat({ message: 'Hola' }, WIDGET_SESSION);
-    expect(agentQueue.add).not.toHaveBeenCalled();
-  });
-
-  it('emits socket event with fallback message', async () => {
-    await service.processChat({ message: 'Hola' }, WIDGET_SESSION);
-    expect(gateway.emitNewMessage).toHaveBeenCalledWith(
-      'biz-1',
-      'conv-456',
-      expect.any(String),
-      'assistant',
-    );
+    expect(result.message).toBe('');
   });
 });
 
