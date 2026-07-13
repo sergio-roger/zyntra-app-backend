@@ -6,10 +6,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { DataSource } from 'typeorm';
-import {
-  PlanModule,
-  ModuleAccessLevel,
-} from '../../modules/auth/entities/plan-module.entity';
+import { PlanModule } from '../../modules/auth/entities/plan-module.entity';
+import { ModuleAccessLevel } from '../../modules/auth/enums/module-access-level.enum';
 import { Menu } from '../../modules/auth/entities/menu.entity';
 import { REQUIRES_MODULE_KEY } from '../decorators/requires-module.decorator';
 
@@ -37,7 +35,7 @@ export class PlanModuleGuard implements CanActivate {
 
     // 1. Try finding explicit key level
     let row = await planModuleRepo.findOne({
-      where: { plan_id: business.plan_id, menu_key: menuKey },
+      where: { planId: business.plan_id, menuKey: menuKey },
     });
 
     // 2. If not found, try to inherit from parent menu
@@ -45,14 +43,14 @@ export class PlanModuleGuard implements CanActivate {
       const menu = await this.dataSource
         .getRepository(Menu)
         .findOne({ where: { key: menuKey } });
-      if (menu?.parent_key) {
+      if (menu?.parentKey) {
         row = await planModuleRepo.findOne({
-          where: { plan_id: business.plan_id, menu_key: menu.parent_key },
+          where: { planId: business.plan_id, menuKey: menu.parentKey },
         });
       }
     }
 
-    const level = row?.access_level ?? ModuleAccessLevel.LOCKED;
+    const level = row?.accessLevel ?? ModuleAccessLevel.LOCKED;
 
     if (level === ModuleAccessLevel.LOCKED) {
       throw new ForbiddenException({

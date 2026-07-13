@@ -636,16 +636,16 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
 
       const globalTemplates = ALL_MENUS.map((m) => ({
         id: `perm-${m.id}`,
-        role_id: 'role-admin-id',
-        menu_id: m.id,
-        business_id: null,
+        roleId: 'role-admin-id',
+        menuId: m.id,
+        businessId: null,
       }));
       permissionRepo._mockQb.getMany.mockResolvedValueOnce(globalTemplates);
 
       await service.getMenuTree(UserRole.ADMIN, 'biz-nueva', 'plan-id');
 
       expect(permissionRepo.count).toHaveBeenCalledWith({
-        where: { business_id: 'biz-nueva', role_id: 'role-admin-id' },
+        where: { businessId: 'biz-nueva', roleId: 'role-admin-id' },
       });
       expect(permissionRepo.createQueryBuilder).toHaveBeenCalledWith('p');
       expect(permissionRepo.save).toHaveBeenCalled();
@@ -655,8 +655,8 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
       )[0][0] as Record<string, unknown>[];
       expect(saved.length).toBe(globalTemplates.length);
       expect(saved[0]).toMatchObject({
-        business_id: 'biz-nueva',
-        role_id: 'role-admin-id',
+        businessId: 'biz-nueva',
+        roleId: 'role-admin-id',
       });
     });
 

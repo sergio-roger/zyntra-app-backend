@@ -22,15 +22,15 @@ export class Menu {
   @Column({ type: 'varchar', length: 255 })
   path: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  parent_key: string | null;
+  @Column({ name: 'parent_key', type: 'varchar', length: 100, nullable: true })
+  parentKey: string | null;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

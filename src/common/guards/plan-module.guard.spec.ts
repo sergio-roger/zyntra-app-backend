@@ -2,10 +2,8 @@ import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { PlanModuleGuard } from './plan-module.guard';
-import {
-  PlanModule,
-  ModuleAccessLevel,
-} from '../../modules/auth/entities/plan-module.entity';
+import { PlanModule } from '../../modules/auth/entities/plan-module.entity';
+import { ModuleAccessLevel } from '../../modules/auth/enums/module-access-level.enum';
 
 const { FULL, READ_ONLY, LOCKED } = ModuleAccessLevel;
 const PLAN_ID = 'plan-test-uuid';
@@ -59,17 +57,17 @@ function makeDataSource(
   menuParents: Record<string, string | null> = {},
 ) {
   const pmFindOne = jest.fn(
-    ({ where }: { where: { plan_id: string; menu_key: string } }) => {
-      if (where.plan_id !== PLAN_ID) return Promise.resolve(null);
-      const lvl = modules[where.menu_key];
-      return Promise.resolve(lvl ? { access_level: lvl } : null);
+    ({ where }: { where: { planId: string; menuKey: string } }) => {
+      if (where.planId !== PLAN_ID) return Promise.resolve(null);
+      const lvl = modules[where.menuKey];
+      return Promise.resolve(lvl ? { accessLevel: lvl } : null);
     },
   );
   const menuFindOne = jest.fn(({ where }: { where: { key: string } }) => {
     if (where.key in menuParents) {
       return Promise.resolve({
         key: where.key,
-        parent_key: menuParents[where.key],
+        parentKey: menuParents[where.key],
       });
     }
     return Promise.resolve(null);

@@ -578,7 +578,7 @@ export class ContactsService {
     business: Business,
     newCount = 1,
   ): Promise<void> {
-    const limit = business.plan_object?.contact_limit;
+    const limit = business.plan_object?.contactLimit;
     if (limit === undefined || limit === null || limit === 999999) return;
 
     const currentCount = await this.contactsRepo.count({

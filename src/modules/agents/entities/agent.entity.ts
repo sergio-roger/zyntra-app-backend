@@ -46,6 +46,24 @@ export class Agent {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ nullable: true })
+  tone: string;
+
+  @Column({ nullable: true })
+  locale: string;
+
+  @Column('int', { default: 1024 })
+  max_tokens: number;
+
+  @Column({ nullable: true })
+  knowledge_collection: string;
+
+  @Column('jsonb', { nullable: true })
+  voice_config: Record<string, unknown>;
+
+  @Column('jsonb', { nullable: true })
+  memory_config: Record<string, unknown>;
+
   @CreateDateColumn()
   created_at: Date;
 

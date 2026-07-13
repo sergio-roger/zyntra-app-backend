@@ -3,7 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UserRole } from '@crm/enums/user-role.enum';
-import { Business, PlanStatus } from './entities/business.entity';
+import { Business } from './entities/business.entity';
+import { PlanStatus } from './enums/plan-status.enum';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -48,11 +49,11 @@ describe('AuthController', () => {
       const mockBusiness = {
         id: 'biz-123',
         name: 'Test Business',
-        plan_id: 'plan-123',
-        plan_status: PlanStatus.ACTIVE,
-        trial_ends_at: new Date(),
-        created_at: new Date(),
-        updated_at: new Date(),
+        planId: 'plan-123',
+        planStatus: PlanStatus.ACTIVE,
+        trialEndsAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         plan_object: null,
       } as unknown as Business;
 
@@ -75,7 +76,7 @@ describe('AuthController', () => {
       expect(authService.getMenuTree).toHaveBeenCalledWith(
         UserRole.ADMIN,
         mockBusiness.id,
-        mockBusiness.plan_id,
+        mockBusiness.planId,
       );
       expect(result).toBe(mockMenuTree);
     });

@@ -1,19 +1,19 @@
+import { Plan } from '@auth/entities/plan.entity';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Plan } from './plan.entity';
 
 @Entity({ name: 'plan_descriptions', schema: 'public' })
 export class PlanDescription {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  plan_id: string;
+  @Column({ name: 'plan_id' })
+  planId: string;
 
   @ManyToOne(() => Plan, (plan) => plan.descriptions)
   @JoinColumn({ name: 'plan_id' })
@@ -22,8 +22,8 @@ export class PlanDescription {
   @Column()
   text: string;
 
-  @Column({ default: true })
-  is_included: boolean;
+  @Column({ name: 'is_included', default: true })
+  isIncluded: boolean;
 
   @Column({ default: 0 })
   order: number;

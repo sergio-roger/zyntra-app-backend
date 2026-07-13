@@ -54,6 +54,7 @@ async function run() {
   await runMigration(c, '20260711_make_channels_unique_partial.sql');
   await runMigration(c, '20260711_create_settings.sql');
   await runMigration(c, '20260712_add_is_read_to_messages.sql');
+  await runMigration(c, '20260712_add_rag_agents_infrastructure.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

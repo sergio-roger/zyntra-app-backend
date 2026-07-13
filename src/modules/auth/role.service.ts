@@ -113,8 +113,8 @@ export class RoleService {
 
     // Also delete any permissions assigned to this role in this business
     await this.permissionRepository.delete({
-      business_id: businessId,
-      role_id: role.id,
+      businessId,
+      roleId: role.id,
     });
 
     await this.roleRepository.remove(role);

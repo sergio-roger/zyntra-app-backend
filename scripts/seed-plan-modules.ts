@@ -2,10 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { Plan } from '../src/modules/auth/entities/plan.entity';
-import {
-  PlanModule,
-  ModuleAccessLevel,
-} from '../src/modules/auth/entities/plan-module.entity';
+import { PlanModule } from '../src/modules/auth/entities/plan-module.entity';
+import { ModuleAccessLevel } from '../src/modules/auth/enums/module-access-level.enum';
 
 const MODULE_MATRIX: Record<string, Record<string, ModuleAccessLevel>> = {
   BrandStart: {
@@ -97,20 +95,20 @@ async function bootstrap() {
     for (const key of definedKeys) {
       const targetLevel = planMatrix[key];
       let pm = await planModuleRepo.findOne({
-        where: { plan_id: plan.id, menu_key: key },
+        where: { planId: plan.id, menuKey: key },
       });
 
       if (pm) {
-        if (pm.access_level !== targetLevel) {
-          pm.access_level = targetLevel;
+        if (pm.accessLevel !== targetLevel) {
+          pm.accessLevel = targetLevel;
           await planModuleRepo.save(pm);
           console.log(`  Updated ${key} -> ${targetLevel}`);
         }
       } else {
         pm = planModuleRepo.create({
-          plan_id: plan.id,
-          menu_key: key,
-          access_level: targetLevel,
+          planId: plan.id,
+          menuKey: key,
+          accessLevel: targetLevel,
         });
         await planModuleRepo.save(pm);
         console.log(`  Created ${key} -> ${targetLevel}`);
@@ -119,12 +117,12 @@ async function bootstrap() {
 
     // Delete other keys to allow inheritance
     const existingPms = await planModuleRepo.find({
-      where: { plan_id: plan.id },
+      where: { planId: plan.id },
     });
     for (const pm of existingPms) {
-      if (!definedKeys.includes(pm.menu_key)) {
+      if (!definedKeys.includes(pm.menuKey)) {
         await planModuleRepo.remove(pm);
-        console.log(`  Deleted ${pm.menu_key} (will inherit access level)`);
+        console.log(`  Deleted ${pm.menuKey} (will inherit access level)`);
       }
     }
   }

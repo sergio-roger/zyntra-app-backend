@@ -35,7 +35,15 @@ export class RbacSeeder implements Seeder {
     for (const m of MENUS_DATA) {
       const existing = await menuRepo.findOne({ where: { key: m.key } });
       if (!existing) {
-        await menuRepo.save(menuRepo.create(m));
+        await menuRepo.save(
+          menuRepo.create({
+            key: m.key,
+            label: m.label,
+            path: m.path,
+            parentKey: m.parent_key,
+            description: m.description,
+          }),
+        );
         console.log(`  ✅ Menu created: ${m.key}`);
         menusCreated++;
       } else {
@@ -44,7 +52,7 @@ export class RbacSeeder implements Seeder {
           {
             label: m.label,
             path: m.path,
-            parent_key: m.parent_key,
+            parentKey: m.parent_key,
             description: m.description,
           },
         );
@@ -70,15 +78,15 @@ export class RbacSeeder implements Seeder {
         if (!menu) continue;
 
         const existing = await permRepo.findOne({
-          where: { role_id: role.id, menu_id: menu.id },
+          where: { roleId: role.id, menuId: menu.id },
         });
 
         if (!existing) {
           await permRepo.save(
             permRepo.create({
-              business_id: null,
-              role_id: role.id,
-              menu_id: menu.id,
+              businessId: null,
+              roleId: role.id,
+              menuId: menu.id,
             }),
           );
           created++;

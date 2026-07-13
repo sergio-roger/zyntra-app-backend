@@ -42,7 +42,7 @@ export class TasksService {
     }
 
     // 2. Validar límites según el plan dinámico
-    const limit = business.plan_object?.task_limit;
+    const limit = business.plan_object?.taskLimit;
 
     // Si el límite es 0, no incluye agentes
     if (limit === 0) {

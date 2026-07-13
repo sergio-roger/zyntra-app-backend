@@ -19,15 +19,15 @@ export class PermissionService {
     roleId: string,
   ): Promise<void> {
     const existing = await this.permissionRepository.count({
-      where: { business_id: businessId, role_id: roleId },
+      where: { businessId, roleId },
     });
     if (existing > 0) return;
 
     // Copy from global templates (business_id IS NULL)
     const templates = await this.permissionRepository
       .createQueryBuilder('p')
-      .where('p.role_id = :roleId', { roleId })
-      .andWhere('p.business_id IS NULL')
+      .where('p.roleId = :roleId', { roleId })
+      .andWhere('p.businessId IS NULL')
       .getMany();
     if (templates.length === 0) {
       this.logger.warn(
@@ -38,9 +38,9 @@ export class PermissionService {
 
     const copies = templates.map((t) =>
       this.permissionRepository.create({
-        business_id: businessId,
-        role_id: t.role_id,
-        menu_id: t.menu_id,
+        businessId,
+        roleId: t.roleId,
+        menuId: t.menuId,
       }),
     );
     await this.permissionRepository.save(copies);
@@ -58,10 +58,10 @@ export class PermissionService {
     await this.ensureBusinessPermissions(businessId, role.id);
 
     const permissions = await this.permissionRepository.find({
-      where: { business_id: businessId, role_id: role.id },
+      where: { businessId, roleId: role.id },
     });
 
-    return permissions.map((p) => p.menu_id);
+    return permissions.map((p) => p.menuId);
   }
 
   async updatePermissionsByRole(
@@ -77,16 +77,16 @@ export class PermissionService {
     await this.permissionRepository.manager.transaction(async (manager) => {
       // Delete only this business's permissions for the role
       await manager.delete(Permission, {
-        business_id: businessId,
-        role_id: role.id,
+        businessId,
+        roleId: role.id,
       });
 
       if (menuIds && menuIds.length > 0) {
         const entities = menuIds.map((menuId) =>
           manager.create(Permission, {
-            business_id: businessId,
-            role_id: role.id,
-            menu_id: menuId,
+            businessId,
+            roleId: role.id,
+            menuId,
           }),
         );
         await manager.save(entities);

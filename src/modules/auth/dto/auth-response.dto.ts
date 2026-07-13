@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PlanStatus } from '@auth/entities/business.entity';
+import { PlanStatus } from '@auth/enums/plan-status.enum';
 
 class PlanDto {
   @ApiProperty({ example: 'uuid-plan' })

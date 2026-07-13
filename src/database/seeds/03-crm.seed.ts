@@ -1,9 +1,7 @@
 import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
-import {
-  Business,
-  PlanStatus,
-} from '../../modules/auth/entities/business.entity';
+import { Business } from '../../modules/auth/entities/business.entity';
+import { PlanStatus } from '../../modules/auth/enums/plan-status.enum';
 import { Plan } from '../../modules/auth/entities/plan.entity';
 import { Company } from '../../modules/crm/entities/company.entity';
 import { Contact } from '../../modules/crm/entities/contact.entity';
@@ -79,9 +77,9 @@ export class CrmSeeder implements Seeder {
         business = await businessRepo.save(
           businessRepo.create({
             name: entry.business.name,
-            plan_id: plan.id,
-            plan_status: PlanStatus.ACTIVE,
-            trial_ends_at: trialEndsAt,
+            planId: plan.id,
+            planStatus: PlanStatus.ACTIVE,
+            trialEndsAt: trialEndsAt,
           }),
         );
         console.log(`  o. Business created: ${business.name}`);
@@ -167,8 +165,8 @@ export class CrmSeeder implements Seeder {
       superBusiness = await businessRepo.save(
         businessRepo.create({
           name: 'Zyntra Global Admin',
-          plan_status: PlanStatus.ACTIVE,
-          trial_ends_at: trialEndsAt,
+          planStatus: PlanStatus.ACTIVE,
+          trialEndsAt: trialEndsAt,
         }),
       );
       console.log(`  ✅ Superadmin Business created: ${superBusiness.name}`);

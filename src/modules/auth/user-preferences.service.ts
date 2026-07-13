@@ -12,7 +12,7 @@ export class UserPreferencesService {
 
   async findOne(userId: string, key: string): Promise<UserPreference | null> {
     return this.preferenceRepo.findOne({
-      where: { user_id: userId, key },
+      where: { userId, key },
     });
   }
 
@@ -22,14 +22,14 @@ export class UserPreferencesService {
     value: unknown,
   ): Promise<UserPreference> {
     let preference = await this.preferenceRepo.findOne({
-      where: { user_id: userId, key },
+      where: { userId, key },
     });
 
     if (preference) {
       preference.value = value;
     } else {
       preference = this.preferenceRepo.create({
-        user_id: userId,
+        userId,
         key,
         value,
       });

@@ -1,20 +1,15 @@
+import { Business } from '@auth/entities/business.entity';
+import { PlanDescription } from '@auth/entities/plan-description.entity';
+import { PlanModule } from '@auth/entities/plan-module.entity';
+import { BillingCycle } from '@auth/enums/billing-cycle.enum';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
   OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { PlanDescription } from './plan-description.entity';
-import { Business } from './business.entity';
-import { PlanModule } from './plan-module.entity';
-
-export enum BillingCycle {
-  ONE_TIME = 'one-time',
-  MONTHLY = 'monthly',
-  YEARLY = 'yearly',
-}
 
 @Entity({ name: 'plans', schema: 'public' })
 export class Plan {
@@ -28,41 +23,55 @@ export class Plan {
   price: number;
 
   @Column({
+    name: 'billing_cycle',
     type: 'enum',
     enum: BillingCycle,
     default: BillingCycle.MONTHLY,
   })
-  billing_cycle: BillingCycle;
+  billingCycle: BillingCycle;
 
-  @Column({ default: false })
-  is_popular: boolean;
+  @Column({ name: 'is_popular', default: false })
+  isPopular: boolean;
 
-  @Column({ default: 0 })
-  contact_limit: number;
+  @Column({ name: 'contact_limit', default: 0 })
+  contactLimit: number;
 
-  @Column({ default: 0 })
-  task_limit: number;
+  @Column({ name: 'task_limit', default: 0 })
+  taskLimit: number;
 
-  @Column({ default: 1 })
-  user_limit: number;
+  @Column({ name: 'user_limit', default: 1 })
+  userLimit: number;
 
-  @Column({ default: 0 })
-  ai_agent_limit: number;
+  @Column({ name: 'ai_agent_limit', default: 0 })
+  aiAgentLimit: number;
 
-  @Column({ default: 0 })
-  chatbot_limit: number;
+  @Column({ name: 'chatbot_limit', default: 0 })
+  chatbotLimit: number;
 
-  @Column({ default: 0 })
-  funnel_limit: number;
+  @Column({ name: 'funnel_limit', default: 0 })
+  funnelLimit: number;
 
-  @Column({ default: 1 })
-  channel_limit: number;
+  @Column({ name: 'channel_limit', default: 1 })
+  channelLimit: number;
 
-  @Column({ default: 0 })
-  pipeline_limit: number;
+  @Column({ name: 'pipeline_limit', default: 0 })
+  pipelineLimit: number;
 
-  @Column({ nullable: true })
-  stripe_price_id: string;
+  @Column({ name: 'stripe_price_id', nullable: true })
+  stripePriceId: string;
+
+  // KB (knowledge base / RAG) limits per plan — see plans.data.ts.
+  @Column({ name: 'kb_max_documents_per_agent', default: 0 })
+  kbMaxDocumentsPerAgent: number;
+
+  @Column({ name: 'kb_max_file_size_mb', default: 0 })
+  kbMaxFileSizeMb: number;
+
+  @Column({ name: 'kb_max_storage_mb_per_business', default: 0 })
+  kbMaxStorageMbPerBusiness: number;
+
+  @Column({ name: 'kb_monthly_upload_limit', default: 0 })
+  kbMonthlyUploadLimit: number;
 
   @OneToMany(() => PlanDescription, (desc) => desc.plan, { cascade: true })
   descriptions: PlanDescription[];
@@ -73,9 +82,9 @@ export class Plan {
   @OneToMany(() => PlanModule, (pm) => pm.plan, { cascade: true, eager: true })
   modules: PlanModule[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

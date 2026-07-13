@@ -34,7 +34,12 @@ export class CompanyService {
 
   async update(businessId: string, dto: UpdateCompanyDto): Promise<Business> {
     const business = await this.findOne(businessId);
-    Object.assign(business, dto);
+    if (dto.name !== undefined) business.name = dto.name;
+    if (dto.email !== undefined) business.email = dto.email;
+    if (dto.phone !== undefined) business.phone = dto.phone;
+    if (dto.address !== undefined) business.address = dto.address;
+    if (dto.tax_id !== undefined) business.taxId = dto.tax_id;
+    if (dto.website !== undefined) business.website = dto.website;
     return this.businessRepository.save(business);
   }
 
@@ -57,10 +62,10 @@ export class CompanyService {
     }
 
     const business = await this.findOne(businessId);
-    const previousUrl = business.logo_url;
+    const previousUrl = business.logoUrl;
 
     const logoUrl = await this.logoStorage.save(file);
-    business.logo_url = logoUrl;
+    business.logoUrl = logoUrl;
     await this.businessRepository.save(business);
 
     if (previousUrl) {
@@ -72,9 +77,9 @@ export class CompanyService {
 
   async removeLogo(businessId: string): Promise<void> {
     const business = await this.findOne(businessId);
-    const currentUrl = business.logo_url;
+    const currentUrl = business.logoUrl;
 
-    business.logo_url = null as unknown as string;
+    business.logoUrl = null as unknown as string;
     await this.businessRepository.save(business);
 
     if (currentUrl) {

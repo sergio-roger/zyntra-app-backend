@@ -86,7 +86,7 @@ export class UserService {
       email: user.email,
       role: user.role,
       plan: user.business?.plan_object ?? null,
-      plan_status: user.business?.plan_status,
+      plan_status: user.business?.planStatus,
       avatarUrl: avatarUrl || user.avatarUrl || null,
       jobTitle: user.jobTitle ?? null,
       phone: user.phone ?? null,

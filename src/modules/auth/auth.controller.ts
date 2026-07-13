@@ -194,7 +194,7 @@ export class AuthController {
     return this.authService.getMenuTree(
       req.user.role as UserRole,
       business.id,
-      business.plan_id,
+      business.planId,
     );
   }
 }

@@ -1,20 +1,14 @@
+import { Plan } from '@auth/entities/plan.entity';
+import { PlanStatus } from '@auth/enums/plan-status.enum';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Plan } from '@auth/entities/plan.entity';
-
-export enum PlanStatus {
-  TRIAL = 'trial',
-  ACTIVE = 'active',
-  PAST_DUE = 'past_due',
-  CANCELLED = 'cancelled',
-}
 
 @Entity({ name: 'businesses', schema: 'public' })
 export class Business {
@@ -33,41 +27,42 @@ export class Business {
   @Column({ nullable: true })
   address: string;
 
-  @Column({ nullable: true })
-  tax_id: string;
+  @Column({ name: 'tax_id', nullable: true })
+  taxId: string;
 
   @Column({ nullable: true })
   website: string;
 
-  @Column({ nullable: true })
-  logo_url: string;
+  @Column({ name: 'logo_url', nullable: true })
+  logoUrl: string;
 
-  @Column({ nullable: true })
-  plan_id: string;
+  @Column({ name: 'plan_id', nullable: true })
+  planId: string;
 
   @ManyToOne(() => Plan, (plan) => plan.businesses)
   @JoinColumn({ name: 'plan_id' })
   plan_object: Plan;
 
   @Column({
+    name: 'plan_status',
     type: 'enum',
     enum: PlanStatus,
     default: PlanStatus.TRIAL,
   })
-  plan_status: PlanStatus;
+  planStatus: PlanStatus;
 
-  @Column({ type: 'timestamp' })
-  trial_ends_at: Date;
+  @Column({ name: 'trial_ends_at', type: 'timestamp' })
+  trialEndsAt: Date;
 
-  @Column({ nullable: true })
-  stripe_customer_id: string;
+  @Column({ name: 'stripe_customer_id', nullable: true })
+  stripeCustomerId: string;
 
-  @Column({ nullable: true })
-  stripe_subscription_id: string;
+  @Column({ name: 'stripe_subscription_id', nullable: true })
+  stripeSubscriptionId: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

@@ -9,9 +9,10 @@ import {
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
-import { Business, PlanStatus } from './entities/business.entity';
+import { Business } from './entities/business.entity';
 import { Plan } from './entities/plan.entity';
 import { User } from './entities/user.entity';
+import { PlanStatus } from './enums/plan-status.enum';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { UserStatus } from '@crm/enums/user-status.enum';
 import { Role } from './entities/role.entity';
@@ -32,10 +33,10 @@ let HASHED = '';
 const mockBusiness: Partial<Business> = {
   id: 'biz-uuid',
   name: 'Test Biz',
-  plan_id: 'plan-id',
-  plan_status: PlanStatus.ACTIVE,
-  trial_ends_at: new Date('2026-01-01'),
-  created_at: new Date('2026-01-01'),
+  planId: 'plan-id',
+  planStatus: PlanStatus.ACTIVE,
+  trialEndsAt: new Date('2026-01-01'),
+  createdAt: new Date('2026-01-01'),
 };
 
 const mockUser: Partial<User> = {
@@ -176,7 +177,7 @@ describe('AuthService — unified login', () => {
     it('throws UnauthorizedException when the business has plan_id null (global admin)', async () => {
       userRepo.findOne.mockResolvedValueOnce({
         ...mockUser,
-        business: { ...mockBusiness, plan_id: null },
+        business: { ...mockBusiness, planId: null },
       });
 
       await expect(
@@ -255,7 +256,7 @@ describe('AuthService — unified login', () => {
         Business,
         expect.objectContaining({
           name: 'Nueva Empresa',
-          plan_id: mockPlan.id,
+          planId: mockPlan.id,
         }),
       );
       expect(txManager.create).toHaveBeenCalledWith(
@@ -374,8 +375,8 @@ describe('AuthService — unified login', () => {
         await service.deleteRole('custom', 'biz-id');
 
         expect(permissionRepo.delete).toHaveBeenCalledWith({
-          business_id: 'biz-id',
-          role_id: 'custom-id',
+          businessId: 'biz-id',
+          roleId: 'custom-id',
         });
         expect(roleRepo.remove).toHaveBeenCalledWith(roleToDelete);
       });

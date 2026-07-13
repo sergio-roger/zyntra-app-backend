@@ -11,10 +11,8 @@ import { promises as fs } from 'fs';
 import { AppModule } from './../src/app.module';
 import { AllExceptionsFilter } from './../src/common/filters/http-exception.filter';
 import { TransformInterceptor } from './../src/common/interceptors/transform.interceptor';
-import {
-  Business,
-  PlanStatus,
-} from './../src/modules/auth/entities/business.entity';
+import { Business } from './../src/modules/auth/entities/business.entity';
+import { PlanStatus } from './../src/modules/auth/enums/plan-status.enum';
 import { User } from './../src/modules/auth/entities/user.entity';
 import { UserRole } from './../src/modules/crm/enums/user-role.enum';
 import { UserStatus } from './../src/modules/crm/enums/user-status.enum';
@@ -71,8 +69,8 @@ describe('Self-service "My Account" (e2e)', () => {
     ownerBusiness = await businessRepo.save(
       businessRepo.create({
         name: 'E2E My Account Owner Business',
-        plan_status: PlanStatus.TRIAL,
-        trial_ends_at: trialEndsAt,
+        planStatus: PlanStatus.TRIAL,
+        trialEndsAt: trialEndsAt,
       }),
     );
     owner = await userRepo.save(
@@ -91,7 +89,7 @@ describe('Self-service "My Account" (e2e)', () => {
       sub: owner.id,
       email: owner.email,
       plan: 'none',
-      plan_status: ownerBusiness.plan_status,
+      plan_status: ownerBusiness.planStatus,
       business_id: ownerBusiness.id,
       role: owner.role,
     });
@@ -99,8 +97,8 @@ describe('Self-service "My Account" (e2e)', () => {
     victimBusiness = await businessRepo.save(
       businessRepo.create({
         name: 'E2E My Account Victim Business',
-        plan_status: PlanStatus.TRIAL,
-        trial_ends_at: trialEndsAt,
+        planStatus: PlanStatus.TRIAL,
+        trialEndsAt: trialEndsAt,
       }),
     );
     victimUser = await userRepo.save(
@@ -130,7 +128,7 @@ describe('Self-service "My Account" (e2e)', () => {
       sub: agent.id,
       email: agent.email,
       plan: 'none',
-      plan_status: victimBusiness.plan_status,
+      plan_status: victimBusiness.planStatus,
       business_id: victimBusiness.id,
       role: agent.role,
     });

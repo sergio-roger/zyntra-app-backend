@@ -22,16 +22,20 @@ export class PlansSeeder implements Seeder {
         plan = planRepo.create({
           name: data.name,
           price: data.price,
-          billing_cycle: data.billing_cycle,
-          is_popular: data.is_popular,
-          contact_limit: data.contact_limit,
-          task_limit: data.task_limit,
-          user_limit: data.user_limit,
-          ai_agent_limit: data.ai_agent_limit,
-          chatbot_limit: data.chatbot_limit,
-          funnel_limit: data.funnel_limit,
-          channel_limit: data.channel_limit,
-          pipeline_limit: data.pipeline_limit,
+          billingCycle: data.billing_cycle,
+          isPopular: data.is_popular,
+          contactLimit: data.contact_limit,
+          taskLimit: data.task_limit,
+          userLimit: data.user_limit,
+          aiAgentLimit: data.ai_agent_limit,
+          chatbotLimit: data.chatbot_limit,
+          funnelLimit: data.funnel_limit,
+          channelLimit: data.channel_limit,
+          pipelineLimit: data.pipeline_limit,
+          kbMaxDocumentsPerAgent: data.kb_max_documents_per_agent,
+          kbMaxFileSizeMb: data.kb_max_file_size_mb,
+          kbMaxStorageMbPerBusiness: data.kb_max_storage_mb_per_business,
+          kbMonthlyUploadLimit: data.kb_monthly_upload_limit,
         });
         await planRepo.save(plan);
         console.log(`✅ Plan created: ${data.name}`);
@@ -39,26 +43,30 @@ export class PlansSeeder implements Seeder {
         // Add descriptions
         const descriptions = data.descriptions.map((text, index) =>
           descRepo.create({
-            plan_id: plan!.id,
+            planId: plan!.id,
             text,
             order: index,
-            is_included: true,
+            isIncluded: true,
           }),
         );
         await descRepo.save(descriptions);
       } else {
         // Update limits
         plan.price = data.price;
-        plan.billing_cycle = data.billing_cycle;
-        plan.is_popular = data.is_popular;
-        plan.contact_limit = data.contact_limit;
-        plan.task_limit = data.task_limit;
-        plan.user_limit = data.user_limit;
-        plan.ai_agent_limit = data.ai_agent_limit;
-        plan.chatbot_limit = data.chatbot_limit;
-        plan.funnel_limit = data.funnel_limit;
-        plan.channel_limit = data.channel_limit;
-        plan.pipeline_limit = data.pipeline_limit;
+        plan.billingCycle = data.billing_cycle;
+        plan.isPopular = data.is_popular;
+        plan.contactLimit = data.contact_limit;
+        plan.taskLimit = data.task_limit;
+        plan.userLimit = data.user_limit;
+        plan.aiAgentLimit = data.ai_agent_limit;
+        plan.chatbotLimit = data.chatbot_limit;
+        plan.funnelLimit = data.funnel_limit;
+        plan.channelLimit = data.channel_limit;
+        plan.pipelineLimit = data.pipeline_limit;
+        plan.kbMaxDocumentsPerAgent = data.kb_max_documents_per_agent;
+        plan.kbMaxFileSizeMb = data.kb_max_file_size_mb;
+        plan.kbMaxStorageMbPerBusiness = data.kb_max_storage_mb_per_business;
+        plan.kbMonthlyUploadLimit = data.kb_monthly_upload_limit;
         await planRepo.save(plan);
         console.log(`ℹ️ Plan ${data.name} updated, syncing modules...`);
       }
@@ -70,20 +78,20 @@ export class PlansSeeder implements Seeder {
         if (!accessLevel) continue;
 
         let pm = await planModuleRepo.findOne({
-          where: { plan_id: plan.id, menu_key: key },
+          where: { planId: plan.id, menuKey: key },
         });
 
         if (pm) {
-          if (pm.access_level !== accessLevel) {
-            pm.access_level = accessLevel;
+          if (pm.accessLevel !== accessLevel) {
+            pm.accessLevel = accessLevel;
             await planModuleRepo.save(pm);
             console.log(`  Updated module ${key} -> ${accessLevel}`);
           }
         } else {
           pm = planModuleRepo.create({
-            plan_id: plan.id,
-            menu_key: key,
-            access_level: accessLevel,
+            planId: plan.id,
+            menuKey: key,
+            accessLevel: accessLevel,
           });
           await planModuleRepo.save(pm);
           console.log(`  Created module ${key} -> ${accessLevel}`);
@@ -92,13 +100,13 @@ export class PlansSeeder implements Seeder {
 
       // Delete any plan modules that are no longer defined (enabling inheritance)
       const existingPms = await planModuleRepo.find({
-        where: { plan_id: plan.id },
+        where: { planId: plan.id },
       });
       for (const pm of existingPms) {
-        if (!definedKeys.includes(pm.menu_key)) {
+        if (!definedKeys.includes(pm.menuKey)) {
           await planModuleRepo.remove(pm);
           console.log(
-            `  Deleted module ${pm.menu_key} (will inherit access level)`,
+            `  Deleted module ${pm.menuKey} (will inherit access level)`,
           );
         }
       }
@@ -112,8 +120,8 @@ export class PlansSeeder implements Seeder {
       const businesses = await businessRepo.find();
       console.log(`🔄 Checking ${businesses.length} businesses for plan_id...`);
       for (const b of businesses) {
-        if (!b.plan_id) {
-          b.plan_id = impulsePlan.id;
+        if (!b.planId) {
+          b.planId = impulsePlan.id;
           await businessRepo.save(b);
           console.log(`  Assigned ${b.name} to Impulse Pro`);
         }

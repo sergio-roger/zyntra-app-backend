@@ -20,7 +20,7 @@ export class MenuService {
 
   async getAllMenus(): Promise<Menu[]> {
     return this.menuRepository.find({
-      order: { parent_key: 'ASC', key: 'ASC' },
+      order: { parentKey: 'ASC', key: 'ASC' },
     });
   }
 

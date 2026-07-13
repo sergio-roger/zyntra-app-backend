@@ -12,7 +12,7 @@ import { ListContactsDto } from '@crm/dto/list-contacts.dto';
 
 const mockBusiness = {
   id: 'biz-uuid',
-  plan_object: { contact_limit: 999999 },
+  plan_object: { contactLimit: 999999 },
 } as Business;
 
 const makeContact = (overrides: Partial<Contact> = {}): Contact =>

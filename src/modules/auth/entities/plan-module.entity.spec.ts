@@ -1,15 +1,16 @@
-import { PlanModule, ModuleAccessLevel } from './plan-module.entity';
+import { PlanModule } from './plan-module.entity';
+import { ModuleAccessLevel } from '../enums/module-access-level.enum';
 import { Plan } from './plan.entity';
 
 describe('PlanModule Entity', () => {
   it('should create a PlanModule instance with default values', () => {
     const planModule = new PlanModule();
-    planModule.menu_key = 'crm_contacts';
-    planModule.access_level = ModuleAccessLevel.LOCKED;
+    planModule.menuKey = 'crm_contacts';
+    planModule.accessLevel = ModuleAccessLevel.LOCKED;
 
     expect(planModule).toBeDefined();
-    expect(planModule.menu_key).toBe('crm_contacts');
-    expect(planModule.access_level).toBe(ModuleAccessLevel.LOCKED);
+    expect(planModule.menuKey).toBe('crm_contacts');
+    expect(planModule.accessLevel).toBe(ModuleAccessLevel.LOCKED);
   });
 
   it('should link correctly to a Plan entity', () => {
@@ -18,8 +19,8 @@ describe('PlanModule Entity', () => {
     plan.name = 'BrandStart';
 
     const planModule = new PlanModule();
-    planModule.menu_key = 'dashboard';
-    planModule.access_level = ModuleAccessLevel.FULL;
+    planModule.menuKey = 'dashboard';
+    planModule.accessLevel = ModuleAccessLevel.FULL;
     planModule.plan = plan;
 
     expect(planModule.plan).toBeDefined();

@@ -8,24 +8,24 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Role } from './role.entity';
-import { Menu } from './menu.entity';
+import { Role } from '@auth/entities/role.entity';
+import { Menu } from '@auth/entities/menu.entity';
 
 @Entity({ name: 'permissions', schema: 'security' })
-@Index(['business_id', 'role_id', 'menu_id'], { unique: true })
+@Index(['businessId', 'roleId', 'menuId'], { unique: true })
 export class Permission {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   // NULL = global template; set to a business UUID for per-business permissions
-  @Column({ type: 'uuid', nullable: true, default: null })
-  business_id: string | null;
+  @Column({ name: 'business_id', type: 'uuid', nullable: true, default: null })
+  businessId: string | null;
 
-  @Column('uuid')
-  role_id: string;
+  @Column({ name: 'role_id', type: 'uuid' })
+  roleId: string;
 
-  @Column('uuid')
-  menu_id: string;
+  @Column({ name: 'menu_id', type: 'uuid' })
+  menuId: string;
 
   @ManyToOne(() => Role, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'role_id' })
@@ -35,9 +35,9 @@ export class Permission {
   @JoinColumn({ name: 'menu_id' })
   menu: Menu;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

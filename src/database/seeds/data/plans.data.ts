@@ -1,5 +1,5 @@
-import { BillingCycle } from '../../../modules/auth/entities/plan.entity';
-import { ModuleAccessLevel } from '../../../modules/auth/entities/plan-module.entity';
+import { BillingCycle } from '@auth/enums/billing-cycle.enum';
+import { ModuleAccessLevel } from '@auth/enums/module-access-level.enum';
 
 export const PLANS_DATA = [
   {
@@ -15,6 +15,12 @@ export const PLANS_DATA = [
     funnel_limit: 0,
     channel_limit: 1,
     pipeline_limit: 0,
+    // Sin agentes de IA en este plan (ai_agent_limit: 0) -> sin base de
+    // conocimiento que alimentarles.
+    kb_max_documents_per_agent: 0,
+    kb_max_file_size_mb: 0,
+    kb_max_storage_mb_per_business: 0,
+    kb_monthly_upload_limit: 0,
     descriptions: [
       'Diagnóstico del modelo de negocio',
       'Creación y configuración de redes sociales (Facebook, Instagram, TikTok)',
@@ -40,7 +46,14 @@ export const PLANS_DATA = [
       agents_ia: ModuleAccessLevel.LOCKED,
       inbox: ModuleAccessLevel.LOCKED,
       funnels: ModuleAccessLevel.LOCKED,
-      avatar: ModuleAccessLevel.LOCKED,
+      // TODO(business): exact access_level per plan for these 5 sub-modules
+      // is pending confirmation. BrandStart is LOCKED (ai_agent_limit: 0),
+      // that part is not in question.
+      automations_agents_identity: ModuleAccessLevel.LOCKED,
+      automations_agents_tools: ModuleAccessLevel.LOCKED,
+      automations_agents_knowledge: ModuleAccessLevel.LOCKED,
+      automations_agents_voice: ModuleAccessLevel.LOCKED,
+      automations_agents_memory: ModuleAccessLevel.LOCKED,
       analytics: ModuleAccessLevel.LOCKED,
       billing: ModuleAccessLevel.FULL,
       settings: ModuleAccessLevel.READ_ONLY,
@@ -68,6 +81,12 @@ export const PLANS_DATA = [
     funnel_limit: 0,
     channel_limit: 3,
     pipeline_limit: 2,
+    // 1 agente permitido: base de conocimiento moderada. kb_max_file_size_mb
+    // queda por debajo del techo global de zyntra-storage (25MB).
+    kb_max_documents_per_agent: 20,
+    kb_max_file_size_mb: 10,
+    kb_max_storage_mb_per_business: 200,
+    kb_monthly_upload_limit: 30,
     descriptions: [
       'Calendario Editorial',
       'Creación de Contenido',
@@ -86,7 +105,14 @@ export const PLANS_DATA = [
       inbox: ModuleAccessLevel.FULL,
       inbox_channels: ModuleAccessLevel.READ_ONLY,
       funnels: ModuleAccessLevel.LOCKED,
-      avatar: ModuleAccessLevel.LOCKED,
+      // TODO(business): exact access_level per plan for these 5 sub-modules
+      // is pending confirmation. Placeholder mirrors the previous `avatar`
+      // gating (locked) until product/business confirms the real split.
+      automations_agents_identity: ModuleAccessLevel.LOCKED,
+      automations_agents_tools: ModuleAccessLevel.LOCKED,
+      automations_agents_knowledge: ModuleAccessLevel.LOCKED,
+      automations_agents_voice: ModuleAccessLevel.LOCKED,
+      automations_agents_memory: ModuleAccessLevel.LOCKED,
       analytics: ModuleAccessLevel.FULL,
       billing: ModuleAccessLevel.FULL,
       settings: ModuleAccessLevel.FULL,
@@ -108,6 +134,12 @@ export const PLANS_DATA = [
     funnel_limit: 999999,
     channel_limit: 999999,
     pipeline_limit: 5,
+    // Plan tope: 10 agentes, base de conocimiento amplia por agente.
+    // kb_max_file_size_mb en el techo global de zyntra-storage (25MB).
+    kb_max_documents_per_agent: 100,
+    kb_max_file_size_mb: 25,
+    kb_max_storage_mb_per_business: 5000,
+    kb_monthly_upload_limit: 500,
     descriptions: [
       'Plan BrandStart incluido',
       'Plan Impulse Pro incluido',
@@ -124,7 +156,14 @@ export const PLANS_DATA = [
       agents_ia: ModuleAccessLevel.FULL,
       inbox: ModuleAccessLevel.FULL,
       funnels: ModuleAccessLevel.FULL,
-      avatar: ModuleAccessLevel.FULL,
+      // TODO(business): exact access_level per plan for these 5 sub-modules
+      // is pending confirmation. Placeholder mirrors the previous `avatar`
+      // gating (full) until product/business confirms the real split.
+      automations_agents_identity: ModuleAccessLevel.FULL,
+      automations_agents_tools: ModuleAccessLevel.FULL,
+      automations_agents_knowledge: ModuleAccessLevel.FULL,
+      automations_agents_voice: ModuleAccessLevel.FULL,
+      automations_agents_memory: ModuleAccessLevel.FULL,
       analytics: ModuleAccessLevel.FULL,
       billing: ModuleAccessLevel.FULL,
       settings: ModuleAccessLevel.FULL,

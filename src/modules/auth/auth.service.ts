@@ -4,11 +4,12 @@ import { ChangePasswordDto } from '@auth/dto/change-password.dto';
 import { LoginDto } from '@auth/dto/login.dto';
 import { RegisterDto } from '@auth/dto/register.dto';
 import { UpdateProfileDto } from '@auth/dto/update-profile.dto';
-import { Business, PlanStatus } from '@auth/entities/business.entity';
+import { Business } from '@auth/entities/business.entity';
 import { Menu } from '@auth/entities/menu.entity';
 import { Plan } from '@auth/entities/plan.entity';
 import { Role } from '@auth/entities/role.entity';
 import { User } from '@auth/entities/user.entity';
+import { PlanStatus } from '@auth/enums/plan-status.enum';
 import { JwtPayload } from '@auth/interfaces/jwt-payload.interface';
 import { MenuNode } from '@auth/interfaces/menu-node.interface';
 import { UploadableFile } from '@auth/interfaces/uploadable-file.interface';
@@ -68,8 +69,8 @@ export class AuthService {
     }
 
     const passwordHash = await hashPassword(password);
-    const trial_ends_at = new Date();
-    trial_ends_at.setDate(trial_ends_at.getDate() + 14);
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
     // 1) Business con datos por defecto, 2) primer usuario admin asociado — en una sola transacción.
     const savedUser = await this.businessRepository.manager.transaction(
@@ -77,9 +78,9 @@ export class AuthService {
         const business = await manager.save(
           manager.create(Business, {
             name,
-            plan_id: defaultPlan.id,
-            plan_status: PlanStatus.TRIAL,
-            trial_ends_at,
+            planId: defaultPlan.id,
+            planStatus: PlanStatus.TRIAL,
+            trialEndsAt,
           }),
         );
 
@@ -117,7 +118,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
-    if (user.business.plan_id === null) {
+    if (user.business.planId === null) {
       this.logger.warn(
         `[login] blocked global admin attempt email=${normalizedEmail} id=${user.id}`,
       );
@@ -156,7 +157,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       plan: user.business.plan_object?.name || 'none',
-      plan_status: user.business.plan_status,
+      plan_status: user.business.planStatus,
       business_id: user.business.id,
       role: user.role,
     };
@@ -183,7 +184,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         plan: user.business.plan_object,
-        plan_status: user.business.plan_status,
+        plan_status: user.business.planStatus,
         role: user.role,
         avatarUrl: avatarUrl || user.avatarUrl || null,
       },

@@ -77,7 +77,7 @@ export class CrmUsersService {
       (dto.isActive === false ? UserStatus.INACTIVE : UserStatus.ACTIVE);
 
     if (targetStatus === UserStatus.ACTIVE) {
-      const limit = business.plan_object?.user_limit;
+      const limit = business.plan_object?.userLimit;
       if (limit !== undefined && limit !== null && limit !== 999999) {
         const currentCount = await this.userRepo.count({
           where: { businessId: business.id, isActive: true },
@@ -134,7 +134,7 @@ export class CrmUsersService {
     }
 
     if (isActive === true && user.isActive === false) {
-      const limit = business.plan_object?.user_limit;
+      const limit = business.plan_object?.userLimit;
       if (limit !== undefined && limit !== null && limit !== 999999) {
         const currentCount = await this.userRepo.count({
           where: { businessId: business.id, isActive: true },
