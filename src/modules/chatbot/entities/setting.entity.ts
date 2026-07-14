@@ -10,13 +10,13 @@ import {
 import { Business } from '@auth/entities/business.entity';
 
 @Entity({ name: 'settings', schema: 'security' })
-@Index(['business_id', 'key'], { unique: true })
+@Index(['businessId', 'key'], { unique: true })
 export class Setting {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -28,6 +28,6 @@ export class Setting {
   @Column('jsonb', { default: {} })
   value: unknown;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

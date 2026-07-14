@@ -11,7 +11,7 @@ const mockBusiness = {
 
 const mockStage = {
   id: 'stage-uuid-1',
-  business_id: 'business-uuid-1234',
+  businessId: 'business-uuid-1234',
   name: 'New Lead',
   position: 0,
 } as LifecycleStage;

@@ -14,8 +14,8 @@ export class ChannelCredential {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid', { unique: true })
-  channel_id: string;
+  @Column({ name: 'channel_id', type: 'uuid', unique: true })
+  channelId: string;
 
   @OneToOne(() => Channel, (c) => c.credentials, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'channel_id' })
@@ -25,9 +25,9 @@ export class ChannelCredential {
   @Column('text')
   data: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

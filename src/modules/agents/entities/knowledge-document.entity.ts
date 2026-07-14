@@ -1,3 +1,6 @@
+import { Agent } from '@/modules/agents/entities/agent.entity';
+import { KnowledgeDocumentStatus } from '@/modules/agents/enums/knowledge-document-status.enum';
+import { Business } from '@auth/entities/business.entity';
 import {
   Column,
   CreateDateColumn,
@@ -7,49 +10,40 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Business } from '@auth/entities/business.entity';
-import { Agent } from '@/modules/agents/entities/agent.entity';
-
-export enum KnowledgeDocumentStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  READY = 'ready',
-  FAILED = 'failed',
-}
 
 @Entity({ name: 'knowledge_documents', schema: 'public' })
 export class KnowledgeDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
   business: Business;
 
-  @Column('uuid')
-  agent_id: string;
+  @Column({ name: 'agent_id', type: 'uuid' })
+  agentId: string;
 
   @ManyToOne(() => Agent, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'agent_id' })
   agent: Agent;
 
-  @Column()
-  file_name: string;
+  @Column({ name: 'file_name' })
+  fileName: string;
 
-  @Column()
-  file_type: string;
+  @Column({ name: 'file_type' })
+  fileType: string;
 
-  @Column('bigint')
-  file_size_bytes: number;
+  @Column({ name: 'file_size_bytes', type: 'bigint' })
+  fileSizeBytes: number;
 
   // Nullable: the row is created in 'pending' status BEFORE calling the
   // storage microservice, so we have our own id to use as entityId for
   // POST /storage/upload. Filled in once that call returns.
-  @Column('uuid', { nullable: true })
-  storage_file_id: string;
+  @Column({ name: 'storage_file_id', type: 'uuid', nullable: true })
+  storageFileId: string;
 
   @Column({
     type: 'enum',
@@ -58,24 +52,24 @@ export class KnowledgeDocument {
   })
   status: KnowledgeDocumentStatus;
 
-  @Column('text', { nullable: true })
-  error_message: string;
+  @Column({ name: 'error_message', type: 'text', nullable: true })
+  errorMessage: string;
 
-  @Column('int', { default: 0 })
-  chunk_count: number;
+  @Column({ name: 'chunk_count', type: 'int', default: 0 })
+  chunkCount: number;
 
-  @Column('int', { default: 0 })
-  token_count: number;
+  @Column({ name: 'token_count', type: 'int', default: 0 })
+  tokenCount: number;
 
-  @Column('uuid')
-  uploaded_by: string;
+  @Column({ name: 'uploaded_by', type: 'uuid' })
+  uploadedBy: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @Column('timestamptz', { nullable: true })
-  processed_at: Date;
+  @Column({ name: 'processed_at', type: 'timestamptz', nullable: true })
+  processedAt: Date;
 }

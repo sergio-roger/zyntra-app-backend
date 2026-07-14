@@ -13,7 +13,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ObjectLiteral, Repository } from 'typeorm';
 
 import { AgentsService } from '../agents.service';
-import { Agent, AgentTool } from '../entities/agent.entity';
+import { Agent } from '../entities/agent.entity';
+import { AgentTool } from '../enums/agent-tool.enum';
 import { Channel } from '@/modules/channels/entities/channel.entity';
 import { AiService } from '@/modules/ai/ai.service';
 
@@ -31,15 +32,21 @@ const makeRepo = <T extends ObjectLiteral>() =>
 
 const makeAgent = (overrides: Partial<Agent> = {}): Agent => ({
   id: 'agent-1',
-  business_id: 'biz-1',
+  businessId: 'biz-1',
   name: 'Test Agent',
   model: 'openai/gpt-4o-mini',
-  system_prompt: 'You are helpful.',
+  systemPrompt: 'You are helpful.',
   temperature: 0.7,
   tools: [],
-  is_active: true,
-  created_at: new Date(),
-  updated_at: new Date(),
+  isActive: true,
+  tone: 'friendly',
+  locale: 'es',
+  maxTokens: 1024,
+  knowledgeCollection: null as unknown as string,
+  voiceConfig: null as unknown as Record<string, unknown>,
+  memoryConfig: null as unknown as Record<string, unknown>,
+  createdAt: new Date(),
+  updatedAt: new Date(),
   business: {} as any,
   ...overrides,
 });
@@ -178,7 +185,7 @@ describe('AgentsService', () => {
   // -------------------------------------------------------------------------
   describe('sandboxTest()', () => {
     it('calls AiService with agent system_prompt and returns reply', async () => {
-      const agent = makeAgent({ system_prompt: 'You sell things.' });
+      const agent = makeAgent({ systemPrompt: 'You sell things.' });
       (agentRepo.findOne as jest.Mock).mockResolvedValue(agent);
       (aiService.chat as jest.Mock).mockResolvedValue({
         model: 'openai/gpt-4o-mini',

@@ -9,20 +9,16 @@ import {
   Index,
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
-
-export enum LifecycleStageType {
-  ACTIVE = 'active',
-  LOST = 'lost',
-}
+import { LifecycleStageType } from '@/modules/lifecycle/enums/lifecycle-stage-type.enum';
 
 @Entity({ name: 'lifecycle_stages', schema: 'public' })
-@Index(['business_id', 'position'])
+@Index(['businessId', 'position'])
 export class LifecycleStage {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -47,18 +43,18 @@ export class LifecycleStage {
   })
   type: LifecycleStageType;
 
-  @Column({ default: false })
-  is_default: boolean;
+  @Column({ name: 'is_default', default: false })
+  isDefault: boolean;
 
-  @Column({ default: false })
-  is_won: boolean;
+  @Column({ name: 'is_won', default: false })
+  isWon: boolean;
 
-  @Column({ default: false })
-  is_system: boolean;
+  @Column({ name: 'is_system', default: false })
+  isSystem: boolean;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

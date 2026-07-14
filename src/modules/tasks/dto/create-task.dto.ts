@@ -1,6 +1,6 @@
 import { IsEnum, IsNotEmpty, IsObject, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { AgentTaskType } from '../schemas/agent-task.schema';
+import { AgentTaskType } from '../enums/agent-task-type.enum';
 
 export class CreateTaskDto {
   @ApiProperty({ enum: AgentTaskType })

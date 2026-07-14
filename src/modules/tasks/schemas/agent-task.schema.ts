@@ -1,27 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
+import { AgentTaskStatus } from '@/modules/tasks/enums/agent-task-status.enum';
+import { AgentTaskType } from '@/modules/tasks/enums/agent-task-type.enum';
 
 export type AgentTaskDocument = AgentTask & Document;
-
-export enum AgentTaskStatus {
-  PENDING = 'pending',
-  RUNNING = 'running',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-}
-
-export enum AgentTaskType {
-  CONTENT = 'content',
-  SOCIAL = 'social',
-  CHATBOT = 'chatbot',
-  CRM_ANALYSIS = 'crm_analysis',
-  REPORT = 'report',
-}
 
 @Schema({ timestamps: true, collection: 'agent_tasks' })
 export class AgentTask {
   @Prop({ required: true, type: String })
-  business_id: string;
+  businessId: string;
 
   @Prop({
     required: true,
@@ -46,20 +33,20 @@ export class AgentTask {
   error: string;
 
   @Prop({ type: Date })
-  started_at: Date;
+  startedAt: Date;
 
   @Prop({ type: Date })
-  completed_at: Date;
+  completedAt: Date;
 
   @Prop({ type: Number })
-  tokens_used: number;
+  tokensUsed: number;
 
   @Prop({ type: Number })
-  duration_ms: number;
+  durationMs: number;
 }
 
 export const AgentTaskSchema = SchemaFactory.createForClass(AgentTask);
 
 // Índices para búsqueda rápida
-AgentTaskSchema.index({ business_id: 1, createdAt: -1 });
+AgentTaskSchema.index({ businessId: 1, createdAt: -1 });
 AgentTaskSchema.index({ status: 1 });

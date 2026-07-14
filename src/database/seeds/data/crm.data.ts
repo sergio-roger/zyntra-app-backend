@@ -1,7 +1,7 @@
 import { ContactSource } from '../../../modules/crm/enums/contact-source.enum';
 import { PipelineStageType } from '../../../modules/crm/enums/pipeline-stage-type.enum';
 import { UserRole } from '../../../modules/crm/enums/user-role.enum';
-import { LifecycleStageType } from '../../../modules/lifecycle/entities/lifecycle-stage.entity';
+import { LifecycleStageType } from '../../../modules/lifecycle/enums/lifecycle-stage-type.enum';
 
 enum ContactStage {
   LEAD = 'lead',
@@ -303,9 +303,9 @@ export const DEFAULT_LIFECYCLE_STAGES = [
     icon: '\u{1F331}',
     position: 0,
     type: LifecycleStageType.ACTIVE,
-    is_default: true,
-    is_won: false,
-    is_system: true,
+    isDefault: true,
+    isWon: false,
+    isSystem: true,
   },
   {
     name: 'Hot Lead',
@@ -313,9 +313,9 @@ export const DEFAULT_LIFECYCLE_STAGES = [
     icon: '\u{1F525}',
     position: 1,
     type: LifecycleStageType.ACTIVE,
-    is_default: false,
-    is_won: false,
-    is_system: true,
+    isDefault: false,
+    isWon: false,
+    isSystem: true,
   },
   {
     name: 'Payment',
@@ -323,9 +323,9 @@ export const DEFAULT_LIFECYCLE_STAGES = [
     icon: '\u{1F4B3}',
     position: 2,
     type: LifecycleStageType.ACTIVE,
-    is_default: false,
-    is_won: false,
-    is_system: true,
+    isDefault: false,
+    isWon: false,
+    isSystem: true,
   },
   {
     name: 'Customer',
@@ -333,9 +333,9 @@ export const DEFAULT_LIFECYCLE_STAGES = [
     icon: '\u{1F389}',
     position: 3,
     type: LifecycleStageType.ACTIVE,
-    is_default: false,
-    is_won: true,
-    is_system: true,
+    isDefault: false,
+    isWon: true,
+    isSystem: true,
   },
   {
     name: 'Cold Lead',
@@ -343,9 +343,9 @@ export const DEFAULT_LIFECYCLE_STAGES = [
     icon: '\u{2744}\u{FE0F}',
     position: 4,
     type: LifecycleStageType.LOST,
-    is_default: false,
-    is_won: false,
-    is_system: true,
+    isDefault: false,
+    isWon: false,
+    isSystem: true,
   },
 ];
 

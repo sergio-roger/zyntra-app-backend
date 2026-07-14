@@ -11,7 +11,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { AgentTool } from '../entities/agent.entity';
+import { AgentTool } from '../enums/agent-tool.enum';
 
 export class CreateAgentDto {
   @ApiProperty({ example: 'Agente de Ventas' })

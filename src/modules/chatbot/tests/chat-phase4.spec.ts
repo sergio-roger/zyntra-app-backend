@@ -15,10 +15,8 @@ import { ObjectLiteral } from 'typeorm';
 import { ChatService } from '../chat.service';
 import { Conversation } from '../entities/conversation.entity';
 import { Message } from '../entities/message.entity';
-import {
-  Channel,
-  ChannelStatus,
-} from '@/modules/channels/entities/channel.entity';
+import { Channel } from '@/modules/channels/entities/channel.entity';
+import { ChannelStatus } from '@/modules/channels/enums/channel-status.enum';
 import { ChannelsService } from '@/modules/channels/channels.service';
 import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
 import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';

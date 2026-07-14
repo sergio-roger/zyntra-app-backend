@@ -8,21 +8,15 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
-
-export enum AgentTool {
-  WEB_SEARCH = 'web_search',
-  KNOWLEDGE_BASE = 'knowledge_base',
-  LEAD_CAPTURE = 'lead_capture',
-  CALENDAR = 'calendar',
-}
+import { AgentTool } from '@/modules/agents/enums/agent-tool.enum';
 
 @Entity({ name: 'agents', schema: 'public' })
 export class Agent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -34,8 +28,8 @@ export class Agent {
   @Column({ default: 'openai/gpt-4o-mini' })
   model: string;
 
-  @Column('text')
-  system_prompt: string;
+  @Column({ name: 'system_prompt', type: 'text' })
+  systemPrompt: string;
 
   @Column('float', { default: 0.7 })
   temperature: number;
@@ -43,8 +37,8 @@ export class Agent {
   @Column('simple-array', { default: '' })
   tools: AgentTool[];
 
-  @Column({ default: true })
-  is_active: boolean;
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 
   @Column({ nullable: true })
   tone: string;
@@ -52,21 +46,21 @@ export class Agent {
   @Column({ nullable: true })
   locale: string;
 
-  @Column('int', { default: 1024 })
-  max_tokens: number;
+  @Column({ name: 'max_tokens', type: 'int', default: 1024 })
+  maxTokens: number;
 
-  @Column({ nullable: true })
-  knowledge_collection: string;
+  @Column({ name: 'knowledge_collection', nullable: true })
+  knowledgeCollection: string;
 
-  @Column('jsonb', { nullable: true })
-  voice_config: Record<string, unknown>;
+  @Column({ name: 'voice_config', type: 'jsonb', nullable: true })
+  voiceConfig: Record<string, unknown>;
 
-  @Column('jsonb', { nullable: true })
-  memory_config: Record<string, unknown>;
+  @Column({ name: 'memory_config', type: 'jsonb', nullable: true })
+  memoryConfig: Record<string, unknown>;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

@@ -16,10 +16,8 @@ import { ObjectLiteral, Repository, QueryFailedError } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
-import {
-  Channel,
-  ChannelStatus,
-} from '@/modules/channels/entities/channel.entity';
+import { Channel } from '@/modules/channels/entities/channel.entity';
+import { ChannelStatus } from '@/modules/channels/enums/channel-status.enum';
 import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
 import { CHANNEL_TYPES_SEED } from '@/modules/channels/seeds/seed-channel-types';
 
@@ -44,37 +42,37 @@ describe('CHANNEL_TYPES_SEED', () => {
     expect(CHANNEL_TYPES_SEED).toHaveLength(3);
   });
 
-  it('web_chat.is_available === true', () => {
+  it('web_chat.isAvailable === true', () => {
     const wc = CHANNEL_TYPES_SEED.find((s) => s.key === 'web_chat');
     expect(wc).toBeDefined();
-    expect(wc!.is_available).toBe(true);
+    expect(wc!.isAvailable).toBe(true);
   });
 
   it('facebook and telegram are not available', () => {
     const fb = CHANNEL_TYPES_SEED.find((s) => s.key === 'facebook');
     const tg = CHANNEL_TYPES_SEED.find((s) => s.key === 'telegram');
-    expect(fb!.is_available).toBe(false);
-    expect(tg!.is_available).toBe(false);
+    expect(fb!.isAvailable).toBe(false);
+    expect(tg!.isAvailable).toBe(false);
   });
 
   it('all records have a valid JSON Schema ($schema field)', () => {
     for (const seed of CHANNEL_TYPES_SEED) {
-      expect(seed.config_schema).toHaveProperty('$schema');
-      expect(seed.config_schema).toHaveProperty('type', 'object');
-      expect(seed.config_schema).toHaveProperty('properties');
+      expect(seed.configSchema).toHaveProperty('$schema');
+      expect(seed.configSchema).toHaveProperty('type', 'object');
+      expect(seed.configSchema).toHaveProperty('properties');
     }
   });
 
-  it('web_chat config_schema has position, primaryColor, allowedDomains', () => {
+  it('web_chat configSchema has position, primaryColor, allowedDomains', () => {
     const wc = CHANNEL_TYPES_SEED.find((s) => s.key === 'web_chat')!;
-    const props = (wc.config_schema as any).properties;
+    const props = (wc.configSchema as any).properties;
     expect(props).toHaveProperty('position');
     expect(props).toHaveProperty('primaryColor');
     expect(props).toHaveProperty('allowedDomains');
   });
 
-  it('sort_order values are unique and ascending', () => {
-    const orders = CHANNEL_TYPES_SEED.map((s) => s.sort_order);
+  it('sortOrder values are unique and ascending', () => {
+    const orders = CHANNEL_TYPES_SEED.map((s) => s.sortOrder);
     const unique = new Set(orders);
     expect(unique.size).toBe(orders.length);
     expect([...orders]).toEqual([...orders].sort((a, b) => a - b));
@@ -288,13 +286,13 @@ describe('ChannelCredential constraint: unique channel_id', () => {
     const channelId = 'chan-uuid';
     await expect(
       credRepo.save({
-        channel_id: channelId,
+        channelId,
         data: 'enc1',
       } as ChannelCredential),
     ).resolves.toBeDefined();
     await expect(
       credRepo.save({
-        channel_id: channelId,
+        channelId,
         data: 'enc2',
       } as ChannelCredential),
     ).rejects.toThrow('unique constraint');

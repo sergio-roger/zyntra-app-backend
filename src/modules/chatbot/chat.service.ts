@@ -1,8 +1,6 @@
 import { ChannelsService } from '@/modules/channels/channels.service';
-import {
-  Channel,
-  ChannelStatus,
-} from '@/modules/channels/entities/channel.entity';
+import { Channel } from '@/modules/channels/entities/channel.entity';
+import { ChannelStatus } from '@/modules/channels/enums/channel-status.enum';
 import { ChatGateway } from '@/modules/chatbot/chat.gateway';
 import {
   ChatRequestDto,

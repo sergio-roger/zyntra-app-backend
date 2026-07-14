@@ -10,11 +10,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import {
-  AgentTask,
-  AgentTaskDocument,
-  AgentTaskStatus,
-} from './schemas/agent-task.schema';
+import { AgentTask, AgentTaskDocument } from './schemas/agent-task.schema';
+import { AgentTaskStatus } from './enums/agent-task-status.enum';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Business } from '../auth/entities/business.entity';
 
@@ -58,7 +55,7 @@ export class TasksService {
       startOfMonth.setHours(0, 0, 0, 0);
 
       const tasksThisMonth = await this.taskModel.countDocuments({
-        business_id: businessId,
+        businessId,
         createdAt: { $gte: startOfMonth },
       });
 
@@ -71,7 +68,7 @@ export class TasksService {
 
     // 3. Crear la tarea en MongoDB
     const task = await this.taskModel.create({
-      business_id: businessId,
+      businessId,
       type: dto.type,
       status: AgentTaskStatus.PENDING,
       input: dto.input as unknown,
@@ -116,7 +113,7 @@ export class TasksService {
 
   async findAll(businessId: string): Promise<AgentTask[]> {
     return this.taskModel
-      .find({ business_id: businessId })
+      .find({ businessId })
       .sort({ createdAt: -1 })
       .limit(50)
       .exec();
@@ -125,7 +122,7 @@ export class TasksService {
   async findOne(id: string, businessId: string): Promise<AgentTask> {
     const task = await this.taskModel.findOne({
       _id: id,
-      business_id: businessId,
+      businessId,
     });
     if (!task) {
       throw new NotFoundException('Tarea no encontrada');

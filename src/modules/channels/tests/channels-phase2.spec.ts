@@ -11,10 +11,8 @@ import { FindManyOptions, IsNull, ObjectLiteral, Repository } from 'typeorm';
 import { ChannelsService } from '@/modules/channels/channels.service';
 import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
 import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
-import {
-  Channel,
-  ChannelStatus,
-} from '@/modules/channels/entities/channel.entity';
+import { Channel } from '@/modules/channels/entities/channel.entity';
+import { ChannelStatus } from '@/modules/channels/enums/channel-status.enum';
 import { ChannelProviderFactory } from '@/modules/channels/providers/channel-provider.factory';
 import { WebChatChannelProvider } from '@/modules/channels/providers/web-chat-channel.provider';
 import {
@@ -40,12 +38,12 @@ const WEB_CHAT_TYPE: ChannelType = {
   key: 'web_chat',
   label: 'Web Chat',
   description: null,
-  icon_url: null,
-  is_available: true,
-  config_schema: {},
-  sort_order: 1,
-  created_at: new Date(),
-  updated_at: new Date(),
+  iconUrl: null,
+  isAvailable: true,
+  configSchema: {},
+  sortOrder: 1,
+  createdAt: new Date(),
+  updatedAt: new Date(),
   channels: [],
 };
 
@@ -53,7 +51,7 @@ const FACEBOOK_TYPE: ChannelType = {
   ...WEB_CHAT_TYPE,
   id: 'ct-fb-uuid',
   key: 'facebook',
-  is_available: false,
+  isAvailable: false,
 };
 
 // ---------------------------------------------------------------------------

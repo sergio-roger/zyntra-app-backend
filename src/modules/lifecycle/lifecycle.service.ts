@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { LifecycleHistory } from '@/modules/lifecycle/entities/lifecycle-history.entity';
-import {
-  LifecycleStage,
-  LifecycleStageType,
-} from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
+import { LifecycleStageType } from '@/modules/lifecycle/enums/lifecycle-stage-type.enum';
 
 @Injectable()
 export class LifecycleService {
@@ -24,18 +22,18 @@ export class LifecycleService {
     reason?: string,
   ): Promise<LifecycleHistory> {
     const history = this.historyRepository.create({
-      contact_id: contactId,
-      new_stage_id: newStageId,
-      old_stage_id: oldStageId || null,
-      changed_by_id: changedById || null,
-      change_reason: reason || null,
+      contactId: contactId,
+      newStageId: newStageId,
+      oldStageId: oldStageId || null,
+      changedById: changedById || null,
+      changeReason: reason || null,
     });
     return this.historyRepository.save(history);
   }
 
   async findAll(businessId: string): Promise<LifecycleStage[]> {
     const stages = await this.stageRepository.find({
-      where: { business_id: businessId },
+      where: { businessId },
       order: { position: 'ASC' },
     });
 
@@ -54,9 +52,9 @@ export class LifecycleService {
         icon: '🆕',
         position: 0,
         type: LifecycleStageType.ACTIVE,
-        is_default: true,
-        is_won: false,
-        is_system: true,
+        isDefault: true,
+        isWon: false,
+        isSystem: true,
       },
       {
         name: 'Hot Lead',
@@ -64,9 +62,9 @@ export class LifecycleService {
         icon: '🔥',
         position: 1,
         type: LifecycleStageType.ACTIVE,
-        is_default: false,
-        is_won: false,
-        is_system: true,
+        isDefault: false,
+        isWon: false,
+        isSystem: true,
       },
       {
         name: 'Payment',
@@ -74,9 +72,9 @@ export class LifecycleService {
         icon: '💵',
         position: 2,
         type: LifecycleStageType.ACTIVE,
-        is_default: false,
-        is_won: false,
-        is_system: true,
+        isDefault: false,
+        isWon: false,
+        isSystem: true,
       },
       {
         name: 'Customer',
@@ -84,9 +82,9 @@ export class LifecycleService {
         icon: '🏆',
         position: 3,
         type: LifecycleStageType.ACTIVE,
-        is_default: false,
-        is_won: true,
-        is_system: true,
+        isDefault: false,
+        isWon: true,
+        isSystem: true,
       },
       {
         name: 'Cold Lead',
@@ -94,14 +92,14 @@ export class LifecycleService {
         icon: '❄️',
         position: 4,
         type: LifecycleStageType.LOST,
-        is_default: false,
-        is_won: false,
-        is_system: true,
+        isDefault: false,
+        isWon: false,
+        isSystem: true,
       },
     ];
 
     const entities = defaultStages.map((s) =>
-      this.stageRepository.create({ ...s, business_id: businessId }),
+      this.stageRepository.create({ ...s, businessId }),
     );
 
     return this.stageRepository.save(entities);
@@ -119,10 +117,10 @@ export class LifecycleService {
     // 2. Delete stages that are NOT in the incoming array and NOT system-managed
     // This ensures the DB reflects the user's deletions in the UI
     const existingStages = await this.stageRepository.find({
-      where: { business_id: businessId },
+      where: { businessId },
     });
     const stagesToDelete = existingStages.filter(
-      (s) => !s.is_system && !stageIdsToKeep.includes(s.id),
+      (s) => !s.isSystem && !stageIdsToKeep.includes(s.id),
     );
 
     if (stagesToDelete.length > 0) {
@@ -134,7 +132,7 @@ export class LifecycleService {
       const stage = this.stageRepository.create(
         s as DeepPartial<LifecycleStage>,
       );
-      stage.business_id = businessId;
+      stage.businessId = businessId;
       stage.position = index;
       return stage;
     });

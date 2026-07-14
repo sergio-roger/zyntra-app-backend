@@ -1,8 +1,8 @@
-import 'reflect-metadata';
-import { DataSource } from 'typeorm';
+import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
 import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
-import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
+import 'reflect-metadata';
+import { DataSource } from 'typeorm';
 
 dotenv.config();
 
@@ -68,28 +68,28 @@ export const CHANNEL_TYPES_SEED = [
     key: 'web_chat',
     label: 'Web Chat',
     description: 'Widget embebible para sitios web',
-    icon_url: null,
-    is_available: true,
-    config_schema: WEB_CHAT_SCHEMA,
-    sort_order: 1,
+    iconUrl: null,
+    isAvailable: true,
+    configSchema: WEB_CHAT_SCHEMA,
+    sortOrder: 1,
   },
   {
     key: 'facebook',
     label: 'Facebook Messenger',
     description: 'Integración con páginas de Facebook',
-    icon_url: null,
-    is_available: false,
-    config_schema: FACEBOOK_SCHEMA,
-    sort_order: 2,
+    iconUrl: null,
+    isAvailable: false,
+    configSchema: FACEBOOK_SCHEMA,
+    sortOrder: 2,
   },
   {
     key: 'telegram',
     label: 'Telegram',
     description: 'Bot de Telegram',
-    icon_url: null,
-    is_available: false,
-    config_schema: TELEGRAM_SCHEMA,
-    sort_order: 3,
+    iconUrl: null,
+    isAvailable: false,
+    configSchema: TELEGRAM_SCHEMA,
+    sortOrder: 3,
   },
 ];
 

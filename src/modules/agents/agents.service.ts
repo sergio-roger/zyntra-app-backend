@@ -26,27 +26,27 @@ export class AgentsService {
 
   async create(businessId: string, dto: CreateAgentDto): Promise<Agent> {
     const agent = this.agentRepo.create({
-      business_id: businessId,
+      businessId: businessId,
       name: dto.name,
       model: dto.model ?? 'openai/gpt-4o-mini',
-      system_prompt: dto.system_prompt,
+      systemPrompt: dto.system_prompt,
       temperature: dto.temperature ?? 0.7,
       tools: dto.tools ?? [],
-      is_active: dto.is_active ?? true,
+      isActive: dto.is_active ?? true,
     });
     return this.agentRepo.save(agent);
   }
 
   async findAll(businessId: string): Promise<Agent[]> {
     return this.agentRepo.find({
-      where: { business_id: businessId },
-      order: { created_at: 'DESC' },
+      where: { businessId: businessId },
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(businessId: string, agentId: string): Promise<Agent> {
     const agent = await this.agentRepo.findOne({
-      where: { id: agentId, business_id: businessId },
+      where: { id: agentId, businessId: businessId },
     });
     if (!agent) throw new NotFoundException('Agente no encontrado');
     return agent;
@@ -58,7 +58,12 @@ export class AgentsService {
     dto: UpdateAgentDto,
   ): Promise<Agent> {
     const agent = await this.findOne(businessId, agentId);
-    Object.assign(agent, dto);
+    if (dto.name !== undefined) agent.name = dto.name;
+    if (dto.model !== undefined) agent.model = dto.model;
+    if (dto.system_prompt !== undefined) agent.systemPrompt = dto.system_prompt;
+    if (dto.temperature !== undefined) agent.temperature = dto.temperature;
+    if (dto.tools !== undefined) agent.tools = dto.tools;
+    if (dto.is_active !== undefined) agent.isActive = dto.is_active;
     return this.agentRepo.save(agent);
   }
 
@@ -93,7 +98,7 @@ export class AgentsService {
       model: agent.model,
       temperature: agent.temperature,
       messages: [
-        { role: 'system', content: agent.system_prompt },
+        { role: 'system', content: agent.systemPrompt },
         { role: 'user', content: message },
       ],
     });

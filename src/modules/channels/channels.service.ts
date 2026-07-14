@@ -2,10 +2,8 @@ import { CreateChannelDto } from '@/modules/channels/dto/create-channel.dto';
 import { UpdateChannelDto } from '@/modules/channels/dto/update-channel.dto';
 import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
 import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
-import {
-  Channel,
-  ChannelStatus,
-} from '@/modules/channels/entities/channel.entity';
+import { Channel } from '@/modules/channels/entities/channel.entity';
+import { ChannelStatus } from '@/modules/channels/enums/channel-status.enum';
 import { ChannelProviderFactory } from '@/modules/channels/providers/channel-provider.factory';
 import { buildEmbedSnippet } from '@/modules/channels/utils/embed-snippet.util';
 import { encryptCredentials } from '@/modules/channels/utils/crypto.util';
@@ -53,16 +51,16 @@ export class ChannelsService {
 
   async getStore() {
     return this.channelTypeRepo.find({
-      order: { sort_order: 'ASC' },
+      order: { sortOrder: 'ASC' },
       select: [
         'id',
         'key',
         'label',
         'description',
-        'icon_url',
-        'is_available',
-        'config_schema',
-        'sort_order',
+        'iconUrl',
+        'isAvailable',
+        'configSchema',
+        'sortOrder',
       ],
     });
   }
@@ -74,7 +72,7 @@ export class ChannelsService {
     if (!channelType) {
       throw new NotFoundException('Tipo de canal no encontrado');
     }
-    if (!channelType.is_available) {
+    if (!channelType.isAvailable) {
       throw new BadRequestException('Este canal aún no está disponible');
     }
 
@@ -107,7 +105,7 @@ export class ChannelsService {
 
     const credData = encryptCredentials({});
     const cred = this.credentialRepo.create({
-      channel_id: channel.id,
+      channelId: channel.id,
       data: credData,
     });
     await this.credentialRepo.save(cred);

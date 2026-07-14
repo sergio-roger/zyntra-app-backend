@@ -7,9 +7,9 @@ const CHANNEL_TYPES_SEED = [
     key: 'web_chat',
     label: 'Web Chat',
     description: 'Widget embebible para sitios web',
-    icon_url: null,
-    is_available: true,
-    config_schema: {
+    iconUrl: null,
+    isAvailable: true,
+    configSchema: {
       $schema: 'http://json-schema.org/draft-07/schema#',
       type: 'object',
       properties: {
@@ -45,15 +45,15 @@ const CHANNEL_TYPES_SEED = [
       },
       additionalProperties: false,
     },
-    sort_order: 1,
+    sortOrder: 1,
   },
   {
     key: 'facebook',
     label: 'Facebook Messenger',
     description: 'Integración con páginas de Facebook',
-    icon_url: null,
-    is_available: false,
-    config_schema: {
+    iconUrl: null,
+    isAvailable: false,
+    configSchema: {
       $schema: 'http://json-schema.org/draft-07/schema#',
       type: 'object',
       properties: {
@@ -62,15 +62,15 @@ const CHANNEL_TYPES_SEED = [
       required: ['page_id'],
       additionalProperties: false,
     },
-    sort_order: 2,
+    sortOrder: 2,
   },
   {
     key: 'telegram',
     label: 'Telegram',
     description: 'Bot de Telegram',
-    icon_url: null,
-    is_available: false,
-    config_schema: {
+    iconUrl: null,
+    isAvailable: false,
+    configSchema: {
       $schema: 'http://json-schema.org/draft-07/schema#',
       type: 'object',
       properties: {
@@ -79,7 +79,7 @@ const CHANNEL_TYPES_SEED = [
       required: ['bot_username'],
       additionalProperties: false,
     },
-    sort_order: 3,
+    sortOrder: 3,
   },
 ];
 

@@ -5,11 +5,8 @@ import {
 } from '@nestjs/bullmq';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  AgentTask,
-  AgentTaskDocument,
-  AgentTaskStatus,
-} from './schemas/agent-task.schema';
+import { AgentTask, AgentTaskDocument } from './schemas/agent-task.schema';
+import { AgentTaskStatus } from './enums/agent-task-status.enum';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
@@ -29,7 +26,7 @@ export class TasksProcessor extends QueueEventsHost {
     this.logger.log(`Job ${jobId} detectado como ACTIVO`);
     await this.taskModel.findByIdAndUpdate(jobId, {
       status: AgentTaskStatus.RUNNING,
-      started_at: new Date(),
+      startedAt: new Date(),
     });
   }
 
@@ -65,7 +62,7 @@ export class TasksProcessor extends QueueEventsHost {
     try {
       await this.taskModel.findByIdAndUpdate(jobId, {
         status: AgentTaskStatus.COMPLETED,
-        completed_at: new Date(),
+        completedAt: new Date(),
         output:
           typeof output === 'object' ? JSON.stringify(output, null, 2) : output,
       });

@@ -212,11 +212,11 @@ export class CrmSeeder implements Seeder {
 
     // Seeding lifecycle stages & tags for superBusiness
     const existingSuperStages = await stageRepo.find({
-      where: { business_id: superBusiness.id },
+      where: { businessId: superBusiness.id },
     });
     if (existingSuperStages.length === 0) {
       const stages = DEFAULT_LIFECYCLE_STAGES.map((s) =>
-        stageRepo.create({ ...s, business_id: superBusiness.id }),
+        stageRepo.create({ ...s, businessId: superBusiness.id }),
       );
       await stageRepo.save(stages);
     }
@@ -248,12 +248,12 @@ export class CrmSeeder implements Seeder {
 
       // Lifecycle stages
       const existingStages = await stageRepo.find({
-        where: { business_id: business.id },
+        where: { businessId: business.id },
       });
 
       if (existingStages.length === 0) {
         const stages = DEFAULT_LIFECYCLE_STAGES.map((s) =>
-          stageRepo.create({ ...s, business_id: business.id }),
+          stageRepo.create({ ...s, businessId: business.id }),
         );
         await stageRepo.save(stages);
         console.log(`  �o. Lifecycle stages created for: ${business.name}`);
@@ -354,7 +354,7 @@ export class CrmSeeder implements Seeder {
       if (!business) continue;
 
       const stages = await stageRepo.find({
-        where: { business_id: business.id },
+        where: { businessId: business.id },
       });
       const stageByName = Object.fromEntries(stages.map((s) => [s.name, s]));
 

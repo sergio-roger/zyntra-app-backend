@@ -22,23 +22,23 @@ export class ChannelType {
   @Column({ nullable: true, type: 'text' })
   description: string | null;
 
-  @Column({ nullable: true, type: 'varchar' })
-  icon_url: string | null;
+  @Column({ name: 'icon_url', nullable: true, type: 'varchar' })
+  iconUrl: string | null;
 
-  @Column({ default: false })
-  is_available: boolean;
+  @Column({ name: 'is_available', default: false })
+  isAvailable: boolean;
 
-  @Column({ type: 'jsonb', default: {} })
-  config_schema: Record<string, unknown>;
+  @Column({ name: 'config_schema', type: 'jsonb', default: {} })
+  configSchema: Record<string, unknown>;
 
-  @Column({ default: 0 })
-  sort_order: number;
+  @Column({ name: 'sort_order', default: 0 })
+  sortOrder: number;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
   @OneToMany(() => Channel, (c) => c.channelType)
   channels: Channel[];

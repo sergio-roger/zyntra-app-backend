@@ -11,38 +11,38 @@ import { Contact } from '@crm/entities/contact.entity';
 import { LifecycleStage } from '@/modules/lifecycle/entities/lifecycle-stage.entity';
 
 @Entity({ name: 'lifecycle_history', schema: 'public' })
-@Index(['contact_id', 'created_at'])
+@Index(['contactId', 'createdAt'])
 export class LifecycleHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  contact_id: string;
+  @Column({ name: 'contact_id', type: 'uuid' })
+  contactId: string;
 
   @ManyToOne(() => Contact, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'contact_id' })
   contact: Contact;
 
-  @Column('uuid', { nullable: true })
-  old_stage_id: string | null;
+  @Column({ name: 'old_stage_id', type: 'uuid', nullable: true })
+  oldStageId: string | null;
 
   @ManyToOne(() => LifecycleStage, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'old_stage_id' })
-  old_stage: LifecycleStage | null;
+  oldStage: LifecycleStage | null;
 
-  @Column('uuid')
-  new_stage_id: string;
+  @Column({ name: 'new_stage_id', type: 'uuid' })
+  newStageId: string;
 
   @ManyToOne(() => LifecycleStage, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'new_stage_id' })
-  new_stage: LifecycleStage;
+  newStage: LifecycleStage;
 
-  @Column('uuid', { nullable: true })
-  changed_by_id: string | null;
+  @Column({ name: 'changed_by_id', type: 'uuid', nullable: true })
+  changedById: string | null;
 
-  @Column('text', { nullable: true })
-  change_reason: string | null;
+  @Column({ name: 'change_reason', type: 'text', nullable: true })
+  changeReason: string | null;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 }

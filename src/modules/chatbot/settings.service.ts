@@ -14,7 +14,7 @@ export class SettingsService {
 
   async getInboxSoundEnabled(businessId: string): Promise<boolean> {
     const setting = await this.settingRepo.findOne({
-      where: { business_id: businessId, key: INBOX_SOUND_KEY },
+      where: { businessId, key: INBOX_SOUND_KEY },
     });
     if (!setting) return true;
     return (setting.value as { enabled?: boolean }).enabled ?? true;
@@ -25,14 +25,14 @@ export class SettingsService {
     enabled: boolean,
   ): Promise<boolean> {
     let setting = await this.settingRepo.findOne({
-      where: { business_id: businessId, key: INBOX_SOUND_KEY },
+      where: { businessId, key: INBOX_SOUND_KEY },
     });
 
     if (setting) {
       setting.value = { enabled };
     } else {
       setting = this.settingRepo.create({
-        business_id: businessId,
+        businessId,
         key: INBOX_SOUND_KEY,
         value: { enabled },
       });
