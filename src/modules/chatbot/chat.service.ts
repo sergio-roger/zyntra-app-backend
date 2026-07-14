@@ -23,7 +23,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Queue } from 'bullmq';
 import { FindOptionsWhere, Repository } from 'typeorm';
 
 const SYSTEM_ASSIGNEE = { assignedTo: 'system', assignedToName: 'Sistema' };
@@ -45,6 +47,8 @@ export class ChatService {
     private readonly widgetSessionService: WidgetSessionService,
     private readonly messageEncryption: MessageEncryptionService,
     private readonly jwtService: JwtService,
+    @InjectQueue('agent-response')
+    private readonly agentResponseQueue: Queue,
   ) {
     this.serviceToken = config.get<string>('SERVICE_TOKEN', '');
   }
@@ -180,13 +184,42 @@ export class ChatService {
       'user',
     );
 
-    // 4. No agent assigned → a human must reply manually from the inbox.
-    // Nothing is queued to produce an automatic reply, so tell the widget
-    // not to wait on one (it would otherwise spin forever). No canned
-    // message is injected here — that would fire on every single user
-    // message with no dedup, and falsely imply an assistant/bot replied
-    // when the channel has nothing configured to do so. A configurable
-    // away/quick-reply message is a separate, not-yet-built feature.
+    // 4. If the channel has an agent assigned, hand off to marketing-agents
+    // via the agent-response queue — the reply comes back async through
+    // POST /internal/agent-callback and reaches the widget over WebSocket.
+    // No agent assigned → a human must reply manually from the inbox; no
+    // canned message is injected here — that would fire on every single
+    // user message with no dedup, and falsely imply an assistant/bot
+    // replied when the channel has nothing configured to do so. A
+    // configurable away/quick-reply message is a separate, not-yet-built
+    // feature.
+    if (channel.agentId) {
+      const jobId = crypto.randomUUID();
+      await this.agentResponseQueue.add(
+        'generate-reply',
+        {
+          conversationId: conversationIdStr,
+          channelId: channel.id,
+          agentId: channel.agentId,
+          businessId: effectiveBusinessId,
+          jobId,
+          // No forma parte del contrato original acordado para este job,
+          // pero sin el texto el worker no puede generar una respuesta ni
+          // hacer retrieval — ya lo tenemos en claro acá antes de cifrarlo.
+          message,
+        },
+        { jobId, removeOnComplete: false, removeOnFail: false },
+      );
+
+      return {
+        id: jobId,
+        conversation_id: conversationIdStr,
+        message: '',
+        pending: true,
+        created_at: new Date().toISOString(),
+      };
+    }
+
     return {
       id: crypto.randomUUID(),
       conversation_id: conversationIdStr,

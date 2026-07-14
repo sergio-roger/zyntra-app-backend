@@ -21,7 +21,10 @@ import { KnowledgeDocument } from '@/modules/agents/entities/knowledge-document.
 import { KnowledgeDocumentStatus } from '@/modules/agents/enums/knowledge-document-status.enum';
 import { KnowledgeCallbackDto } from '@/modules/knowledge/dto/knowledge-callback.dto';
 import { detectKnowledgeMimeType } from '@/modules/knowledge/utils/detect-knowledge-mime.util';
-import { KB_INGESTION_QUEUE } from '@/modules/knowledge/constants/knowledge.constants';
+import {
+  KB_INGESTION_QUEUE,
+  KB_DELETION_QUEUE,
+} from '@/modules/knowledge/constants/knowledge.constants';
 
 @Injectable()
 export class KnowledgeService {
@@ -34,6 +37,8 @@ export class KnowledgeService {
     private readonly businessRepo: Repository<Business>,
     @InjectQueue(KB_INGESTION_QUEUE)
     private readonly kbQueue: Queue,
+    @InjectQueue(KB_DELETION_QUEUE)
+    private readonly kbDeletionQueue: Queue,
     private readonly agentsService: AgentsService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
@@ -229,9 +234,14 @@ export class KnowledgeService {
       }
     }
 
-    // TODO(Fase C): encolar/disparar el borrado del vector en Qdrant
-    // (colección agent.knowledgeCollection) — todavía no existe cliente de
-    // Qdrant en este repo.
+    const agent = await this.agentsService.findOne(businessId, agentId);
+    if (agent.knowledgeCollection) {
+      await this.kbDeletionQueue.add('delete-document-vectors', {
+        scope: 'document',
+        knowledgeCollection: agent.knowledgeCollection,
+        documentId: document.id,
+      });
+    }
 
     await this.documentRepo.remove(document);
     return { success: true };

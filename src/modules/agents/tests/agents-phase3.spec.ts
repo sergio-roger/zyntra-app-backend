@@ -10,6 +10,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { getQueueToken } from '@nestjs/bullmq';
 import { ObjectLiteral, Repository } from 'typeorm';
 
 import { AgentsService } from '../agents.service';
@@ -61,6 +62,7 @@ describe('AgentsService', () => {
   let agentRepo: Repository<Agent>;
   let channelRepo: Repository<Channel>;
   let aiService: Partial<AiService>;
+  let kbDeletionQueue: { add: jest.Mock };
 
   beforeEach(async () => {
     agentRepo = makeRepo<Agent>();
@@ -68,12 +70,14 @@ describe('AgentsService', () => {
     aiService = {
       chat: jest.fn(),
     };
+    kbDeletionQueue = { add: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AgentsService,
         { provide: getRepositoryToken(Agent), useValue: agentRepo },
         { provide: getRepositoryToken(Channel), useValue: channelRepo },
+        { provide: getQueueToken('kb-deletion'), useValue: kbDeletionQueue },
         { provide: AiService, useValue: aiService },
       ],
     }).compile();

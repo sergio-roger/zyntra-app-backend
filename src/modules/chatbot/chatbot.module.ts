@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
+import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import { Business } from '../auth/entities/business.entity';
 import { ChannelsModule } from '@/modules/channels/channels.module';
@@ -30,6 +31,7 @@ import { MessageEncryptionService } from './services/message-encryption.service'
     AiModule,
     ChannelsModule,
     WidgetSessionModule,
+    BullModule.registerQueue({ name: 'agent-response' }),
   ],
   controllers: [ChatController, InternalCallbackController, SettingsController],
   providers: [

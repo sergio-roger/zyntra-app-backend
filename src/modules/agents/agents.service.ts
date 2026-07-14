@@ -9,7 +9,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 
 export interface AgentTestSource {
@@ -37,6 +39,9 @@ export class AgentsService {
 
     @InjectRepository(Channel)
     private readonly channelRepo: Repository<Channel>,
+
+    @InjectQueue('kb-deletion')
+    private readonly kbDeletionQueue: Queue,
 
     private readonly aiService: AiService,
   ) {}
@@ -121,6 +126,16 @@ export class AgentsService {
       throw new ConflictException(
         'Desasigna el agente de sus canales antes de eliminarlo',
       );
+    }
+
+    // knowledge_documents del agente se cascadean solos a nivel de DB (FK
+    // ON DELETE CASCADE), pero eso no dispara ningún código de aplicación —
+    // hay que dropear la colección entera de Qdrant acá explícitamente.
+    if (agent.knowledgeCollection) {
+      await this.kbDeletionQueue.add('delete-agent-collection', {
+        scope: 'agent',
+        knowledgeCollection: agent.knowledgeCollection,
+      });
     }
 
     await this.agentRepo.remove(agent);

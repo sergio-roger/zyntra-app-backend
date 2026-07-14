@@ -9,12 +9,18 @@ import { KnowledgeService } from '@/modules/knowledge/knowledge.service';
 import { KnowledgeDocumentsController } from '@/modules/knowledge/knowledge-documents.controller';
 import { KnowledgeUsageController } from '@/modules/knowledge/knowledge-usage.controller';
 import { KnowledgeInternalController } from '@/modules/knowledge/knowledge-internal.controller';
-import { KB_INGESTION_QUEUE } from '@/modules/knowledge/constants/knowledge.constants';
+import {
+  KB_INGESTION_QUEUE,
+  KB_DELETION_QUEUE,
+} from '@/modules/knowledge/constants/knowledge.constants';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([KnowledgeDocument, Business]),
-    BullModule.registerQueue({ name: KB_INGESTION_QUEUE }),
+    BullModule.registerQueue(
+      { name: KB_INGESTION_QUEUE },
+      { name: KB_DELETION_QUEUE },
+    ),
     HttpModule,
     AgentsModule,
   ],
