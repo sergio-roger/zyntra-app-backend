@@ -15,13 +15,13 @@ import { PipelineStage } from './pipeline-stage.entity';
 import { Team } from './team.entity';
 
 @Entity({ name: 'pipelines', schema: 'crm' })
-@Index(['business_id'])
+@Index(['businessId'])
 export class Pipeline {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -33,11 +33,11 @@ export class Pipeline {
   @Column('int', { default: 0 })
   position: number;
 
-  @Column({ default: false })
-  is_default: boolean;
+  @Column({ name: 'is_default', default: false })
+  isDefault: boolean;
 
-  @Column('uuid', { nullable: true })
-  team_id: string | null;
+  @Column({ name: 'team_id', type: 'uuid', nullable: true })
+  teamId: string | null;
 
   @ManyToOne(() => Team, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'team_id' })
@@ -48,12 +48,12 @@ export class Pipeline {
   })
   stages: PipelineStage[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

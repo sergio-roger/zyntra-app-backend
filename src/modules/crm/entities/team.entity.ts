@@ -15,13 +15,13 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'teams', schema: 'security' })
-@Index(['business_id'])
+@Index(['businessId'])
 export class Team {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -45,12 +45,12 @@ export class Team {
   })
   members: User[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

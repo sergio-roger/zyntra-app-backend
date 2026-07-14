@@ -253,14 +253,14 @@ export class ContactsService {
     ) {
       await this.activitiesRepo.save(
         this.activitiesRepo.create({
-          contact_id: saved.id,
+          contactId: saved.id,
           type: ActivityType.STAGE_CHANGE,
           content: `Lifecycle stage updated`,
           metadata: {
             from: previousLifecycleStageId,
             to: dto.lifecycleStageId,
           },
-          created_by: ActivityCreatedBy.USER,
+          createdBy: ActivityCreatedBy.USER,
         }),
       );
     }
@@ -284,10 +284,10 @@ export class ContactsService {
 
     const qb = this.activitiesRepo
       .createQueryBuilder('a')
-      .where('a.contact_id = :cid', { cid: contactId });
+      .where('a.contactId = :cid', { cid: contactId });
     if (type) qb.andWhere('a.type = :type', { type });
 
-    qb.orderBy('a.created_at', 'DESC')
+    qb.orderBy('a.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -304,11 +304,11 @@ export class ContactsService {
 
     const activity = await this.activitiesRepo.save(
       this.activitiesRepo.create({
-        contact_id: contact.id,
+        contactId: contact.id,
         type: dto.type,
         content: dto.content,
         metadata: dto.metadata ?? {},
-        created_by: ActivityCreatedBy.USER,
+        createdBy: ActivityCreatedBy.USER,
       }),
     );
 
@@ -324,11 +324,11 @@ export class ContactsService {
     contact.lastActivityAt = new Date();
     await this.activitiesRepo.save(
       this.activitiesRepo.create({
-        contact_id: contact.id,
+        contactId: contact.id,
         type: ActivityType.SYSTEM,
         content: 'Lead archivado',
         metadata: {},
-        created_by: ActivityCreatedBy.SYSTEM,
+        createdBy: ActivityCreatedBy.SYSTEM,
       }),
     );
     return this.contactsRepo.save(contact);
@@ -342,13 +342,13 @@ export class ContactsService {
     const contact = await this.findOne(business, id);
 
     const deal = this.dealsRepo.create({
-      business_id: business.id,
+      businessId: business.id,
       contacts: [contact],
       title: dto.title,
       value: dto.value ?? 0,
-      pipeline_id: dto.pipelineId,
-      stage_id: dto.stageId,
-      expected_close_date: dto.expectedCloseDate
+      pipelineId: dto.pipelineId,
+      stageId: dto.stageId,
+      expectedCloseDate: dto.expectedCloseDate
         ? new Date(dto.expectedCloseDate)
         : null,
       description: dto.description,
@@ -360,11 +360,11 @@ export class ContactsService {
 
     await this.activitiesRepo.save(
       this.activitiesRepo.create({
-        contact_id: contact.id,
+        contactId: contact.id,
         type: ActivityType.SYSTEM,
         content: `Lead convertido a negocio: "${savedDeal.title}"`,
-        metadata: { deal_id: savedDeal.id },
-        created_by: ActivityCreatedBy.SYSTEM,
+        metadata: { dealId: savedDeal.id },
+        createdBy: ActivityCreatedBy.SYSTEM,
       }),
     );
 

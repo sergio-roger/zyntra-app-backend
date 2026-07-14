@@ -16,14 +16,14 @@ import { TaskPriority } from '@crm/enums/task-priority.enum';
 import { Deal } from './deal.entity';
 
 @Entity({ name: 'tasks', schema: 'crm' })
-@Index(['business_id', 'status'])
-@Index(['business_id', 'due_date'])
+@Index(['businessId', 'status'])
+@Index(['businessId', 'dueDate'])
 export class CrmTask {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -35,8 +35,8 @@ export class CrmTask {
   @Column('text', { nullable: true })
   description: string | null;
 
-  @Column('timestamp')
-  due_date: Date;
+  @Column({ name: 'due_date', type: 'timestamp' })
+  dueDate: Date;
 
   @Column({
     type: 'enum',
@@ -52,29 +52,29 @@ export class CrmTask {
   })
   priority: TaskPriority;
 
-  @Column('uuid', { nullable: true })
-  contact_id: string | null;
+  @Column({ name: 'contact_id', type: 'uuid', nullable: true })
+  contactId: string | null;
 
   @ManyToOne(() => Contact, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'contact_id' })
   contact: Contact | null;
 
-  @Column('uuid', { nullable: true })
-  deal_id: string | null;
+  @Column({ name: 'deal_id', type: 'uuid', nullable: true })
+  dealId: string | null;
 
   @ManyToOne(() => Deal, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'deal_id' })
   deal: Deal | null;
 
-  @Column('uuid', { nullable: true })
-  assigned_to: string | null;
+  @Column({ name: 'assigned_to', type: 'uuid', nullable: true })
+  assignedTo: string | null;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

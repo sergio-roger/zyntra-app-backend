@@ -19,14 +19,14 @@ export class IndustriesService {
 
   async findAll(business: Business): Promise<Industry[]> {
     return this.repo.find({
-      where: { business_id: business.id },
+      where: { businessId: business.id },
       order: { name: 'ASC' },
     });
   }
 
   async findOne(business: Business, id: string): Promise<Industry> {
     const sector = await this.repo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
     });
     if (!sector) throw new NotFoundException('Sector type not found');
     return sector;
@@ -34,14 +34,19 @@ export class IndustriesService {
 
   async create(business: Business, dto: CreateIndustryDto): Promise<Industry> {
     const existing = await this.repo.findOne({
-      where: { business_id: business.id, name: dto.name },
+      where: { businessId: business.id, name: dto.name },
     });
     if (existing)
       throw new ConflictException(
         'A sector type with this name already exists',
       );
 
-    const sector = this.repo.create({ ...dto, business_id: business.id });
+    const sector = this.repo.create({
+      name: dto.name,
+      description: dto.description,
+      isActive: dto.is_active,
+      businessId: business.id,
+    });
     return this.repo.save(sector);
   }
 
@@ -54,7 +59,7 @@ export class IndustriesService {
 
     if (dto.name && dto.name !== sector.name) {
       const existing = await this.repo.findOne({
-        where: { business_id: business.id, name: dto.name },
+        where: { businessId: business.id, name: dto.name },
       });
       if (existing)
         throw new ConflictException(
@@ -62,7 +67,10 @@ export class IndustriesService {
         );
     }
 
-    Object.assign(sector, dto);
+    if (dto.name !== undefined) sector.name = dto.name;
+    if (dto.description !== undefined) sector.description = dto.description;
+    if (dto.is_active !== undefined) sector.isActive = dto.is_active;
+
     return this.repo.save(sector);
   }
 

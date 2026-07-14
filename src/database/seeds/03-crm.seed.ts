@@ -222,12 +222,12 @@ export class CrmSeeder implements Seeder {
     }
     for (const tagData of DEFAULT_TAGS) {
       const existingTag = await tagRepo.findOne({
-        where: { business_id: superBusiness.id, name: tagData.name },
+        where: { businessId: superBusiness.id, name: tagData.name },
       });
       if (!existingTag) {
         await tagRepo.save(
           tagRepo.create({
-            business_id: superBusiness.id,
+            businessId: superBusiness.id,
             name: tagData.name,
             color: tagData.color,
             description: tagData.description,
@@ -266,17 +266,17 @@ export class CrmSeeder implements Seeder {
       // Tags
       for (const tagData of DEFAULT_TAGS) {
         const existingTag = await tagRepo.findOne({
-          where: { business_id: business.id, name: tagData.name },
+          where: { businessId: business.id, name: tagData.name },
         });
 
         if (!existingTag) {
           await tagRepo.save(
             tagRepo.create({
-              business_id: business.id,
+              businessId: business.id,
               name: tagData.name,
               color: tagData.color,
               description: tagData.description,
-              entity_type: tagData.entity_type,
+              entityType: tagData.entityType,
             }),
           );
         }
@@ -297,15 +297,15 @@ export class CrmSeeder implements Seeder {
       const industryMap: Record<string, Industry> = {};
       for (const industryData of DEFAULT_INDUSTRIES) {
         let industry = await industryRepo.findOne({
-          where: { business_id: business.id, name: industryData.name },
+          where: { businessId: business.id, name: industryData.name },
         });
         if (!industry) {
           industry = await industryRepo.save(
             industryRepo.create({
-              business_id: business.id,
+              businessId: business.id,
               name: industryData.name,
               description: industryData.description,
-              is_active: true,
+              isActive: true,
             }),
           );
         }
@@ -432,12 +432,12 @@ export class CrmSeeder implements Seeder {
 
       // 2. Create Teams
       const existingTeams = await teamRepo.find({
-        where: { business_id: business.id },
+        where: { businessId: business.id },
       });
       if (existingTeams.length === 0) {
         await teamRepo.save(
           teamRepo.create({
-            business_id: business.id,
+            businessId: business.id,
             name: 'Ventas',
             description: 'Equipo de Ventas',
             color: '#10B981',
@@ -448,7 +448,7 @@ export class CrmSeeder implements Seeder {
         );
         await teamRepo.save(
           teamRepo.create({
-            business_id: business.id,
+            businessId: business.id,
             name: 'Soporte',
             description: 'Equipo de Soporte',
             color: '#3B82F6',
@@ -460,31 +460,31 @@ export class CrmSeeder implements Seeder {
 
       // 3. Custom Fields
       const existingFields = await customFieldRepo.find({
-        where: { business_id: business.id },
+        where: { businessId: business.id },
       });
       if (existingFields.length === 0) {
         await customFieldRepo.save(
           customFieldRepo.create([
             {
-              business_id: business.id,
+              businessId: business.id,
               name: 'industry',
               label: 'Industria',
               type: CustomFieldType.TEXT,
-              is_active: true,
+              isActive: true,
             },
             {
-              business_id: business.id,
+              businessId: business.id,
               name: 'budget',
               label: 'Presupuesto',
               type: CustomFieldType.NUMBER,
-              is_active: true,
+              isActive: true,
             },
             {
-              business_id: business.id,
+              businessId: business.id,
               name: 'lead_score',
               label: 'Puntuación de Lead',
               type: CustomFieldType.NUMBER,
-              is_active: true,
+              isActive: true,
             },
           ]),
         );
@@ -540,7 +540,7 @@ export class CrmSeeder implements Seeder {
       if (!business) continue;
 
       const existingPipelines = await pipelineRepo.find({
-        where: { business_id: business.id },
+        where: { businessId: business.id },
       });
 
       if (existingPipelines.length > 0) {
@@ -557,10 +557,10 @@ export class CrmSeeder implements Seeder {
       for (const pipelineData of DEFAULT_PIPELINES) {
         const pipeline = await pipelineRepo.save(
           pipelineRepo.create({
-            business_id: business.id,
+            businessId: business.id,
             name: pipelineData.name,
             position: pipelineData.position,
-            is_default: pipelineData.is_default,
+            isDefault: pipelineData.isDefault,
           }),
         );
 
@@ -568,12 +568,12 @@ export class CrmSeeder implements Seeder {
         for (const stageData of pipelineData.stages) {
           const stage = await pipelineStageRepo.save(
             pipelineStageRepo.create({
-              pipeline_id: pipeline.id,
+              pipelineId: pipeline.id,
               name: stageData.name,
               color: stageData.color,
               position: stageData.position,
               type: stageData.type,
-              probability_percent: stageData.probability_percent,
+              probabilityPercent: stageData.probabilityPercent,
             }),
           );
           stageMap[stageData.name] = stage;
@@ -643,7 +643,7 @@ export class CrmSeeder implements Seeder {
         if (!contact || !stage) continue;
 
         const existingDeal = await dealRepo.findOne({
-          where: { business_id: business.id, title: dealData.title },
+          where: { businessId: business.id, title: dealData.title },
         });
         if (existingDeal) continue;
 
@@ -652,25 +652,25 @@ export class CrmSeeder implements Seeder {
 
         const deal = await dealRepo.save(
           dealRepo.create({
-            business_id: business.id,
+            businessId: business.id,
             title: dealData.title,
             contacts: [contact],
-            company_id: dealsCreated % 2 === 0 ? companies[0]?.id : null, // randomly assign company if it exists
-            pipeline_id: defaultPipeline.id,
-            stage_id: stage.id,
+            companyId: dealsCreated % 2 === 0 ? companies[0]?.id : null, // randomly assign company if it exists
+            pipelineId: defaultPipeline.id,
+            stageId: stage.id,
             value: dealData.value,
             currency: 'USD',
             status: DealStatus.OPEN,
-            expected_close_date: closeDate,
-            probability: stage.probability_percent,
+            expectedCloseDate: closeDate,
+            probability: stage.probabilityPercent,
           }),
         );
 
         await historyRepo.save(
           historyRepo.create({
-            deal_id: deal.id,
-            stage_id: stage.id,
-            entered_at: new Date(),
+            dealId: deal.id,
+            stageId: stage.id,
+            enteredAt: new Date(),
           }),
         );
 
@@ -686,7 +686,7 @@ export class CrmSeeder implements Seeder {
       // Tasks Seed
       let tasksCreated = 0;
       const allDeals = await dealRepo.find({
-        where: { business_id: business.id },
+        where: { businessId: business.id },
       });
       const admin = await userRepo.findOne({
         where: { businessId: business.id, email: 'admin@zyntra.com' },
@@ -707,14 +707,14 @@ export class CrmSeeder implements Seeder {
 
         await taskRepo.save(
           taskRepo.create({
-            business_id: business.id,
+            businessId: business.id,
             title: `Llamada de seguimiento - ${d.title}`,
             description: 'Verificar avances de la propuesta.',
-            due_date: dueDate,
+            dueDate,
             status: i % 2 === 0 ? TaskStatus.PENDING : TaskStatus.COMPLETED,
             priority: i % 3 === 0 ? TaskPriority.HIGH : TaskPriority.MEDIUM,
-            deal_id: d.id,
-            assigned_to: assignedUserId,
+            dealId: d.id,
+            assignedTo: assignedUserId,
           }),
         );
         tasksCreated++;

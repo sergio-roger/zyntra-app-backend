@@ -12,8 +12,8 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'tags', schema: 'crm' })
-@Index(['business_id'])
-@Index(['business_id', 'name'], {
+@Index(['businessId'])
+@Index(['businessId', 'name'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })
@@ -21,8 +21,8 @@ export class Tag {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -37,15 +37,15 @@ export class Tag {
   @Column('text', { nullable: true })
   description: string | null;
 
-  @Column({ type: 'varchar', length: 50, default: 'contact' })
-  entity_type: string;
+  @Column({ name: 'entity_type', type: 'varchar', length: 50, default: 'contact' })
+  entityType: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

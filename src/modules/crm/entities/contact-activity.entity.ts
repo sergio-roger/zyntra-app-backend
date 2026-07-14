@@ -13,13 +13,13 @@ import { ActivityType } from '@crm/enums/activity-type.enum';
 import { ActivityCreatedBy } from '@crm/enums/activity-created-by.enum';
 
 @Entity({ name: 'activities', schema: 'crm' })
-@Index(['contact_id', 'created_at'])
+@Index(['contactId', 'createdAt'])
 export class ContactActivity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  contact_id: string;
+  @Column({ name: 'contact_id', type: 'uuid' })
+  contactId: string;
 
   @ManyToOne(() => Contact, (c) => c.activities, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'contact_id' })
@@ -38,15 +38,16 @@ export class ContactActivity {
   metadata: Record<string, unknown>;
 
   @Column({
+    name: 'created_by',
     type: 'enum',
     enum: ActivityCreatedBy,
     default: ActivityCreatedBy.USER,
   })
-  created_by: ActivityCreatedBy;
+  createdBy: ActivityCreatedBy;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

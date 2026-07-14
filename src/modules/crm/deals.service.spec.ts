@@ -18,27 +18,27 @@ const mockBusiness = { id: 'biz-uuid' } as Business;
 const makeStage = (overrides: Partial<PipelineStage> = {}): PipelineStage =>
   ({
     id: 'stage-uuid',
-    pipeline_id: 'pipe-uuid',
+    pipelineId: 'pipe-uuid',
     name: 'Prospección',
     color: '#4f46e5',
     position: 0,
     type: PipelineStageType.ACTIVE,
-    probability_percent: 10,
+    probabilityPercent: 10,
     ...overrides,
   }) as PipelineStage;
 
 const makeDeal = (overrides: Partial<Deal> = {}): Deal =>
   ({
     id: 'deal-uuid',
-    business_id: 'biz-uuid',
+    businessId: 'biz-uuid',
     title: 'Test Deal',
     value: 5000,
-    pipeline_id: 'pipe-uuid',
-    stage_id: 'stage-uuid',
+    pipelineId: 'pipe-uuid',
+    stageId: 'stage-uuid',
     status: DealStatus.OPEN,
     contacts: [{ id: 'contact-uuid' } as Contact],
-    closed_at: null,
-    deleted_at: null,
+    closedAt: null,
+    deletedAt: null,
     ...overrides,
   }) as unknown as Deal;
 
@@ -104,7 +104,7 @@ describe('DealsService', () => {
       dealsRepo.findOne.mockResolvedValue(deal);
       dealsRepo.softRemove.mockResolvedValue({
         ...deal,
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       });
 
       await service.remove(mockBusiness, 'deal-uuid');
@@ -144,8 +144,8 @@ describe('DealsService', () => {
   // ─── update() — stage transitions ──────────────────────────────────────────
 
   describe('update() — stage transitions', () => {
-    it('keeps status OPEN and clears closed_at when moving to an ACTIVE stage', async () => {
-      const deal = makeDeal({ stage_id: 'stage-old', status: DealStatus.OPEN });
+    it('keeps status OPEN and clears closedAt when moving to an ACTIVE stage', async () => {
+      const deal = makeDeal({ stageId: 'stage-old', status: DealStatus.OPEN });
       const newStage = makeStage({
         id: 'stage-new',
         type: PipelineStageType.ACTIVE,
@@ -163,20 +163,20 @@ describe('DealsService', () => {
       });
 
       expect(result.status).toBe(DealStatus.OPEN);
-      expect(result.closed_at).toBeNull();
+      expect(result.closedAt).toBeNull();
     });
 
-    it('sets status WON and closed_at when moving to a WON stage', async () => {
-      const deal = makeDeal({ stage_id: 'stage-old', status: DealStatus.OPEN });
+    it('sets status WON and closedAt when moving to a WON stage', async () => {
+      const deal = makeDeal({ stageId: 'stage-old', status: DealStatus.OPEN });
       const wonStage = makeStage({
         id: 'stage-won',
         type: PipelineStageType.WON,
         name: 'Ganado',
       });
       const updatedDeal = makeDeal({
-        stage_id: 'stage-won',
+        stageId: 'stage-won',
         status: DealStatus.WON,
-        closed_at: new Date(),
+        closedAt: new Date(),
       });
 
       // update() calls findOne twice: once to load the current deal, once to
@@ -196,20 +196,20 @@ describe('DealsService', () => {
       });
 
       expect(result.status).toBe(DealStatus.WON);
-      expect(result.closed_at).toBeInstanceOf(Date);
+      expect(result.closedAt).toBeInstanceOf(Date);
     });
 
-    it('sets status LOST and closed_at when moving to a LOST stage', async () => {
-      const deal = makeDeal({ stage_id: 'stage-old', status: DealStatus.OPEN });
+    it('sets status LOST and closedAt when moving to a LOST stage', async () => {
+      const deal = makeDeal({ stageId: 'stage-old', status: DealStatus.OPEN });
       const lostStage = makeStage({
         id: 'stage-lost',
         type: PipelineStageType.LOST,
         name: 'Perdido',
       });
       const updatedDeal = makeDeal({
-        stage_id: 'stage-lost',
+        stageId: 'stage-lost',
         status: DealStatus.LOST,
-        closed_at: new Date(),
+        closedAt: new Date(),
       });
 
       dealsRepo.findOne
@@ -226,11 +226,11 @@ describe('DealsService', () => {
       });
 
       expect(result.status).toBe(DealStatus.LOST);
-      expect(result.closed_at).toBeInstanceOf(Date);
+      expect(result.closedAt).toBeInstanceOf(Date);
     });
 
     it('throws BadRequestException when target stage does not belong to the pipeline', async () => {
-      const deal = makeDeal({ stage_id: 'stage-old' });
+      const deal = makeDeal({ stageId: 'stage-old' });
 
       dealsRepo.findOne.mockResolvedValue(deal);
       stageRepo.findOne.mockResolvedValue(null); // stage not found in this pipeline
@@ -244,8 +244,8 @@ describe('DealsService', () => {
       expect(dealsRepo.save).not.toHaveBeenCalled();
     });
 
-    it('does NOT create history or update status when stage_id is unchanged', async () => {
-      const deal = makeDeal({ stage_id: 'same-stage' });
+    it('does NOT create history or update status when stageId is unchanged', async () => {
+      const deal = makeDeal({ stageId: 'same-stage' });
 
       dealsRepo.findOne.mockResolvedValue(deal);
       dealsRepo.save.mockImplementation((d: Deal) => Promise.resolve(d));
@@ -260,7 +260,7 @@ describe('DealsService', () => {
     });
 
     it('creates a history record when moving stages', async () => {
-      const deal = makeDeal({ stage_id: 'stage-old' });
+      const deal = makeDeal({ stageId: 'stage-old' });
       const newStage = makeStage({
         id: 'stage-new',
         type: PipelineStageType.ACTIVE,
@@ -279,17 +279,17 @@ describe('DealsService', () => {
 
       // closes open history entry
       expect(historyRepo.update).toHaveBeenCalledWith(
-        { deal_id: deal.id, left_at: expect.anything() as unknown },
-        { left_at: expect.any(Date) as Date },
+        { dealId: deal.id, leftAt: expect.anything() as unknown },
+        { leftAt: expect.any(Date) as Date },
       );
       // opens new history entry
       expect(historyRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ deal_id: deal.id, stage_id: 'stage-new' }),
+        expect.objectContaining({ dealId: deal.id, stageId: 'stage-new' }),
       );
     });
 
     it('creates a STAGE_CHANGE activity when moving stages', async () => {
-      const deal = makeDeal({ stage_id: 'stage-old' });
+      const deal = makeDeal({ stageId: 'stage-old' });
       const newStage = makeStage({
         id: 'stage-new',
         name: 'Propuesta',
@@ -346,17 +346,17 @@ describe('DealsService', () => {
       const stage = makeStage({ id: 'stage-uuid' });
       const pipeline = {
         id: 'pipe-uuid',
-        business_id: 'biz-uuid',
+        businessId: 'biz-uuid',
         stages: [stage],
       };
       const openDeal = makeDeal({
         id: 'open-deal',
-        stage_id: 'stage-uuid',
+        stageId: 'stage-uuid',
         status: DealStatus.OPEN,
       });
       const wonDeal = makeDeal({
         id: 'won-deal',
-        stage_id: 'stage-uuid',
+        stageId: 'stage-uuid',
         status: DealStatus.WON,
       });
 

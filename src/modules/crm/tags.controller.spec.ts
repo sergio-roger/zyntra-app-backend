@@ -14,7 +14,7 @@ const mockBusiness = {
 
 const mockTag = {
   id: 'tag-uuid-1',
-  business_id: 'business-uuid-1234',
+  businessId: 'business-uuid-1234',
   name: 'Sales',
   color: '#6366f1',
   description: 'Sales team tag',
@@ -73,7 +73,7 @@ describe('TagsController', () => {
       mockTagsService.create.mockResolvedValue({
         id: 'new-uuid',
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
       const result = await controller.create(mockBusiness, createDto);
       expect(service.create).toHaveBeenCalledWith(mockBusiness, createDto);

@@ -44,7 +44,7 @@ export class PipelinesService {
     // Admin ve todos los pipelines
     if (!user.id || user.role === UserRole.ADMIN) {
       return this.pipelineRepo.find({
-        where: { business_id: business.id },
+        where: { businessId: business.id },
         relations: ['stages', 'team'],
         order: { position: 'ASC', stages: { position: 'ASC' } },
       });
@@ -56,8 +56,8 @@ export class PipelinesService {
       .leftJoinAndSelect('p.stages', 'stages')
       .leftJoinAndSelect('p.team', 'team')
       .innerJoin('team.members', 'member')
-      .where('p.business_id = :bid', { bid: business.id })
-      .andWhere('p.team_id IS NOT NULL')
+      .where('p.businessId = :bid', { bid: business.id })
+      .andWhere('p.teamId IS NOT NULL')
       .andWhere('member.id = :uid', { uid: user.id })
       .orderBy('p.position', 'ASC')
       .addOrderBy('stages.position', 'ASC')
@@ -66,7 +66,7 @@ export class PipelinesService {
 
   async findOne(business: Business, id: string): Promise<Pipeline> {
     const pipeline = await this.pipelineRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
       relations: ['stages', 'team'],
       order: { stages: { position: 'ASC' } },
     });
@@ -81,7 +81,7 @@ export class PipelinesService {
       });
       if (plan && plan.pipelineLimit > 0) {
         const current = await this.pipelineRepo.count({
-          where: { business_id: business.id },
+          where: { businessId: business.id },
         });
         if (current >= plan.pipelineLimit) {
           throw new ForbiddenException(
@@ -93,14 +93,17 @@ export class PipelinesService {
 
     if (dto.is_default) {
       await this.pipelineRepo.update(
-        { business_id: business.id },
-        { is_default: false },
+        { businessId: business.id },
+        { isDefault: false },
       );
     }
 
     const pipeline = this.pipelineRepo.create({
-      ...dto,
-      business_id: business.id,
+      name: dto.name,
+      position: dto.position,
+      isDefault: dto.is_default,
+      teamId: dto.team_id,
+      businessId: business.id,
     });
     const saved = await this.pipelineRepo.save(pipeline);
 
@@ -110,48 +113,48 @@ export class PipelinesService {
         color: '#4f46e5',
         position: 0,
         type: PipelineStageType.ACTIVE,
-        probability_percent: 10,
+        probabilityPercent: 10,
       },
       {
         name: 'Contactado',
         color: '#06b6d4',
         position: 1,
         type: PipelineStageType.ACTIVE,
-        probability_percent: 20,
+        probabilityPercent: 20,
       },
       {
         name: 'Propuesta',
         color: '#f59e0b',
         position: 2,
         type: PipelineStageType.ACTIVE,
-        probability_percent: 40,
+        probabilityPercent: 40,
       },
       {
         name: 'Negociación',
         color: '#8b5cf6',
         position: 3,
         type: PipelineStageType.ACTIVE,
-        probability_percent: 60,
+        probabilityPercent: 60,
       },
       {
         name: 'Ganado',
         color: '#10b981',
         position: 4,
         type: PipelineStageType.WON,
-        probability_percent: 100,
+        probabilityPercent: 100,
       },
       {
         name: 'Perdido',
         color: '#ef4444',
         position: 5,
         type: PipelineStageType.LOST,
-        probability_percent: 0,
+        probabilityPercent: 0,
       },
     ];
 
     await this.stageRepo.save(
       defaultStages.map((s) =>
-        this.stageRepo.create({ ...s, pipeline_id: saved.id }),
+        this.stageRepo.create({ ...s, pipelineId: saved.id }),
       ),
     );
 
@@ -167,12 +170,16 @@ export class PipelinesService {
 
     if (dto.is_default) {
       await this.pipelineRepo.update(
-        { business_id: business.id },
-        { is_default: false },
+        { businessId: business.id },
+        { isDefault: false },
       );
     }
 
-    Object.assign(pipeline, dto);
+    if (dto.name !== undefined) pipeline.name = dto.name;
+    if (dto.position !== undefined) pipeline.position = dto.position;
+    if (dto.is_default !== undefined) pipeline.isDefault = dto.is_default;
+    if (dto.team_id !== undefined) pipeline.teamId = dto.team_id;
+
     return this.pipelineRepo.save(pipeline);
   }
 
@@ -181,9 +188,9 @@ export class PipelinesService {
 
     const activeDealsCount = await this.dealRepo
       .createQueryBuilder('d')
-      .where('d.pipeline_id = :pid', { pid: pipeline.id })
+      .where('d.pipelineId = :pid', { pid: pipeline.id })
       .andWhere('d.status = :status', { status: DealStatus.OPEN })
-      .andWhere('d.deleted_at IS NULL')
+      .andWhere('d.deletedAt IS NULL')
       .getCount();
 
     if (activeDealsCount > 0) {
@@ -203,7 +210,7 @@ export class PipelinesService {
   ): Promise<PipelineStage[]> {
     await this.findOne(business, pipelineId);
     return this.stageRepo.find({
-      where: { pipeline_id: pipelineId },
+      where: { pipelineId },
       order: { position: 'ASC' },
     });
   }
@@ -216,8 +223,12 @@ export class PipelinesService {
     await this.findOne(business, pipelineId);
 
     const stage = this.stageRepo.create({
-      ...dto,
-      pipeline_id: pipelineId,
+      name: dto.name,
+      color: dto.color,
+      position: dto.position,
+      type: dto.type,
+      probabilityPercent: dto.probability_percent,
+      pipelineId,
     });
     return this.stageRepo.save(stage);
   }
@@ -231,11 +242,17 @@ export class PipelinesService {
       where: { id: stageId },
       relations: ['pipeline'],
     });
-    if (!stage || stage.pipeline.business_id !== business.id) {
+    if (!stage || stage.pipeline.businessId !== business.id) {
       throw new NotFoundException('Stage not found');
     }
 
-    Object.assign(stage, dto);
+    if (dto.name !== undefined) stage.name = dto.name;
+    if (dto.color !== undefined) stage.color = dto.color;
+    if (dto.position !== undefined) stage.position = dto.position;
+    if (dto.type !== undefined) stage.type = dto.type;
+    if (dto.probability_percent !== undefined)
+      stage.probabilityPercent = dto.probability_percent;
+
     return this.stageRepo.save(stage);
   }
 
@@ -244,12 +261,12 @@ export class PipelinesService {
       where: { id: stageId },
       relations: ['pipeline'],
     });
-    if (!stage || stage.pipeline.business_id !== business.id) {
+    if (!stage || stage.pipeline.businessId !== business.id) {
       throw new NotFoundException('Stage not found');
     }
 
     const dealsCount = await this.dealRepo.count({
-      where: { stage_id: stageId },
+      where: { stageId },
     });
     if (dealsCount > 0) {
       throw new ConflictException(
@@ -269,7 +286,7 @@ export class PipelinesService {
 
     const stageIds = dto.stages.map((s) => s.id);
     const stages = await this.stageRepo.find({
-      where: dto.stages.map((s) => ({ id: s.id, pipeline_id: pipeline.id })),
+      where: dto.stages.map((s) => ({ id: s.id, pipelineId: pipeline.id })),
     });
 
     if (stages.length !== stageIds.length) {
@@ -314,19 +331,19 @@ export class PipelinesService {
       .createQueryBuilder('d')
       .innerJoin('d.stage', 's')
       .select([
-        `TO_CHAR(d.expected_close_date, 'YYYY-MM') AS month`,
+        `TO_CHAR(d.expectedCloseDate, 'YYYY-MM') AS month`,
         `SUM(d.value) AS total_value`,
-        `SUM(d.value * s.probability_percent / 100.0) AS weighted_value`,
+        `SUM(d.value * s.probabilityPercent / 100.0) AS weighted_value`,
         `COUNT(d.id)::int AS deal_count`,
         `d.currency AS currency`,
       ])
-      .where('d.pipeline_id = :pid', { pid: pipelineId })
-      .andWhere('d.business_id = :bid', { bid: business.id })
+      .where('d.pipelineId = :pid', { pid: pipelineId })
+      .andWhere('d.businessId = :bid', { bid: business.id })
       .andWhere('d.status = :status', { status: DealStatus.OPEN })
-      .andWhere('d.deleted_at IS NULL')
-      .andWhere('d.expected_close_date IS NOT NULL')
-      .groupBy(`TO_CHAR(d.expected_close_date, 'YYYY-MM'), d.currency`)
-      .orderBy(`TO_CHAR(d.expected_close_date, 'YYYY-MM')`, 'ASC')
+      .andWhere('d.deletedAt IS NULL')
+      .andWhere('d.expectedCloseDate IS NOT NULL')
+      .groupBy(`TO_CHAR(d.expectedCloseDate, 'YYYY-MM'), d.currency`)
+      .orderBy(`TO_CHAR(d.expectedCloseDate, 'YYYY-MM')`, 'ASC')
       .getRawMany();
 
     const totalsRow: ForecastTotals | undefined = await this.dealRepo
@@ -334,13 +351,13 @@ export class PipelinesService {
       .innerJoin('d.stage', 's')
       .select([
         `SUM(d.value) AS total_value`,
-        `SUM(d.value * s.probability_percent / 100.0) AS weighted_value`,
+        `SUM(d.value * s.probabilityPercent / 100.0) AS weighted_value`,
         `COUNT(d.id)::int AS deal_count`,
       ])
-      .where('d.pipeline_id = :pid', { pid: pipelineId })
-      .andWhere('d.business_id = :bid', { bid: business.id })
+      .where('d.pipelineId = :pid', { pid: pipelineId })
+      .andWhere('d.businessId = :bid', { bid: business.id })
       .andWhere('d.status = :status', { status: DealStatus.OPEN })
-      .andWhere('d.deleted_at IS NULL')
+      .andWhere('d.deletedAt IS NULL')
       .getRawOne();
 
     return {

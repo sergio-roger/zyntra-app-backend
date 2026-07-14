@@ -23,7 +23,7 @@ export class SegmentsService {
 
   async findAll(business: Business): Promise<SegmentResponse[]> {
     const segments = await this.segmentRepo.find({
-      where: { business_id: business.id },
+      where: { businessId: business.id },
       order: { name: 'ASC' },
     });
 
@@ -32,7 +32,7 @@ export class SegmentsService {
 
   async findOne(business: Business, id: string): Promise<SegmentResponse> {
     const segment = await this.segmentRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
     });
     if (!segment) throw new NotFoundException('Segmento no encontrado');
     return this.mapSegment(segment);
@@ -43,7 +43,7 @@ export class SegmentsService {
     dto: CreateSegmentDto,
   ): Promise<SegmentResponse> {
     const existing = await this.segmentRepo.findOne({
-      where: { business_id: business.id, name: dto.name },
+      where: { businessId: business.id, name: dto.name },
     });
     if (existing) {
       throw new ConflictException('Ya existe un segmento con este nombre');
@@ -51,7 +51,7 @@ export class SegmentsService {
 
     const segment = this.segmentRepo.create({
       ...dto,
-      business_id: business.id,
+      businessId: business.id,
     });
     const saved = await this.segmentRepo.save(segment);
 
@@ -67,7 +67,7 @@ export class SegmentsService {
 
     if (dto.name && dto.name !== segment.name) {
       const existing = await this.segmentRepo.findOne({
-        where: { business_id: business.id, name: dto.name },
+        where: { businessId: business.id, name: dto.name },
       });
       if (existing) {
         throw new ConflictException('Ya existe un segmento con este nombre');
@@ -81,7 +81,7 @@ export class SegmentsService {
 
   async remove(business: Business, id: string): Promise<void> {
     const existing = await this.segmentRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
     });
     if (!existing) throw new NotFoundException('Segmento no encontrado');
     await this.segmentRepo.softRemove(existing);
@@ -94,8 +94,8 @@ export class SegmentsService {
       description: segment.description,
       conditions: segment.conditions,
       type: segment.type,
-      createdAt: segment.created_at,
-      updatedAt: segment.updated_at,
+      createdAt: segment.createdAt,
+      updatedAt: segment.updatedAt,
     };
   }
 

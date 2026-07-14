@@ -24,15 +24,15 @@ import { DealStageHistory } from './deal-stage-history.entity';
 import { DealStatus } from '@crm/enums/deal-status.enum';
 
 @Entity({ name: 'deals', schema: 'crm' })
-@Index(['business_id', 'status'])
-@Index(['business_id', 'pipeline_id'])
-@Index(['business_id', 'stage_id'])
+@Index(['businessId', 'status'])
+@Index(['businessId', 'pipelineId'])
+@Index(['businessId', 'stageId'])
 export class Deal {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -57,22 +57,22 @@ export class Deal {
   })
   status: DealStatus;
 
-  @Column('uuid')
-  pipeline_id: string;
+  @Column({ name: 'pipeline_id', type: 'uuid' })
+  pipelineId: string;
 
   @ManyToOne(() => Pipeline, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'pipeline_id' })
   pipeline: Pipeline;
 
-  @Column('uuid')
-  stage_id: string;
+  @Column({ name: 'stage_id', type: 'uuid' })
+  stageId: string;
 
   @ManyToOne(() => PipelineStage, { onDelete: 'RESTRICT', eager: false })
   @JoinColumn({ name: 'stage_id' })
   stage: PipelineStage;
 
-  @Column('uuid', { nullable: true })
-  company_id: string | null;
+  @Column({ name: 'company_id', type: 'uuid', nullable: true })
+  companyId: string | null;
 
   @ManyToOne(() => Company, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'company_id' })
@@ -87,25 +87,25 @@ export class Deal {
   })
   contacts: Contact[];
 
-  @Column('uuid', { nullable: true })
-  assigned_to_id: string | null;
+  @Column({ name: 'assigned_to_id', type: 'uuid', nullable: true })
+  assignedToId: string | null;
 
   @ManyToOne(() => User, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'assigned_to_id' })
-  assigned_to: User | null;
+  assignedTo: User | null;
 
-  @Column('uuid', { nullable: true })
-  team_id: string | null;
+  @Column({ name: 'team_id', type: 'uuid', nullable: true })
+  teamId: string | null;
 
   @ManyToOne(() => Team, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'team_id' })
   team: Team | null;
 
-  @Column('timestamp', { nullable: true })
-  expected_close_date: Date | null;
+  @Column({ name: 'expected_close_date', type: 'timestamp', nullable: true })
+  expectedCloseDate: Date | null;
 
-  @Column('timestamp', { nullable: true })
-  closed_at: Date | null;
+  @Column({ name: 'closed_at', type: 'timestamp', nullable: true })
+  closedAt: Date | null;
 
   @Column('int', { default: 0 })
   probability: number;
@@ -114,14 +114,14 @@ export class Deal {
   tasks: CrmTask[];
 
   @OneToMany(() => DealStageHistory, (h) => h.deal)
-  stage_history: DealStageHistory[];
+  stageHistory: DealStageHistory[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

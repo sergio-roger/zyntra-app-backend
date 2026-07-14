@@ -12,8 +12,8 @@ import {
 import { Business } from '@auth/entities/business.entity';
 
 @Entity({ name: 'industries', schema: 'crm' })
-@Index(['business_id'])
-@Index(['business_id', 'name'], {
+@Index(['businessId'])
+@Index(['businessId', 'name'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })
@@ -21,8 +21,8 @@ export class Industry {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
@@ -34,15 +34,15 @@ export class Industry {
   @Column('text', { nullable: true })
   description: string | null;
 
-  @Column({ default: true })
-  is_active: boolean;
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

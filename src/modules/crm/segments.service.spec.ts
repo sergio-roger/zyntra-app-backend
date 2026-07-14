@@ -14,13 +14,13 @@ const mockBusiness = {
 
 const mockSegment = {
   id: 'segment-uuid-1',
-  business_id: 'business-uuid-1234',
+  businessId: 'business-uuid-1234',
   name: 'WhatsApp Leads',
   description: 'Leads from WhatsApp source',
   conditions: [{ field: 'source', operator: 'equals', value: 'whatsapp' }],
-  created_at: new Date(),
-  updated_at: new Date(),
-  deleted_at: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
 } as Segment;
 
 const mockSegmentResponse = {
@@ -29,8 +29,8 @@ const mockSegmentResponse = {
   description: mockSegment.description,
   conditions: mockSegment.conditions,
   type: undefined,
-  createdAt: mockSegment.created_at,
-  updatedAt: mockSegment.updated_at,
+  createdAt: mockSegment.createdAt,
+  updatedAt: mockSegment.updatedAt,
 };
 
 describe('SegmentsService', () => {
@@ -92,7 +92,7 @@ describe('SegmentsService', () => {
       const result = await service.findAll(mockBusiness);
 
       expect(repo.find).toHaveBeenCalledWith({
-        where: { business_id: mockBusiness.id },
+        where: { businessId: mockBusiness.id },
         order: { name: 'ASC' },
       });
       expect(result).toEqual([mockSegmentResponse]);
@@ -106,7 +106,7 @@ describe('SegmentsService', () => {
       const result = await service.findOne(mockBusiness, 'segment-uuid-1');
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { id: 'segment-uuid-1', business_id: mockBusiness.id },
+        where: { id: 'segment-uuid-1', businessId: mockBusiness.id },
       });
       expect(result).toEqual(mockSegmentResponse);
     });
@@ -131,22 +131,22 @@ describe('SegmentsService', () => {
       mockSegmentRepository.findOne.mockResolvedValue(null);
       mockSegmentRepository.create.mockReturnValue({
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
       mockSegmentRepository.save.mockResolvedValue({
         id: 'new-segment-uuid',
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
 
       const result = await service.create(mockBusiness, createDto);
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { business_id: mockBusiness.id, name: createDto.name },
+        where: { businessId: mockBusiness.id, name: createDto.name },
       });
       expect(repo.create).toHaveBeenCalledWith({
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
       expect(repo.save).toHaveBeenCalled();
       expect(result).toHaveProperty('id');
@@ -213,7 +213,7 @@ describe('SegmentsService', () => {
       await service.remove(mockBusiness, mockSegment.id);
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { id: mockSegment.id, business_id: mockBusiness.id },
+        where: { id: mockSegment.id, businessId: mockBusiness.id },
       });
       expect(repo.softRemove).toHaveBeenCalledWith(mockSegment);
     });

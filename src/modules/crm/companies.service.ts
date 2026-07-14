@@ -180,7 +180,7 @@ export class CompaniesService {
     if (tagIds?.length) {
       company.tags = await this.tagsRepo.findBy({
         id: In(tagIds),
-        business_id: business.id,
+        businessId: business.id,
       });
     } else {
       company.tags = [];
@@ -213,7 +213,7 @@ export class CompaniesService {
       } else {
         company.tags = await this.tagsRepo.findBy({
           id: In(tagIds),
-          business_id: business.id,
+          businessId: business.id,
         });
       }
     }

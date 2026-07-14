@@ -13,12 +13,12 @@ const mockBusiness = { id: 'biz-uuid' } as Business;
 const makeTask = (assignedTo: string | null = null): CrmTask =>
   ({
     id: 'task-uuid',
-    business_id: 'biz-uuid',
+    businessId: 'biz-uuid',
     title: 'Test task',
     status: TaskStatus.PENDING,
-    assigned_to: assignedTo,
-    contact_id: null,
-    due_date: new Date(),
+    assignedTo: assignedTo,
+    contactId: null,
+    dueDate: new Date(),
   }) as unknown as CrmTask;
 
 describe('CrmTasksService — ownership rules', () => {
@@ -157,7 +157,7 @@ describe('CrmTasksService — ownership rules', () => {
         { id: 'admin-uuid', role: UserRole.ADMIN },
       );
       expect(mockQb.andWhere).not.toHaveBeenCalledWith(
-        expect.stringContaining('assigned_to'),
+        expect.stringContaining('assignedTo'),
         expect.anything(),
       );
     });
@@ -168,7 +168,7 @@ describe('CrmTasksService — ownership rules', () => {
         {},
         { id: 'agent-uuid', role: UserRole.AGENT },
       );
-      expect(mockQb.andWhere).toHaveBeenCalledWith('t.assigned_to = :uid', {
+      expect(mockQb.andWhere).toHaveBeenCalledWith('t.assignedTo = :uid', {
         uid: 'agent-uuid',
       });
     });
@@ -180,7 +180,7 @@ describe('CrmTasksService — ownership rules', () => {
       tasksRepo.findOne.mockResolvedValue(task);
       tasksRepo.softRemove.mockResolvedValue({
         ...task,
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       });
 
       await service.remove(mockBusiness, 'task-uuid');

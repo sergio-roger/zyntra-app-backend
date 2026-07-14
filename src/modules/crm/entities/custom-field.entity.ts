@@ -13,8 +13,8 @@ import { Business } from '@auth/entities/business.entity';
 import { CustomFieldType } from '@crm/enums/custom-field-type.enum';
 
 @Entity({ name: 'custom_fields', schema: 'crm' })
-@Index(['business_id'])
-@Index('UQ_business_field_name', ['business_id', 'name'], {
+@Index(['businessId'])
+@Index('UQ_business_field_name', ['businessId', 'name'], {
   unique: true,
   where: '"deleted_at" IS NULL',
 })
@@ -22,15 +22,15 @@ export class CustomField {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  business_id: string;
+  @Column({ name: 'business_id', type: 'uuid' })
+  businessId: string;
 
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
   business: Business;
 
-  @Column({ default: 'contact' })
-  entity_type: string; // 'contact' | 'company'
+  @Column({ name: 'entity_type', default: 'contact' })
+  entityType: string; // 'contact' | 'company'
 
   @Column()
   name: string; // internal key, e.g., 'preferred_contact_method'
@@ -51,15 +51,15 @@ export class CustomField {
   @Column({ default: false })
   required: boolean;
 
-  @Column({ default: true })
-  is_active: boolean;
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 }

@@ -10,28 +10,28 @@ import { Deal } from './deal.entity';
 import { PipelineStage } from './pipeline-stage.entity';
 
 @Entity({ name: 'deal_stage_history', schema: 'crm' })
-@Index(['deal_id', 'entered_at'])
+@Index(['dealId', 'enteredAt'])
 export class DealStageHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  deal_id: string;
+  @Column({ name: 'deal_id', type: 'uuid' })
+  dealId: string;
 
   @ManyToOne(() => Deal, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'deal_id' })
   deal: Deal;
 
-  @Column('uuid', { nullable: true })
-  stage_id: string | null;
+  @Column({ name: 'stage_id', type: 'uuid', nullable: true })
+  stageId: string | null;
 
   @ManyToOne(() => PipelineStage, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'stage_id' })
   stage: PipelineStage | null;
 
-  @Column('timestamp')
-  entered_at: Date;
+  @Column({ name: 'entered_at', type: 'timestamp' })
+  enteredAt: Date;
 
-  @Column('timestamp', { nullable: true })
-  left_at: Date | null;
+  @Column({ name: 'left_at', type: 'timestamp', nullable: true })
+  leftAt: Date | null;
 }

@@ -15,24 +15,24 @@ const mockBusiness = { id: 'biz-uuid' } as Business;
 const makePipeline = (overrides: Partial<Pipeline> = {}): Pipeline =>
   ({
     id: 'pipe-uuid',
-    business_id: 'biz-uuid',
+    businessId: 'biz-uuid',
     name: 'Pipeline Ventas',
-    is_default: false,
+    isDefault: false,
     position: 0,
     stages: [],
-    deleted_at: null,
+    deletedAt: null,
     ...overrides,
   }) as unknown as Pipeline;
 
 const makeStage = (overrides: Partial<PipelineStage> = {}): PipelineStage =>
   ({
     id: 'stage-uuid',
-    pipeline_id: 'pipe-uuid',
+    pipelineId: 'pipe-uuid',
     name: 'Prospección',
     color: '#4f46e5',
     position: 0,
     type: PipelineStageType.ACTIVE,
-    probability_percent: 10,
+    probabilityPercent: 10,
     ...overrides,
   }) as PipelineStage;
 
@@ -143,8 +143,8 @@ describe('PipelinesService', () => {
       expect(typeCount[PipelineStageType.LOST]).toBe(1);
     });
 
-    it('unsets is_default on existing pipelines when creating a new default', async () => {
-      const savedPipeline = makePipeline({ is_default: true });
+    it('unsets isDefault on existing pipelines when creating a new default', async () => {
+      const savedPipeline = makePipeline({ isDefault: true });
       planRepo.findOne.mockResolvedValue(null);
       pipelineRepo.update.mockResolvedValue({ affected: 1 });
       pipelineRepo.create.mockReturnValue(savedPipeline);
@@ -158,8 +158,8 @@ describe('PipelinesService', () => {
       });
 
       expect(pipelineRepo.update).toHaveBeenCalledWith(
-        { business_id: mockBusiness.id },
-        { is_default: false },
+        { businessId: mockBusiness.id },
+        { isDefault: false },
       );
     });
   });
@@ -196,7 +196,7 @@ describe('PipelinesService', () => {
       dealRepo.createQueryBuilder.mockReturnValue(mockQb);
       pipelineRepo.softRemove.mockResolvedValue({
         ...pipeline,
-        deleted_at: new Date(),
+        deletedAt: new Date(),
       });
 
       await service.softDelete(mockBusiness, 'pipe-uuid');
@@ -226,8 +226,8 @@ describe('PipelinesService', () => {
 
     it('throws NotFoundException when stage belongs to a different business', async () => {
       const stage = makeStage();
-      (stage as unknown as { pipeline: { business_id: string } }).pipeline = {
-        business_id: 'other-biz',
+      (stage as unknown as { pipeline: { businessId: string } }).pipeline = {
+        businessId: 'other-biz',
       };
       stageRepo.findOne.mockResolvedValue(stage);
 
@@ -238,8 +238,8 @@ describe('PipelinesService', () => {
 
     it('throws ConflictException when stage has assigned deals', async () => {
       const stage = makeStage();
-      (stage as unknown as { pipeline: { business_id: string } }).pipeline = {
-        business_id: 'biz-uuid',
+      (stage as unknown as { pipeline: { businessId: string } }).pipeline = {
+        businessId: 'biz-uuid',
       };
       stageRepo.findOne.mockResolvedValue(stage);
       dealRepo.count.mockResolvedValue(2);
@@ -252,8 +252,8 @@ describe('PipelinesService', () => {
 
     it('calls remove when stage has no deals', async () => {
       const stage = makeStage();
-      (stage as unknown as { pipeline: { business_id: string } }).pipeline = {
-        business_id: 'biz-uuid',
+      (stage as unknown as { pipeline: { businessId: string } }).pipeline = {
+        businessId: 'biz-uuid',
       };
       stageRepo.findOne.mockResolvedValue(stage);
       dealRepo.count.mockResolvedValue(0);

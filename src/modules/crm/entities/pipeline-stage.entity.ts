@@ -12,13 +12,13 @@ import { Pipeline } from './pipeline.entity';
 import { PipelineStageType } from '@crm/enums/pipeline-stage-type.enum';
 
 @Entity({ name: 'pipeline_stages', schema: 'crm' })
-@Index(['pipeline_id', 'position'])
+@Index(['pipelineId', 'position'])
 export class PipelineStage {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid')
-  pipeline_id: string;
+  @Column({ name: 'pipeline_id', type: 'uuid' })
+  pipelineId: string;
 
   @ManyToOne(() => Pipeline, (pipeline) => pipeline.stages, {
     onDelete: 'CASCADE',
@@ -42,12 +42,12 @@ export class PipelineStage {
   })
   type: PipelineStageType;
 
-  @Column('int', { default: 20 })
-  probability_percent: number;
+  @Column({ name: 'probability_percent', type: 'int', default: 20 })
+  probabilityPercent: number;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

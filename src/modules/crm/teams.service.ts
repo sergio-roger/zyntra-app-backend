@@ -17,7 +17,7 @@ export class TeamsService {
 
   async list(business: Business) {
     return this.teamRepo.find({
-      where: { business_id: business.id },
+      where: { businessId: business.id },
       relations: ['members'],
       order: { name: 'ASC' },
     });
@@ -25,7 +25,7 @@ export class TeamsService {
 
   async findOne(business: Business, id: string) {
     const team = await this.teamRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
       relations: ['members'],
     });
     if (!team) throw new NotFoundException('Team not found');
@@ -36,7 +36,7 @@ export class TeamsService {
     const { member_ids, ...rest } = dto;
     const team = this.teamRepo.create({
       ...rest,
-      business_id: business.id,
+      businessId: business.id,
       members: [],
     });
 

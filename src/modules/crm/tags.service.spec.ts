@@ -13,13 +13,13 @@ const mockBusiness = {
 
 const mockTag = {
   id: 'tag-uuid-1',
-  business_id: 'business-uuid-1234',
+  businessId: 'business-uuid-1234',
   name: 'Sales',
   color: '#6366f1',
   description: 'Sales team tag',
-  created_at: new Date(),
-  updated_at: new Date(),
-  deleted_at: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
 } as Tag;
 
 describe('TagsService', () => {
@@ -65,7 +65,7 @@ describe('TagsService', () => {
       const result = await service.findAll(mockBusiness);
 
       expect(repo.find).toHaveBeenCalledWith({
-        where: { business_id: mockBusiness.id },
+        where: { businessId: mockBusiness.id },
         order: { name: 'ASC' },
       });
       expect(result).toEqual(tagsList);
@@ -78,7 +78,7 @@ describe('TagsService', () => {
       const result = await service.findAll(mockBusiness, 'company');
 
       expect(repo.find).toHaveBeenCalledWith({
-        where: { business_id: mockBusiness.id, entity_type: 'company' },
+        where: { businessId: mockBusiness.id, entityType: 'company' },
         order: { name: 'ASC' },
       });
       expect(result).toEqual(tagsList);
@@ -92,7 +92,7 @@ describe('TagsService', () => {
       const result = await service.findOne(mockBusiness, 'tag-uuid-1');
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { id: 'tag-uuid-1', business_id: mockBusiness.id },
+        where: { id: 'tag-uuid-1', businessId: mockBusiness.id },
       });
       expect(result).toEqual(mockTag);
     });
@@ -117,22 +117,22 @@ describe('TagsService', () => {
       mockRepository.findOne.mockResolvedValue(null);
       mockRepository.create.mockReturnValue({
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
       mockRepository.save.mockResolvedValue({
         id: 'new-tag-uuid',
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
 
       const result = await service.create(mockBusiness, createDto);
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { business_id: mockBusiness.id, name: createDto.name },
+        where: { businessId: mockBusiness.id, name: createDto.name },
       });
       expect(repo.create).toHaveBeenCalledWith({
         ...createDto,
-        business_id: mockBusiness.id,
+        businessId: mockBusiness.id,
       });
       expect(repo.save).toHaveBeenCalled();
       expect(result).toHaveProperty('id');
@@ -187,7 +187,7 @@ describe('TagsService', () => {
       await service.remove(mockBusiness, mockTag.id);
 
       expect(repo.findOne).toHaveBeenCalledWith({
-        where: { id: mockTag.id, business_id: mockBusiness.id },
+        where: { id: mockTag.id, businessId: mockBusiness.id },
       });
       expect(repo.softRemove).toHaveBeenCalledWith(mockTag);
     });

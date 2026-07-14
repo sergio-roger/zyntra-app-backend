@@ -33,26 +33,26 @@ export class CrmTasksService {
     const qb = this.tasksRepo
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.contact', 'c')
-      .where('t.business_id = :bid', { bid: business.id });
+      .where('t.businessId = :bid', { bid: business.id });
 
     if (query.status) {
       qb.andWhere('t.status = :status', { status: query.status });
     }
 
     if (query.contactId) {
-      qb.andWhere('t.contact_id = :cid', { cid: query.contactId });
+      qb.andWhere('t.contactId = :cid', { cid: query.contactId });
     }
 
     if (query.dealId) {
-      qb.andWhere('t.deal_id = :did', { did: query.dealId });
+      qb.andWhere('t.dealId = :did', { did: query.dealId });
     }
 
     // Agent sees only tasks assigned to them
     if (caller?.role === UserRole.AGENT && caller?.id) {
-      qb.andWhere('t.assigned_to = :uid', { uid: caller.id });
+      qb.andWhere('t.assignedTo = :uid', { uid: caller.id });
     }
 
-    qb.orderBy('t.due_date', 'ASC');
+    qb.orderBy('t.dueDate', 'ASC');
 
     const tasks = await qb.getMany();
     return tasks.map((t) => this.mapTask(t));
@@ -60,7 +60,7 @@ export class CrmTasksService {
 
   async findOne(business: Business, id: string): Promise<TaskResponse> {
     const task = await this.tasksRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
       relations: ['contact'],
     });
     if (!task) throw new NotFoundException('Task not found');
@@ -71,12 +71,12 @@ export class CrmTasksService {
     const task = this.tasksRepo.create({
       title: dto.title,
       description: dto.description,
-      due_date: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
       priority: dto.priority,
-      contact_id: dto.contactId,
-      deal_id: dto.dealId,
-      assigned_to: dto.assignedTo,
-      business_id: business.id,
+      contactId: dto.contactId,
+      dealId: dto.dealId,
+      assignedTo: dto.assignedTo,
+      businessId: business.id,
       status: TaskStatus.PENDING,
     });
     const saved = await this.tasksRepo.save(task);
@@ -90,12 +90,12 @@ export class CrmTasksService {
     caller?: CallerContext,
   ): Promise<TaskResponse> {
     const existing = await this.tasksRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
       relations: ['contact'],
     });
     if (!existing) throw new NotFoundException('Task not found');
 
-    if (caller?.role === UserRole.AGENT && existing.assigned_to !== caller.id) {
+    if (caller?.role === UserRole.AGENT && existing.assignedTo !== caller.id) {
       throw new ForbiddenException('Solo puedes editar tareas asignadas a ti');
     }
 
@@ -103,11 +103,11 @@ export class CrmTasksService {
 
     if (dto.title !== undefined) existing.title = dto.title;
     if (dto.description !== undefined) existing.description = dto.description;
-    if (dto.dueDate !== undefined) existing.due_date = new Date(dto.dueDate);
+    if (dto.dueDate !== undefined) existing.dueDate = new Date(dto.dueDate);
     if (dto.priority !== undefined) existing.priority = dto.priority;
-    if (dto.contactId !== undefined) existing.contact_id = dto.contactId;
-    if (dto.dealId !== undefined) existing.deal_id = dto.dealId;
-    if (dto.assignedTo !== undefined) existing.assigned_to = dto.assignedTo;
+    if (dto.contactId !== undefined) existing.contactId = dto.contactId;
+    if (dto.dealId !== undefined) existing.dealId = dto.dealId;
+    if (dto.assignedTo !== undefined) existing.assignedTo = dto.assignedTo;
     if (dto.status !== undefined) existing.status = dto.status;
 
     const saved = await this.tasksRepo.save(existing);
@@ -115,12 +115,12 @@ export class CrmTasksService {
     if (
       saved.status === TaskStatus.COMPLETED &&
       oldStatus !== TaskStatus.COMPLETED &&
-      saved.contact_id
+      saved.contactId
     ) {
-      await this.contactsService.addActivity(business, saved.contact_id, {
+      await this.contactsService.addActivity(business, saved.contactId, {
         type: ActivityType.NOTE,
         content: `Tarea completada: ${saved.title}`,
-        metadata: { task_id: saved.id },
+        metadata: { taskId: saved.id },
       });
     }
 
@@ -129,7 +129,7 @@ export class CrmTasksService {
 
   async remove(business: Business, id: string) {
     const existing = await this.tasksRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
     });
     if (!existing) throw new NotFoundException('Task not found');
     await this.tasksRepo.softRemove(existing);
@@ -140,16 +140,16 @@ export class CrmTasksService {
       id: task.id,
       title: task.title,
       description: task.description,
-      dueDate: task.due_date,
+      dueDate: task.dueDate,
       status: task.status,
       priority: task.priority,
-      contactId: task.contact_id,
-      dealId: task.deal_id,
-      assignedTo: task.assigned_to,
+      contactId: task.contactId,
+      dealId: task.dealId,
+      assignedTo: task.assignedTo,
       contact: task.contact,
       deal: task.deal,
-      createdAt: task.created_at,
-      updatedAt: task.updated_at,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
     };
   }
 }

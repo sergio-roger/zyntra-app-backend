@@ -31,10 +31,10 @@ export class CustomFieldsService {
   ): Promise<CustomField[]> {
     return this.fieldRepo.find({
       where: {
-        business_id: business.id,
-        ...(entityType ? { entity_type: entityType } : {}),
+        businessId: business.id,
+        ...(entityType ? { entityType } : {}),
       },
-      order: { created_at: 'ASC' },
+      order: { createdAt: 'ASC' },
     });
   }
 
@@ -43,14 +43,19 @@ export class CustomFieldsService {
     dto: CreateCustomFieldDto,
   ): Promise<CustomField> {
     const existing = await this.fieldRepo.findOne({
-      where: { business_id: business.id, name: dto.name },
+      where: { businessId: business.id, name: dto.name },
     });
     if (existing)
       throw new ConflictException('Ya existe un campo con este nombre técnico');
 
     const field = this.fieldRepo.create({
-      ...dto,
-      business_id: business.id,
+      entityType: dto.entity_type,
+      name: dto.name,
+      label: dto.label,
+      type: dto.type,
+      options: dto.options,
+      required: dto.required,
+      businessId: business.id,
     });
     return this.fieldRepo.save(field);
   }
@@ -61,21 +66,25 @@ export class CustomFieldsService {
     dto: UpdateCustomFieldDto,
   ): Promise<CustomField> {
     const field = await this.fieldRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
     });
     if (!field) throw new NotFoundException('Campo no encontrado');
 
-    Object.assign(field, dto);
+    if (dto.label !== undefined) field.label = dto.label;
+    if (dto.options !== undefined) field.options = dto.options;
+    if (dto.required !== undefined) field.required = dto.required;
+    if (dto.is_active !== undefined) field.isActive = dto.is_active;
+
     return this.fieldRepo.save(field);
   }
 
   async remove(business: Business, id: string): Promise<void> {
     const field = await this.fieldRepo.findOne({
-      where: { id, business_id: business.id },
+      where: { id, businessId: business.id },
     });
     if (!field) throw new NotFoundException('Campo no encontrado');
 
-    if (field.entity_type === 'company') {
+    if (field.entityType === 'company') {
       const count = await this.companyRepo
         .createQueryBuilder('c')
         .where('c.business_id = :businessId', { businessId: business.id })
