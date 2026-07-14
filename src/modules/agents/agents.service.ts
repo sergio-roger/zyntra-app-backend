@@ -12,6 +12,23 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+export interface AgentTestSource {
+  documentId: string;
+  fileName: string;
+  snippet?: string;
+  score?: number;
+}
+
+export interface AgentTestResult {
+  reply: string;
+  model: string;
+  tokens?: number;
+  // Poblado a partir de la Fase C, cuando marketing-agents devuelva las
+  // fuentes de la base de conocimiento usadas para responder. Por ahora
+  // siempre queda undefined — el contrato ya está preparado.
+  sources?: AgentTestSource[];
+}
+
 @Injectable()
 export class AgentsService {
   constructor(
@@ -26,28 +43,46 @@ export class AgentsService {
 
   async create(businessId: string, dto: CreateAgentDto): Promise<Agent> {
     const agent = this.agentRepo.create({
-      businessId: businessId,
+      businessId,
       name: dto.name,
       model: dto.model ?? 'openai/gpt-4o-mini',
-      systemPrompt: dto.system_prompt,
+      systemPrompt: dto.systemPrompt,
       temperature: dto.temperature ?? 0.7,
       tools: dto.tools ?? [],
-      isActive: dto.is_active ?? true,
+      isActive: dto.isActive ?? true,
+      tone: dto.tone,
+      locale: dto.locale,
+      maxTokens: dto.maxTokens ?? 1024,
+      voiceConfig: dto.voiceConfig,
+      memoryConfig: dto.memoryConfig,
     });
-    return this.agentRepo.save(agent);
+    const saved = await this.agentRepo.save(agent);
+
+    // knowledgeCollection no es editable por el usuario: se autogenera acá,
+    // recién cuando ya existe un id (columna Qdrant que va a usar la Fase C).
+    saved.knowledgeCollection = `kb_${saved.id}`;
+    return this.agentRepo.save(saved);
   }
 
   async findAll(businessId: string): Promise<Agent[]> {
     return this.agentRepo.find({
-      where: { businessId: businessId },
+      where: { businessId },
       order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(businessId: string, agentId: string): Promise<Agent> {
     const agent = await this.agentRepo.findOne({
-      where: { id: agentId, businessId: businessId },
+      where: { id: agentId, businessId },
     });
+    if (!agent) throw new NotFoundException('Agente no encontrado');
+    return agent;
+  }
+
+  // Variante sin scope de negocio, solo para llamadas internas
+  // service-to-service (protegidas por SERVICE_TOKEN, no por JWT de usuario).
+  async findById(agentId: string): Promise<Agent> {
+    const agent = await this.agentRepo.findOne({ where: { id: agentId } });
     if (!agent) throw new NotFoundException('Agente no encontrado');
     return agent;
   }
@@ -60,10 +95,15 @@ export class AgentsService {
     const agent = await this.findOne(businessId, agentId);
     if (dto.name !== undefined) agent.name = dto.name;
     if (dto.model !== undefined) agent.model = dto.model;
-    if (dto.system_prompt !== undefined) agent.systemPrompt = dto.system_prompt;
+    if (dto.systemPrompt !== undefined) agent.systemPrompt = dto.systemPrompt;
     if (dto.temperature !== undefined) agent.temperature = dto.temperature;
     if (dto.tools !== undefined) agent.tools = dto.tools;
-    if (dto.is_active !== undefined) agent.isActive = dto.is_active;
+    if (dto.isActive !== undefined) agent.isActive = dto.isActive;
+    if (dto.tone !== undefined) agent.tone = dto.tone;
+    if (dto.locale !== undefined) agent.locale = dto.locale;
+    if (dto.maxTokens !== undefined) agent.maxTokens = dto.maxTokens;
+    if (dto.voiceConfig !== undefined) agent.voiceConfig = dto.voiceConfig;
+    if (dto.memoryConfig !== undefined) agent.memoryConfig = dto.memoryConfig;
     return this.agentRepo.save(agent);
   }
 
@@ -91,12 +131,13 @@ export class AgentsService {
     businessId: string,
     agentId: string,
     message: string,
-  ): Promise<{ reply: string; model: string; tokens?: number }> {
+  ): Promise<AgentTestResult> {
     const agent = await this.findOne(businessId, agentId);
 
     const response = await this.aiService.chat({
       model: agent.model,
       temperature: agent.temperature,
+      max_tokens: agent.maxTokens,
       messages: [
         { role: 'system', content: agent.systemPrompt },
         { role: 'user', content: message },
@@ -110,6 +151,22 @@ export class AgentsService {
       reply,
       model: response.model,
       tokens: response.usage?.total_tokens,
+    };
+  }
+
+  async getRuntimeConfig(agentId: string) {
+    const agent = await this.findById(agentId);
+    return {
+      systemPrompt: agent.systemPrompt,
+      tone: agent.tone,
+      locale: agent.locale,
+      model: agent.model,
+      temperature: agent.temperature,
+      maxTokens: agent.maxTokens,
+      tools: agent.tools,
+      knowledgeCollection: agent.knowledgeCollection,
+      voice: agent.voiceConfig,
+      memory: agent.memoryConfig,
     };
   }
 

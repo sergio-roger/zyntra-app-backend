@@ -9,6 +9,8 @@ import {
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
 import { AgentTool } from '@/modules/agents/enums/agent-tool.enum';
+import { ChatbotTone } from '@/modules/chatbot/enums/chatbot-tone.enum';
+import { ChatbotLocale } from '@/modules/chatbot/enums/chatbot-locale.enum';
 
 @Entity({ name: 'agents', schema: 'public' })
 export class Agent {
@@ -40,11 +42,11 @@ export class Agent {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column({ nullable: true })
-  tone: string;
+  @Column({ type: 'varchar', nullable: true })
+  tone: ChatbotTone | null;
 
-  @Column({ nullable: true })
-  locale: string;
+  @Column({ type: 'varchar', nullable: true })
+  locale: ChatbotLocale | null;
 
   @Column({ name: 'max_tokens', type: 'int', default: 1024 })
   maxTokens: number;

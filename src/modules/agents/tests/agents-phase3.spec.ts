@@ -17,6 +17,8 @@ import { Agent } from '../entities/agent.entity';
 import { AgentTool } from '../enums/agent-tool.enum';
 import { Channel } from '@/modules/channels/entities/channel.entity';
 import { AiService } from '@/modules/ai/ai.service';
+import { ChatbotTone } from '@/modules/chatbot/enums/chatbot-tone.enum';
+import { ChatbotLocale } from '@/modules/chatbot/enums/chatbot-locale.enum';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -39,8 +41,8 @@ const makeAgent = (overrides: Partial<Agent> = {}): Agent => ({
   temperature: 0.7,
   tools: [],
   isActive: true,
-  tone: 'friendly',
-  locale: 'es',
+  tone: ChatbotTone.FRIENDLY,
+  locale: ChatbotLocale.ES,
   maxTokens: 1024,
   knowledgeCollection: null as unknown as string,
   voiceConfig: null as unknown as Record<string, unknown>,
@@ -91,7 +93,7 @@ describe('AgentsService', () => {
 
       const result = await service.create('biz-1', {
         name: 'Test Agent',
-        system_prompt: 'Be helpful.',
+        systemPrompt: 'Be helpful.',
       });
 
       expect(result).toMatchObject({ name: 'Test Agent' });
@@ -104,7 +106,7 @@ describe('AgentsService', () => {
 
       const result = await service.create('biz-1', {
         name: 'Agent',
-        system_prompt: 'p',
+        systemPrompt: 'p',
         tools: [AgentTool.WEB_SEARCH],
       });
 

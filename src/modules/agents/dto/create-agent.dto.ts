@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsEnum,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   Max,
@@ -12,6 +13,8 @@ import {
   MinLength,
 } from 'class-validator';
 import { AgentTool } from '../enums/agent-tool.enum';
+import { ChatbotTone } from '@/modules/chatbot/enums/chatbot-tone.enum';
+import { ChatbotLocale } from '@/modules/chatbot/enums/chatbot-locale.enum';
 
 export class CreateAgentDto {
   @ApiProperty({ example: 'Agente de Ventas' })
@@ -30,7 +33,7 @@ export class CreateAgentDto {
   @IsString()
   @MinLength(1)
   @MaxLength(8000)
-  system_prompt: string;
+  systemPrompt: string;
 
   @ApiPropertyOptional({ example: 0.7, minimum: 0, maximum: 1 })
   @IsOptional()
@@ -48,5 +51,38 @@ export class CreateAgentDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
-  is_active?: boolean;
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ enum: ChatbotTone, example: ChatbotTone.FRIENDLY })
+  @IsOptional()
+  @IsEnum(ChatbotTone)
+  tone?: ChatbotTone;
+
+  @ApiPropertyOptional({ enum: ChatbotLocale, example: ChatbotLocale.ES })
+  @IsOptional()
+  @IsEnum(ChatbotLocale)
+  locale?: ChatbotLocale;
+
+  @ApiPropertyOptional({ example: 1024, minimum: 1, maximum: 32000 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(32000)
+  maxTokens?: number;
+
+  @ApiPropertyOptional({
+    description: 'Configuración libre del motor de voz (Fase C)',
+    example: { provider: 'elevenlabs', voiceId: 'abc123' },
+  })
+  @IsOptional()
+  @IsObject()
+  voiceConfig?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'Configuración libre de memoria/persistencia de contexto',
+    example: { strategy: 'summary', maxTurns: 20 },
+  })
+  @IsOptional()
+  @IsObject()
+  memoryConfig?: Record<string, unknown>;
 }

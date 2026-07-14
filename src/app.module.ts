@@ -1,6 +1,7 @@
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { AgentsModule } from '@/modules/agents/agents.module';
+import { KnowledgeModule } from '@/modules/knowledge/knowledge.module';
 import { ChannelsModule } from '@/modules/channels/channels.module';
 import { LifecycleModule } from '@/modules/lifecycle/lifecycle.module';
 import { TasksModule } from '@/modules/tasks/tasks.module';
@@ -47,6 +48,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     TasksModule,
     ChannelsModule,
     AgentsModule,
+    KnowledgeModule,
 
     BullModule.forRootAsync({
       inject: [ConfigService],
