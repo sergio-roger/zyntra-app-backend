@@ -21,9 +21,11 @@ import { KnowledgeDocument } from '@/modules/agents/entities/knowledge-document.
 import { KnowledgeDocumentStatus } from '@/modules/agents/enums/knowledge-document-status.enum';
 import { KnowledgeCallbackDto } from '@/modules/knowledge/dto/knowledge-callback.dto';
 import { detectKnowledgeMimeType } from '@/modules/knowledge/utils/detect-knowledge-mime.util';
+import { StorageClientService } from '@/storage-client/storage-client.service';
 import {
   KB_INGESTION_QUEUE,
   KB_DELETION_QUEUE,
+  KB_TEXT_ONLY_MIME_TYPES,
 } from '@/modules/knowledge/constants/knowledge.constants';
 
 @Injectable()
@@ -42,6 +44,7 @@ export class KnowledgeService {
     private readonly agentsService: AgentsService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly storageClient: StorageClientService,
   ) {}
 
   private get storageServiceUrl(): string {
@@ -203,6 +206,49 @@ export class KnowledgeService {
     });
     if (!document) throw new NotFoundException('Documento no encontrado');
     return document;
+  }
+
+  async getPreviewUrl(
+    businessId: string,
+    agentId: string,
+    documentId: string,
+  ): Promise<{
+    url: string;
+    fileName: string;
+    fileType: string;
+    content: string | null;
+  }> {
+    const document = await this.findOne(businessId, agentId, documentId);
+    if (!document.storageFileId) {
+      throw new ConflictException(
+        'El documento todavía no tiene un archivo disponible para previsualizar.',
+      );
+    }
+
+    const url = await this.storageClient.getSignedUrl(
+      businessId,
+      document.storageFileId,
+    );
+
+    // Los mimetypes de texto plano se renderizan mal embebidos en un iframe
+    // (el navegador no siempre asume UTF-8 y el tema oscuro los hace
+    // ilegibles) — se resuelve leyendo el contenido acá y devolviéndolo como
+    // string para que el frontend lo pinte con su propio estilo.
+    let content: string | null = null;
+    if (KB_TEXT_ONLY_MIME_TYPES.has(document.fileType)) {
+      try {
+        const response = await firstValueFrom(
+          this.httpService.get<string>(url, { responseType: 'text' }),
+        );
+        content = response.data;
+      } catch (error) {
+        this.logger.warn(
+          `No se pudo leer el contenido de texto del documento ${document.id}: ${error}`,
+        );
+      }
+    }
+
+    return { url, fileName: document.fileName, fileType: document.fileType, content };
   }
 
   async remove(

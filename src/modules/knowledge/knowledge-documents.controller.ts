@@ -89,6 +89,18 @@ export class KnowledgeDocumentsController {
     return this.knowledgeService.findOne(businessId, agentId, id);
   }
 
+  @Get(':id/preview-url')
+  @ApiOperation({ summary: 'Obtiene una URL firmada para previsualizar el documento' })
+  getPreviewUrl(
+    @Req() req: RequestWithUser,
+    @Param('businessId', ParseUUIDPipe) businessId: string,
+    @Param('agentId', ParseUUIDPipe) agentId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    this.knowledgeService.assertOwnership(req.user.businessId, businessId);
+    return this.knowledgeService.getPreviewUrl(businessId, agentId, id);
+  }
+
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(HttpStatus.OK)
