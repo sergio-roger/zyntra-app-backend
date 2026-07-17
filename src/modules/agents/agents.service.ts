@@ -1,17 +1,22 @@
 import { CreateAgentDto } from '@/modules/agents/dto/create-agent.dto';
 import { UpdateAgentDto } from '@/modules/agents/dto/update-agent.dto';
 import { Agent } from '@/modules/agents/entities/agent.entity';
+import { AgentTool } from '@/modules/agents/enums/agent-tool.enum';
 import { Channel } from '@/modules/channels/entities/channel.entity';
 import { AiService } from '@ai/ai.service';
 import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectQueue } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
+import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
 
 export interface AgentTestSource {
@@ -33,6 +38,8 @@ export interface AgentTestResult {
 
 @Injectable()
 export class AgentsService {
+  private readonly logger = new Logger(AgentsService.name);
+
   constructor(
     @InjectRepository(Agent)
     private readonly agentRepo: Repository<Agent>,
@@ -44,6 +51,8 @@ export class AgentsService {
     private readonly kbDeletionQueue: Queue,
 
     private readonly aiService: AiService,
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(businessId: string, dto: CreateAgentDto): Promise<Agent> {
@@ -149,13 +158,18 @@ export class AgentsService {
   ): Promise<AgentTestResult> {
     const agent = await this.findOne(businessId, agentId);
 
+    const context = await this.retrieveKnowledgeContext(agent, message);
+    const promptMessage = context
+      ? `Contexto relevante de la base de conocimiento:\n${context}\n\nPregunta del usuario: ${message}`
+      : message;
+
     const response = await this.aiService.chat({
       model: agent.model,
       temperature: agent.temperature,
       max_tokens: agent.maxTokens,
       messages: [
         { role: 'system', content: agent.systemPrompt },
-        { role: 'user', content: message },
+        { role: 'user', content: promptMessage },
       ],
     });
 
@@ -167,6 +181,46 @@ export class AgentsService {
       model: response.model,
       tokens: response.usage?.total_tokens,
     };
+  }
+
+  // Mismo retrieval (embeddings + Qdrant) que usa el flujo real de mensajes
+  // por canal (marketing-agents/agent-response.worker.ts), para que "Probar
+  // agente" no responda a ciegas cuando el agente tiene knowledge_base
+  // activado. Si marketing-agents no está disponible, se degrada a responder
+  // sin contexto en vez de romper el sandbox.
+  private async retrieveKnowledgeContext(
+    agent: Agent,
+    message: string,
+  ): Promise<string | null> {
+    if (!agent.tools?.includes(AgentTool.KNOWLEDGE_BASE) || !agent.knowledgeCollection) {
+      return null;
+    }
+
+    const baseUrl = this.configService.get<string>(
+      'MARKETING_AGENTS_URL',
+      'http://localhost:4111',
+    );
+    const serviceToken = this.configService.get<string>('SERVICE_TOKEN', '');
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<{ context: string | null }>(
+          `${baseUrl}/internal/retrieve-context`,
+          {
+            tools: agent.tools,
+            knowledgeCollection: agent.knowledgeCollection,
+            message,
+          },
+          { headers: { 'x-service-token': serviceToken } },
+        ),
+      );
+      return response.data.context;
+    } catch (err) {
+      this.logger.warn(
+        `retrieve-context failed for agent ${agent.id}, answering without context: ${err}`,
+      );
+      return null;
+    }
   }
 
   async getRuntimeConfig(agentId: string) {
