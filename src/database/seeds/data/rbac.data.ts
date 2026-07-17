@@ -460,6 +460,43 @@ export const MENUS_DATA = [
     description:
       'Configuración de agentes automatizados dentro de los flujos de trabajo.',
   },
+  // Tabs del detalle de agente — ya referenciadas en plans.data.ts (modules)
+  // y en @RequiresModule del backend, pero faltaban como nodos de menú acá.
+  {
+    key: 'automations_agents_identity',
+    label: 'Identidad',
+    path: '/automations/agents',
+    parent_key: 'automations_agents',
+    description: 'Personalidad, tono y modelo del agente.',
+  },
+  {
+    key: 'automations_agents_tools',
+    label: 'Herramientas',
+    path: '/automations/agents',
+    parent_key: 'automations_agents',
+    description: 'Herramientas habilitadas para el agente.',
+  },
+  {
+    key: 'automations_agents_knowledge',
+    label: 'Conocimiento',
+    path: '/automations/agents',
+    parent_key: 'automations_agents',
+    description: 'Base de conocimiento y documentos del agente.',
+  },
+  {
+    key: 'automations_agents_voice',
+    label: 'Voz',
+    path: '/automations/agents',
+    parent_key: 'automations_agents',
+    description: 'Configuración de voz del agente.',
+  },
+  {
+    key: 'automations_agents_memory',
+    label: 'Memoria',
+    path: '/automations/agents',
+    parent_key: 'automations_agents',
+    description: 'Configuración de memoria del agente.',
+  },
 ];
 
 // ─── Permission sets by role ──────────────────────────────────────────────────
