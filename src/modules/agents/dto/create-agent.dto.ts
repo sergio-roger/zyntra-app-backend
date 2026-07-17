@@ -23,7 +23,7 @@ export class CreateAgentDto {
   @MaxLength(100)
   name: string;
 
-  @ApiPropertyOptional({ example: 'openai/gpt-4o-mini' })
+  @ApiPropertyOptional({ example: 'openai/gpt-oss-20b:free' })
   @IsOptional()
   @IsString()
   @MaxLength(100)

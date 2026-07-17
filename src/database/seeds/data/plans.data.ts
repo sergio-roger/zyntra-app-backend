@@ -46,9 +46,8 @@ export const PLANS_DATA = [
       agents_ia: ModuleAccessLevel.LOCKED,
       inbox: ModuleAccessLevel.LOCKED,
       funnels: ModuleAccessLevel.LOCKED,
-      // TODO(business): exact access_level per plan for these 5 sub-modules
-      // is pending confirmation. BrandStart is LOCKED (ai_agent_limit: 0),
-      // that part is not in question.
+      // ai_agent_limit: 0 -> sin agentes en este plan, los 5 sub-módulos
+      // quedan LOCKED igual que el módulo padre automations_agents.
       automations_agents_identity: ModuleAccessLevel.LOCKED,
       automations_agents_tools: ModuleAccessLevel.LOCKED,
       automations_agents_knowledge: ModuleAccessLevel.LOCKED,
@@ -105,14 +104,14 @@ export const PLANS_DATA = [
       inbox: ModuleAccessLevel.FULL,
       inbox_channels: ModuleAccessLevel.READ_ONLY,
       funnels: ModuleAccessLevel.LOCKED,
-      // TODO(business): exact access_level per plan for these 5 sub-modules
-      // is pending confirmation. Placeholder mirrors the previous `avatar`
-      // gating (locked) until product/business confirms the real split.
-      automations_agents_identity: ModuleAccessLevel.LOCKED,
-      automations_agents_tools: ModuleAccessLevel.LOCKED,
-      automations_agents_knowledge: ModuleAccessLevel.LOCKED,
-      automations_agents_voice: ModuleAccessLevel.LOCKED,
-      automations_agents_memory: ModuleAccessLevel.LOCKED,
+      // ai_agent_limit: 1 -> el plan permite crear/configurar ese agente,
+      // así que los 5 sub-módulos van FULL (antes LOCKED por error, lo que
+      // bloqueaba por completo el flujo de creación de agentes).
+      automations_agents_identity: ModuleAccessLevel.FULL,
+      automations_agents_tools: ModuleAccessLevel.FULL,
+      automations_agents_knowledge: ModuleAccessLevel.FULL,
+      automations_agents_voice: ModuleAccessLevel.FULL,
+      automations_agents_memory: ModuleAccessLevel.FULL,
       analytics: ModuleAccessLevel.FULL,
       billing: ModuleAccessLevel.FULL,
       settings: ModuleAccessLevel.FULL,
@@ -156,9 +155,7 @@ export const PLANS_DATA = [
       agents_ia: ModuleAccessLevel.FULL,
       inbox: ModuleAccessLevel.FULL,
       funnels: ModuleAccessLevel.FULL,
-      // TODO(business): exact access_level per plan for these 5 sub-modules
-      // is pending confirmation. Placeholder mirrors the previous `avatar`
-      // gating (full) until product/business confirms the real split.
+      // ai_agent_limit: 10 -> plan tope, los 5 sub-módulos van FULL.
       automations_agents_identity: ModuleAccessLevel.FULL,
       automations_agents_tools: ModuleAccessLevel.FULL,
       automations_agents_knowledge: ModuleAccessLevel.FULL,

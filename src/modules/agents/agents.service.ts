@@ -50,7 +50,7 @@ export class AgentsService {
     const agent = this.agentRepo.create({
       businessId,
       name: dto.name,
-      model: dto.model ?? 'openai/gpt-4o-mini',
+      model: dto.model ?? 'openai/gpt-oss-20b:free',
       systemPrompt: dto.systemPrompt,
       temperature: dto.temperature ?? 0.7,
       tools: dto.tools ?? [],

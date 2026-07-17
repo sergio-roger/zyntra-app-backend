@@ -27,7 +27,7 @@ export class Agent {
   @Column()
   name: string;
 
-  @Column({ default: 'openai/gpt-4o-mini' })
+  @Column({ default: 'openai/gpt-oss-20b:free' })
   model: string;
 
   @Column({ name: 'system_prompt', type: 'text' })
