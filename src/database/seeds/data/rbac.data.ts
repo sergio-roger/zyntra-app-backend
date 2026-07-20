@@ -497,6 +497,14 @@ export const MENUS_DATA = [
     parent_key: 'automations_agents',
     description: 'Configuración de memoria del agente.',
   },
+  {
+    key: 'automations_forms',
+    label: 'Formularios',
+    path: '/automations/forms',
+    parent_key: 'automations',
+    description:
+      'Creación de plantillas de formulario reutilizables para capturar leads.',
+  },
 ];
 
 // ─── Permission sets by role ──────────────────────────────────────────────────

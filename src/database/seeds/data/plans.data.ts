@@ -61,6 +61,7 @@ export const PLANS_DATA = [
       automations: ModuleAccessLevel.LOCKED,
       automations_workflows: ModuleAccessLevel.LOCKED,
       automations_agents: ModuleAccessLevel.LOCKED,
+      automations_forms: ModuleAccessLevel.LOCKED,
     },
   },
   {
@@ -110,6 +111,7 @@ export const PLANS_DATA = [
       automations: ModuleAccessLevel.FULL,
       automations_workflows: ModuleAccessLevel.LOCKED,
       automations_agents: ModuleAccessLevel.FULL,
+      automations_forms: ModuleAccessLevel.FULL,
     },
   },
   {
@@ -155,6 +157,7 @@ export const PLANS_DATA = [
       automations: ModuleAccessLevel.FULL,
       automations_workflows: ModuleAccessLevel.FULL,
       automations_agents: ModuleAccessLevel.FULL,
+      automations_forms: ModuleAccessLevel.FULL,
     },
   },
 ];

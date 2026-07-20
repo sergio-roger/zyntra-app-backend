@@ -11,7 +11,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'knowledge_documents', schema: 'public' })
+@Entity({ name: 'knowledge_documents', schema: 'workflows' })
 export class KnowledgeDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

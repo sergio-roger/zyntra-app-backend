@@ -12,7 +12,7 @@ import { AgentTool } from '@/modules/agents/enums/agent-tool.enum';
 import { ChatbotTone } from '@/modules/chatbot/enums/chatbot-tone.enum';
 import { ChatbotLocale } from '@/modules/chatbot/enums/chatbot-locale.enum';
 
-@Entity({ name: 'agents', schema: 'public' })
+@Entity({ name: 'agents', schema: 'workflows' })
 export class Agent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
