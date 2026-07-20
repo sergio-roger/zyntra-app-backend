@@ -8,6 +8,7 @@ import {
 } from '@/modules/chatbot/dto/chat.dto';
 import { Conversation } from '@/modules/chatbot/entities/conversation.entity';
 import { Message } from '@/modules/chatbot/entities/message.entity';
+import { VisitorConversationMessage } from '@/modules/chatbot/interfaces/chat-gateway.interface';
 import { MessageEncryptionService } from '@/modules/chatbot/services/message-encryption.service';
 import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
 import { WidgetSessionService } from '@/modules/widget-session/widget-session.service';
@@ -227,6 +228,41 @@ export class ChatService {
       pending: false,
       created_at: new Date().toISOString(),
     };
+  }
+
+  /**
+   * History for the widget on reconnect. The conversationId alone is not
+   * proof of ownership (it's stored client-side and could be replayed) —
+   * ownership is enforced against the verified widget session (businessId,
+   * channelId, visitorFingerprint), never against caller-supplied fields.
+   */
+  async getVisitorConversationHistory(
+    widgetSession: WidgetSessionPayload,
+    conversationId: string,
+  ): Promise<VisitorConversationMessage[] | null> {
+    if (!UUID_RE.test(conversationId)) return null;
+
+    const conversation = await this.conversationRepo.findOneBy({
+      id: conversationId,
+    });
+    if (
+      !conversation ||
+      conversation.businessId !== widgetSession.businessId ||
+      conversation.channelId !== widgetSession.channelId ||
+      conversation.visitor?.fingerprint !== widgetSession.visitorFingerprint
+    ) {
+      return null;
+    }
+
+    const messages = await this.messageRepo.find({
+      where: { conversationId },
+      order: { createdAt: 'ASC' },
+    });
+
+    return messages.map((m) => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: this.messageEncryption.decrypt(m.contentEncrypted),
+    }));
   }
 
   // ---------------------------------------------------------------------------

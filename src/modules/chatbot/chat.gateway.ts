@@ -1,6 +1,7 @@
 import { ChatService } from '@/modules/chatbot/chat.service';
 import { ChatRateLimitGuard } from '@/modules/chatbot/guards/chat-rate-limit.guard';
 import {
+  IdentifyAck,
   SendMessagePayload,
   SocketContext,
 } from '@/modules/chatbot/interfaces/chat-gateway.interface';
@@ -125,15 +126,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     set.add(client.id);
   }
 
-  /** Visitor calls this once it has a conversation_id (after the first /chat reply). */
+  /**
+   * Visitor calls this once it has a conversation_id (from a prior visit,
+   * restored from localStorage). Ownership is verified against the widget
+   * session before joining the room or returning history — otherwise a
+   * visitor could replay another visitor's conversationId to eavesdrop on
+   * their chat or read their message history.
+   */
   @SubscribeMessage('conversation:identify')
-  handleIdentify(
+  async handleIdentify(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { conversationId: string },
-  ) {
+  ): Promise<IdentifyAck> {
+    const ctx = client.data as SocketContext;
+    if (ctx.kind !== 'visitor') return { ok: false, error: 'forbidden' };
     if (!payload?.conversationId) return { ok: false, error: 'missing id' };
+
+    const messages = await this.chatService.getVisitorConversationHistory(
+      this.toWidgetSessionPayload(ctx),
+      payload.conversationId,
+    );
+    if (!messages) return { ok: false, error: 'not_found' };
+
     this.attachToConversation(client, payload.conversationId);
-    return { ok: true, room: `conversation:${payload.conversationId}` };
+    return { ok: true, room: `conversation:${payload.conversationId}`, messages };
   }
 
   /** Agent joins a conversation room to see live messages. */

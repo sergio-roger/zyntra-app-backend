@@ -19,3 +19,15 @@ export interface SendMessagePayload {
   message: string;
   visitor?: { page_url?: string; referrer?: string; user_agent?: string };
 }
+
+export interface VisitorConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface IdentifyAck {
+  ok: boolean;
+  room?: string;
+  messages?: VisitorConversationMessage[];
+  error?: string;
+}
