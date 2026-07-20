@@ -34,8 +34,6 @@ export class PlansSeeder implements Seeder {
           pipelineLimit: data.pipeline_limit,
           kbMaxDocumentsPerAgent: data.kb_max_documents_per_agent,
           kbMaxFileSizeMb: data.kb_max_file_size_mb,
-          kbMaxStorageMbPerBusiness: data.kb_max_storage_mb_per_business,
-          kbMonthlyUploadLimit: data.kb_monthly_upload_limit,
         });
         await planRepo.save(plan);
         console.log(`✅ Plan created: ${data.name}`);
@@ -65,8 +63,6 @@ export class PlansSeeder implements Seeder {
         plan.pipelineLimit = data.pipeline_limit;
         plan.kbMaxDocumentsPerAgent = data.kb_max_documents_per_agent;
         plan.kbMaxFileSizeMb = data.kb_max_file_size_mb;
-        plan.kbMaxStorageMbPerBusiness = data.kb_max_storage_mb_per_business;
-        plan.kbMonthlyUploadLimit = data.kb_monthly_upload_limit;
         await planRepo.save(plan);
         console.log(`ℹ️ Plan ${data.name} updated, syncing modules...`);
       }

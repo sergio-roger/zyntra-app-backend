@@ -67,12 +67,6 @@ export class Plan {
   @Column({ name: 'kb_max_file_size_mb', default: 0 })
   kbMaxFileSizeMb: number;
 
-  @Column({ name: 'kb_max_storage_mb_per_business', default: 0 })
-  kbMaxStorageMbPerBusiness: number;
-
-  @Column({ name: 'kb_monthly_upload_limit', default: 0 })
-  kbMonthlyUploadLimit: number;
-
   @OneToMany(() => PlanDescription, (desc) => desc.plan, { cascade: true })
   descriptions: PlanDescription[];
 

@@ -15,12 +15,8 @@ export const PLANS_DATA = [
     funnel_limit: 0,
     channel_limit: 1,
     pipeline_limit: 0,
-    // Sin agentes de IA en este plan (ai_agent_limit: 0) -> sin base de
-    // conocimiento que alimentarles.
-    kb_max_documents_per_agent: 0,
-    kb_max_file_size_mb: 0,
-    kb_max_storage_mb_per_business: 0,
-    kb_monthly_upload_limit: 0,
+    kb_max_documents_per_agent: 4,
+    kb_max_file_size_mb: 10,
     descriptions: [
       'Diagnóstico del modelo de negocio',
       'Creación y configuración de redes sociales (Facebook, Instagram, TikTok)',
@@ -80,12 +76,8 @@ export const PLANS_DATA = [
     funnel_limit: 0,
     channel_limit: 3,
     pipeline_limit: 2,
-    // 1 agente permitido: base de conocimiento moderada. kb_max_file_size_mb
-    // queda por debajo del techo global de zyntra-storage (25MB).
-    kb_max_documents_per_agent: 20,
+    kb_max_documents_per_agent: 4,
     kb_max_file_size_mb: 10,
-    kb_max_storage_mb_per_business: 200,
-    kb_monthly_upload_limit: 30,
     descriptions: [
       'Calendario Editorial',
       'Creación de Contenido',
@@ -133,12 +125,8 @@ export const PLANS_DATA = [
     funnel_limit: 999999,
     channel_limit: 999999,
     pipeline_limit: 5,
-    // Plan tope: 10 agentes, base de conocimiento amplia por agente.
-    // kb_max_file_size_mb en el techo global de zyntra-storage (25MB).
-    kb_max_documents_per_agent: 100,
-    kb_max_file_size_mb: 25,
-    kb_max_storage_mb_per_business: 5000,
-    kb_monthly_upload_limit: 500,
+    kb_max_documents_per_agent: 4,
+    kb_max_file_size_mb: 10,
     descriptions: [
       'Plan BrandStart incluido',
       'Plan Impulse Pro incluido',

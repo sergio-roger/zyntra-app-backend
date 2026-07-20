@@ -631,7 +631,6 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
       const { service, permissionRepo } = await buildService(
         PM_IMPULSE_PRO,
         ALL_MENUS,
-        0,
       );
 
       const globalTemplates = ALL_MENUS.map((m) => ({
@@ -641,13 +640,14 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
         businessId: null,
       }));
       permissionRepo._mockQb.getMany.mockResolvedValueOnce(globalTemplates);
+      permissionRepo.find.mockResolvedValueOnce([]);
 
       await service.getMenuTree(UserRole.ADMIN, 'biz-nueva', 'plan-id');
 
-      expect(permissionRepo.count).toHaveBeenCalledWith({
+      expect(permissionRepo.createQueryBuilder).toHaveBeenCalledWith('p');
+      expect(permissionRepo.find).toHaveBeenCalledWith({
         where: { businessId: 'biz-nueva', roleId: 'role-admin-id' },
       });
-      expect(permissionRepo.createQueryBuilder).toHaveBeenCalledWith('p');
       expect(permissionRepo.save).toHaveBeenCalled();
 
       const saved = (
@@ -660,18 +660,54 @@ describe('AuthService — getMenuTree() por plan de empresa', () => {
       });
     });
 
-    it('NO copia plantillas si la empresa ya tiene permisos (count > 0)', async () => {
+    it('NO copia plantillas que la empresa ya tiene', async () => {
       const { service, permissionRepo } = await buildService(
         PM_IMPULSE_PRO,
         ALL_MENUS,
-        5,
+      );
+
+      const globalTemplates = ALL_MENUS.map((m) => ({
+        id: `perm-${m.id}`,
+        roleId: 'role-admin-id',
+        menuId: m.id,
+        businessId: null,
+      }));
+      permissionRepo._mockQb.getMany.mockResolvedValueOnce(globalTemplates);
+      permissionRepo.find.mockResolvedValueOnce(
+        globalTemplates.map((t) => ({ ...t, businessId: 'biz-existente' })),
       );
 
       await service.getMenuTree(UserRole.ADMIN, 'biz-existente', 'plan-id');
 
-      expect(permissionRepo.count).toHaveBeenCalled();
-      expect(permissionRepo.createQueryBuilder).not.toHaveBeenCalled();
+      expect(permissionRepo.find).toHaveBeenCalled();
       expect(permissionRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('copia solo los menús nuevos cuando la empresa ya tiene permisos parciales', async () => {
+      const { service, permissionRepo } = await buildService(
+        PM_IMPULSE_PRO,
+        ALL_MENUS,
+      );
+
+      const globalTemplates = ALL_MENUS.map((m) => ({
+        id: `perm-${m.id}`,
+        roleId: 'role-admin-id',
+        menuId: m.id,
+        businessId: null,
+      }));
+      permissionRepo._mockQb.getMany.mockResolvedValueOnce(globalTemplates);
+      // La empresa solo tiene el primer menú, le falta el resto (p.ej. menús agregados después)
+      permissionRepo.find.mockResolvedValueOnce([
+        { ...globalTemplates[0], businessId: 'biz-parcial' },
+      ]);
+
+      await service.getMenuTree(UserRole.ADMIN, 'biz-parcial', 'plan-id');
+
+      expect(permissionRepo.save).toHaveBeenCalled();
+      const saved = (
+        permissionRepo.save.mock.calls as unknown[][]
+      )[0][0] as Record<string, unknown>[];
+      expect(saved.length).toBe(globalTemplates.length - 1);
     });
   });
 

@@ -18,11 +18,6 @@ export class PermissionService {
     businessId: string,
     roleId: string,
   ): Promise<void> {
-    const existing = await this.permissionRepository.count({
-      where: { businessId, roleId },
-    });
-    if (existing > 0) return;
-
     // Copy from global templates (business_id IS NULL)
     const templates = await this.permissionRepository
       .createQueryBuilder('p')
@@ -36,7 +31,18 @@ export class PermissionService {
       return;
     }
 
-    const copies = templates.map((t) =>
+    const existing = await this.permissionRepository.find({
+      where: { businessId, roleId },
+    });
+    const existingMenuIds = new Set(existing.map((p) => p.menuId));
+
+    // Reconciliar: agregar únicamente los menús de template que el negocio
+    // todavía no tiene, sin tocar los ya existentes (pueden haber sido
+    // personalizados vía updatePermissionsByRole).
+    const missing = templates.filter((t) => !existingMenuIds.has(t.menuId));
+    if (missing.length === 0) return;
+
+    const copies = missing.map((t) =>
       this.permissionRepository.create({
         businessId,
         roleId: t.roleId,

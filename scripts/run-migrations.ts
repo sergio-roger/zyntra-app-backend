@@ -55,6 +55,8 @@ async function run() {
   await runMigration(c, '20260711_create_settings.sql');
   await runMigration(c, '20260712_add_is_read_to_messages.sql');
   await runMigration(c, '20260712_add_rag_agents_infrastructure.sql');
+  await runMigration(c, '20260716_agents_default_model_free.sql');
+  await runMigration(c, '20260719_drop_kb_storage_upload_limits.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

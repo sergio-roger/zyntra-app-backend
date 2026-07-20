@@ -87,28 +87,6 @@ export class KnowledgeService {
       );
     }
 
-    const sizeRow = await this.documentRepo
-      .createQueryBuilder('d')
-      .select('COALESCE(SUM(d.fileSizeBytes), 0)', 'sum')
-      .where('d.businessId = :businessId', { businessId })
-      .getRawOne<{ sum: string }>();
-    const storageUsedBytes = Number(sizeRow?.sum ?? 0);
-    const maxStorageBytes = plan.kbMaxStorageMbPerBusiness * 1024 * 1024;
-    if (storageUsedBytes + file.size > maxStorageBytes) {
-      throw new ForbiddenException(
-        `Tu negocio alcanzó el límite de almacenamiento de conocimiento de tu plan (${plan.kbMaxStorageMbPerBusiness}MB).`,
-      );
-    }
-
-    const uploadsThisMonth = await this.documentRepo.count({
-      where: { businessId, createdAt: MoreThanOrEqual(startOfMonth()) },
-    });
-    if (uploadsThisMonth >= plan.kbMonthlyUploadLimit) {
-      throw new ForbiddenException(
-        `Alcanzaste el límite de ${plan.kbMonthlyUploadLimit} subidas mensuales de tu plan.`,
-      );
-    }
-
     const detectedMime = await detectKnowledgeMimeType(
       file.buffer,
       file.mimetype,
@@ -351,8 +329,6 @@ export class KnowledgeService {
       limits: {
         kbMaxDocumentsPerAgent: plan.kbMaxDocumentsPerAgent,
         kbMaxFileSizeMb: plan.kbMaxFileSizeMb,
-        kbMaxStorageMbPerBusiness: plan.kbMaxStorageMbPerBusiness,
-        kbMonthlyUploadLimit: plan.kbMonthlyUploadLimit,
       },
     };
   }
