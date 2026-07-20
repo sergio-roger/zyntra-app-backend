@@ -26,7 +26,7 @@ src/
 ├── common/             # Guardias globales, decoradores, constantes y utilidades de Redis
 ├── database/           # Configuración de base de datos y migraciones
 ├── modules/            # Módulos de funcionalidad del negocio
-│   ├── agents/         # Gestión y coordinación de agentes de IA (CrewAI)
+│   ├── agents/         # Gestión y coordinación de agentes de IA (Mastra)
 │   ├── ai/             # Conexión y servicios compartidos con LLMs
 │   ├── auth/           # Registro, login y sesiones de negocios
 │   ├── channels/       # Configuración y generación de widgets (Web Chat, etc.)

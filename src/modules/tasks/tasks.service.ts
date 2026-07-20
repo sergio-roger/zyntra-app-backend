@@ -77,7 +77,7 @@ export class TasksService {
       `Tarea creada en MongoDB: id=${task._id.toString()} business_id=${businessId} type=${dto.type}`,
     );
 
-    // 4. Construir el BusinessContext para el worker Python
+    // 4. Construir el BusinessContext para el worker Mastra (marketing-agents)
     const businessContext = {
       business_id: business.id,
       name: business.name,
@@ -93,7 +93,7 @@ export class TasksService {
 
     // 5. Encolar en BullMQ (Redis)
     await this.tasksQueue.add(
-      'execute-crew',
+      'execute-agent-task',
       {
         task_id: task._id.toString(),
         task_type: task.type,
