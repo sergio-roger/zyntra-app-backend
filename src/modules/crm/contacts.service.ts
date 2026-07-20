@@ -51,6 +51,16 @@ export class ContactsService {
     });
   }
 
+  async findMemberById(
+    business: Business,
+    userId: string,
+  ): Promise<{ id: string; name: string } | null> {
+    return this.crmUsersRepo.findOne({
+      where: { id: userId, businessId: business.id, isActive: true },
+      select: ['id', 'name'],
+    });
+  }
+
   async list(business: Business, query: ListContactsDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;

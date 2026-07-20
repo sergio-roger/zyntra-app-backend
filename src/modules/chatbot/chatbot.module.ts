@@ -18,6 +18,8 @@ import { ChatRateLimitGuard } from './guards/chat-rate-limit.guard';
 import { AiModule } from '../ai/ai.module';
 import { WidgetSessionModule } from '@/modules/widget-session/widget-session.module';
 import { MessageEncryptionService } from './services/message-encryption.service';
+import { CrmModule } from '@/modules/crm/crm.module';
+import { AgentsModule } from '@/modules/agents/agents.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { MessageEncryptionService } from './services/message-encryption.service'
     AiModule,
     ChannelsModule,
     WidgetSessionModule,
+    CrmModule,
+    AgentsModule,
     BullModule.registerQueue({ name: 'agent-response' }),
   ],
   controllers: [ChatController, InternalCallbackController, SettingsController],

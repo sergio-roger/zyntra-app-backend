@@ -314,4 +314,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .to(`business:${businessId}`)
       .emit('conversation:status-changed', payload);
   }
+
+  emitConversationAssigned(
+    businessId: string,
+    conversationId: string,
+    assignedTo: { id: string; name: string } | null,
+  ) {
+    const payload = {
+      conversation_id: conversationId,
+      assignedTo,
+      timestamp: new Date().toISOString(),
+    };
+    void this.server
+      .to(`conversation:${conversationId}`)
+      .to(`business:${businessId}`)
+      .emit('conversation:assigned', payload);
+  }
 }

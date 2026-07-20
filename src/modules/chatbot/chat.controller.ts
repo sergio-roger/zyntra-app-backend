@@ -2,6 +2,7 @@ import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { ChatService } from '@chatbot/chat.service';
 import { Public } from '@common/decorators/public.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
+import { UserRole } from '@crm/enums/user-role.enum';
 import {
   Body,
   Controller,
@@ -126,21 +127,51 @@ export class ChatController {
     );
   }
 
+  @Get('assignable-users')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Lista los usuarios del negocio para asignarles una conversación',
+  })
+  async getAssignableUsers(@Req() req: RequestWithUser) {
+    return this.chatService.getAssignableUsers(req.user.business);
+  }
+
   @Post('conversations/:id/assign')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'El agente autenticado se asigna la conversación' })
+  @ApiOperation({
+    summary:
+      'El agente autenticado se asigna la conversación, o (ADMIN/MANAGER) la asigna a otro usuario del negocio',
+  })
   async assignConversation(
     @Req() req: RequestWithUser,
     @Param('id') id: string,
+    @Body('userId') userId?: string,
   ) {
     const businessId = req.user.businessId;
     if (!businessId)
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.chatService.assignConversationToSelf(businessId, id, {
-      id: req.user.id,
-      name: req.user.name,
-    });
+
+    if (!userId || userId === req.user.id) {
+      return this.chatService.assignConversationToSelf(businessId, id, {
+        id: req.user.id,
+        name: req.user.name,
+      });
+    }
+
+    if (![UserRole.ADMIN, UserRole.MANAGER].includes(req.user.role)) {
+      throw new HttpException(
+        'Solo un administrador o manager puede asignar la conversación a otro usuario',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    return this.chatService.assignConversationToUser(
+      req.user.business,
+      id,
+      userId,
+    );
   }
 
   @Delete('conversations/:id/assign')

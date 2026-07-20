@@ -1,7 +1,10 @@
+import { AgentsService } from '@/modules/agents/agents.service';
 import { ChannelsService } from '@/modules/channels/channels.service';
 import { Channel } from '@/modules/channels/entities/channel.entity';
 import { ChannelStatus } from '@/modules/channels/enums/channel-status.enum';
 import { ChatGateway } from '@/modules/chatbot/chat.gateway';
+import { Business } from '@auth/entities/business.entity';
+import { ContactsService } from '@crm/contacts.service';
 import {
   ChatRequestDto,
   ChatResponseDto,
@@ -48,6 +51,8 @@ export class ChatService {
     private readonly widgetSessionService: WidgetSessionService,
     private readonly messageEncryption: MessageEncryptionService,
     private readonly jwtService: JwtService,
+    private readonly contactsService: ContactsService,
+    private readonly agentsService: AgentsService,
     @InjectQueue('agent-response')
     private readonly agentResponseQueue: Queue,
   ) {
@@ -185,16 +190,11 @@ export class ChatService {
       'user',
     );
 
-    // 4. If the channel has an agent assigned, hand off to marketing-agents
-    // via the agent-response queue — the reply comes back async through
-    // POST /internal/agent-callback and reaches the widget over WebSocket.
-    // No agent assigned → a human must reply manually from the inbox; no
-    // canned message is injected here — that would fire on every single
-    // user message with no dedup, and falsely imply an assistant/bot
-    // replied when the channel has nothing configured to do so. A
-    // configurable away/quick-reply message is a separate, not-yet-built
-    // feature.
-    if (channel.agentId) {
+    const isHumanAssigned =
+      !!conversation.assignedTo &&
+      conversation.assignedTo !== SYSTEM_ASSIGNEE.assignedTo;
+
+    if (channel.agentId && !isHumanAssigned) {
       const jobId = crypto.randomUUID();
       await this.agentResponseQueue.add(
         'generate-reply',
@@ -204,9 +204,6 @@ export class ChatService {
           agentId: channel.agentId,
           businessId: effectiveBusinessId,
           jobId,
-          // No forma parte del contrato original acordado para este job,
-          // pero sin el texto el worker no puede generar una respuesta ni
-          // hacer retrieval — ya lo tenemos en claro acá antes de cifrarlo.
           message,
         },
         { jobId, removeOnComplete: false, removeOnFail: false },
@@ -288,6 +285,22 @@ export class ChatService {
     const existing = await this.messageRepo.findOneBy({ jobId });
     if (existing) return { ok: true, duplicate: true };
 
+    // The job may have been enqueued before a human claimed the conversation
+    // (processChat only checks assignment at enqueue time) — re-check now so
+    // a late-arriving AI reply doesn't land on top of a human's takeover.
+    const conversation = await this.conversationRepo.findOneBy({
+      id: conversationId,
+    });
+    const isHumanAssigned =
+      !!conversation?.assignedTo &&
+      conversation.assignedTo !== SYSTEM_ASSIGNEE.assignedTo;
+    if (isHumanAssigned) {
+      this.logger.warn(
+        `Descartada respuesta IA jobId=${jobId}: conversación ${conversationId} tomada por un humano`,
+      );
+      return { ok: true, discarded: true };
+    }
+
     const encryptedReply = this.messageEncryption.encrypt(reply);
     const msg = this.messageRepo.create({
       conversationId,
@@ -336,6 +349,7 @@ export class ChatService {
 
     const conversations = await this.conversationRepo.find({
       where,
+      relations: ['channelEntity'],
       order: { lastMessageAt: 'DESC' },
       take: 100,
     });
@@ -343,6 +357,15 @@ export class ChatService {
     const conversationIds = conversations.map((c) => c.id);
     const { lastMessageByConversation, unreadCountByConversation } =
       await this.getConversationMessageSummaries(conversationIds);
+
+    const agentIds = [
+      ...new Set(
+        conversations
+          .map((c) => c.channelEntity?.agentId)
+          .filter((id): id is string => !!id),
+      ),
+    ];
+    const agentNameById = await this.getAgentNamesById(agentIds);
 
     return conversations.map((c) => {
       const unreadCount = unreadCountByConversation.get(c.id) ?? 0;
@@ -356,11 +379,45 @@ export class ChatService {
         lastMessageAt: c.lastMessageAt?.toISOString(),
         contactName: c.visitor?.name || 'Visitante anónimo',
         assignedTo: this.shapeAssignee(c),
+        assistantAgent: this.shapeAssistantAgent(c, agentNameById),
         unread: unreadCount > 0,
         unreadCount,
         lastMessage: lastMessageByConversation.get(c.id) ?? null,
       };
     });
+  }
+
+  private shapeAssistantAgent(
+    c: Pick<Conversation, 'assignedTo' | 'channelEntity'>,
+    agentNameById: Map<string, string>,
+  ): { id: string; name: string } | null {
+    const isHumanAssigned =
+      !!c.assignedTo && c.assignedTo !== SYSTEM_ASSIGNEE.assignedTo;
+    const agentId = c.channelEntity?.agentId;
+    if (isHumanAssigned || !agentId) return null;
+    return { id: agentId, name: agentNameById.get(agentId) ?? 'Agente' };
+  }
+
+  /**
+   * Batch-resolves agent names by id. Agent.findById has no business scope
+   * (it's meant for internal callers), so a missing/foreign id is ignored
+   * rather than thrown — the caller falls back to a generic label.
+   */
+  private async getAgentNamesById(
+    agentIds: string[],
+  ): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    await Promise.all(
+      agentIds.map(async (id) => {
+        try {
+          const agent = await this.agentsService.findById(id);
+          map.set(id, agent.name);
+        } catch {
+          // Agente borrado o inaccesible — el consumidor usa el fallback 'Agente'.
+        }
+      }),
+    );
+    return map;
   }
 
   /**
@@ -410,10 +467,13 @@ export class ChatService {
       throw new NotFoundException('Conversación no encontrada');
     }
 
-    const conversation = await this.findConversationOrThrow(
-      businessId,
-      conversationId,
-    );
+    const conversation = await this.conversationRepo.findOne({
+      where: { id: conversationId },
+      relations: ['channelEntity'],
+    });
+    if (!conversation || conversation.businessId !== businessId) {
+      throw new NotFoundException('Conversación no encontrada');
+    }
 
     const messages = await this.messageRepo.find({
       where: { conversationId },
@@ -424,6 +484,11 @@ export class ChatService {
       (m) => m.role === 'user' && !m.isRead,
     ).length;
 
+    const agentId = conversation.channelEntity?.agentId;
+    const agentNameById = agentId
+      ? await this.getAgentNamesById([agentId])
+      : new Map<string, string>();
+
     return {
       id: conversation.id,
       status: conversation.status,
@@ -433,6 +498,7 @@ export class ChatService {
       startedAt: conversation.startedAt?.toISOString(),
       contactName: conversation.visitor?.name || 'Visitante anónimo',
       assignedTo: this.shapeAssignee(conversation),
+      assistantAgent: this.shapeAssistantAgent(conversation, agentNameById),
       unread: unreadCount > 0,
       unreadCount,
       visitor: conversation.visitor,
@@ -507,6 +573,24 @@ export class ChatService {
     };
   }
 
+  private async persistAssignment(
+    businessId: string,
+    conversationId: string,
+    assignee: { id: string; name: string } | null,
+  ) {
+    await this.conversationRepo.update(
+      conversationId,
+      assignee
+        ? { assignedTo: assignee.id, assignedToName: assignee.name }
+        : SYSTEM_ASSIGNEE,
+    );
+    this.chatGateway.emitConversationAssigned(
+      businessId,
+      conversationId,
+      assignee,
+    );
+  }
+
   /** Agent self-assign ("claim") / release, backing the "Míos" inbox tab. */
   async assignConversationToSelf(
     businessId: string,
@@ -518,12 +602,37 @@ export class ChatService {
       conversationId,
     );
 
-    await this.conversationRepo.update(conversation.id, {
-      assignedTo: user.id,
-      assignedToName: user.name,
-    });
+    await this.persistAssignment(businessId, conversation.id, user);
 
-    return { success: true, assignedTo: { id: user.id, name: user.name } };
+    return { success: true, assignedTo: user };
+  }
+
+  /** Assign to a specific business member (ADMIN/MANAGER-gated in the controller). */
+  async assignConversationToUser(
+    business: Business,
+    conversationId: string,
+    userId: string,
+  ) {
+    const conversation = await this.findConversationOrThrow(
+      business.id,
+      conversationId,
+    );
+
+    const targetUser = await this.contactsService.findMemberById(
+      business,
+      userId,
+    );
+    if (!targetUser) {
+      throw new NotFoundException('Usuario no encontrado en este negocio');
+    }
+
+    await this.persistAssignment(business.id, conversation.id, targetUser);
+
+    return { success: true, assignedTo: targetUser };
+  }
+
+  async getAssignableUsers(business: Business) {
+    return this.contactsService.listMembers(business);
   }
 
   async unassignConversation(businessId: string, conversationId: string) {
@@ -532,7 +641,7 @@ export class ChatService {
       conversationId,
     );
 
-    await this.conversationRepo.update(conversation.id, SYSTEM_ASSIGNEE);
+    await this.persistAssignment(businessId, conversation.id, null);
 
     return { success: true };
   }
