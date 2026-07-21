@@ -3,6 +3,7 @@ import { AppService } from '@/app.service';
 import { AgentsModule } from '@/modules/agents/agents.module';
 import { FormsModule } from '@/modules/forms/forms.module';
 import { KnowledgeModule } from '@/modules/knowledge/knowledge.module';
+import { OrchestratorModule } from '@/modules/orchestrator/orchestrator.module';
 import { ChannelsModule } from '@/modules/channels/channels.module';
 import { LifecycleModule } from '@/modules/lifecycle/lifecycle.module';
 import { TasksModule } from '@/modules/tasks/tasks.module';
@@ -50,6 +51,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     ChannelsModule,
     AgentsModule,
     KnowledgeModule,
+    OrchestratorModule,
     FormsModule,
 
     BullModule.forRootAsync({

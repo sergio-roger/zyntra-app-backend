@@ -59,6 +59,7 @@ async function run() {
   await runMigration(c, '20260719_drop_kb_storage_upload_limits.sql');
   await runMigration(c, '20260720_move_agents_to_workflows_schema.sql');
   await runMigration(c, '20260720_create_forms_schema.sql');
+  await runMigration(c, '20260721_create_workflow_runs.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();
