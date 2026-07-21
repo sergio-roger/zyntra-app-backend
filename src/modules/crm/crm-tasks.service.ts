@@ -83,6 +83,30 @@ export class CrmTasksService {
     return this.mapTask(saved);
   }
 
+  // Usado por CrmInternalService (tool createTask, System Agents) — mismo
+  // create() de arriba pero con created_by_agent_id seteado en el insert,
+  // sin exponer ese campo en CreateTaskDto (que es el DTO público).
+  async createFromAgent(
+    business: Business,
+    dto: CreateTaskDto,
+    agentId: string,
+  ): Promise<TaskResponse> {
+    const task = this.tasksRepo.create({
+      title: dto.title,
+      description: dto.description,
+      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      priority: dto.priority,
+      contactId: dto.contactId,
+      dealId: dto.dealId,
+      assignedTo: dto.assignedTo,
+      businessId: business.id,
+      status: TaskStatus.PENDING,
+      createdByAgentId: agentId,
+    });
+    const saved = await this.tasksRepo.save(task);
+    return this.mapTask(saved);
+  }
+
   async update(
     business: Business,
     id: string,
@@ -150,6 +174,7 @@ export class CrmTasksService {
       deal: task.deal,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
+      createdByAgentId: task.createdByAgentId,
     };
   }
 }

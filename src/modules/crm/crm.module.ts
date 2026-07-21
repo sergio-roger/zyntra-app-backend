@@ -1,7 +1,10 @@
 import { AuthModule } from '@auth/auth.module';
+import { Business } from '@auth/entities/business.entity';
 import { Plan } from '@auth/entities/plan.entity';
 import { CompaniesController } from '@crm/companies.controller';
 import { CompaniesService } from '@crm/companies.service';
+import { CrmInternalController } from '@crm/crm-internal.controller';
+import { CrmInternalService } from '@crm/crm-internal.service';
 import { ContactsController } from '@crm/contacts.controller';
 import { ContactsService } from '@crm/contacts.service';
 import { CrmTasksController } from '@crm/crm-tasks.controller';
@@ -59,6 +62,7 @@ import { StorageClientModule } from '@/storage-client/storage-client.module';
       Industry,
       Company,
       Plan,
+      Business,
     ]),
     AuthModule,
   ],
@@ -74,6 +78,7 @@ import { StorageClientModule } from '@/storage-client/storage-client.module';
     PipelinesController,
     IndustriesController,
     CompaniesController,
+    CrmInternalController,
   ],
   providers: [
     ContactsService,
@@ -87,6 +92,7 @@ import { StorageClientModule } from '@/storage-client/storage-client.module';
     PipelinesService,
     IndustriesService,
     CompaniesService,
+    CrmInternalService,
   ],
   exports: [
     ContactsService,

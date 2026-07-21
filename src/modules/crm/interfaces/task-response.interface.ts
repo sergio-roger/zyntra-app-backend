@@ -8,6 +8,7 @@ export interface TaskResponse {
   contact: Contact | null;
   contactId: string | null;
   createdAt: Date;
+  createdByAgentId: string | null;
   deal: Deal | null;
   dealId: string | null;
   description: string | null;

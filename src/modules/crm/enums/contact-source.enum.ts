@@ -6,4 +6,5 @@ export enum ContactSource {
   EMAIL = 'email',
   FORM = 'form',
   IMPORT = 'import',
+  AGENT = 'agent',
 }

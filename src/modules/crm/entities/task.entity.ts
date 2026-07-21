@@ -69,6 +69,11 @@ export class CrmTask {
   @Column({ name: 'assigned_to', type: 'uuid', nullable: true })
   assignedTo: string | null;
 
+  // null = creado por un humano. Seteado por crm-internal.controller.ts
+  // cuando la tool createTask (Tool Registry, System Agents) crea la tarea.
+  @Column({ name: 'created_by_agent_id', type: 'uuid', nullable: true })
+  createdByAgentId: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
