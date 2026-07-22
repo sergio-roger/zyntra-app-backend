@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { Conversation } from './conversation.entity';
 
-@Entity({ name: 'messages', schema: 'messaging' })
+@Entity({ name: 'messages', schema: 'inbox' })
 @Index('idx_msg_conversation_created', ['conversationId', 'createdAt'])
 export class Message {
   @PrimaryGeneratedColumn('uuid')

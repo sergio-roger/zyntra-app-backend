@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
 
-@Entity({ name: 'settings', schema: 'security' })
+@Entity({ name: 'settings', schema: 'inbox' })
 @Index(['businessId', 'key'], { unique: true })
 export class Setting {
   @PrimaryGeneratedColumn('uuid')

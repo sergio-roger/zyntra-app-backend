@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Channel } from '@/modules/channels/entities/channel.entity';
 
-@Entity({ name: 'channel_types', schema: 'public' })
+@Entity({ name: 'channel_types', schema: 'channels' })
 export class ChannelType {
   @PrimaryGeneratedColumn('uuid')
   id: string;

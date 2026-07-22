@@ -11,7 +11,7 @@ import {
 import { Plan } from '@auth/entities/plan.entity';
 import { ModuleAccessLevel } from '@auth/enums/module-access-level.enum';
 
-@Entity({ name: 'plan_modules', schema: 'public' })
+@Entity({ name: 'plan_modules', schema: 'security' })
 @Index(['planId', 'menuKey'], { unique: true })
 export class PlanModule {
   @PrimaryGeneratedColumn('uuid')

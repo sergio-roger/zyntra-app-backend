@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity({ name: 'plan_descriptions', schema: 'public' })
+@Entity({ name: 'plan_descriptions', schema: 'security' })
 export class PlanDescription {
   @PrimaryGeneratedColumn('uuid')
   id: string;

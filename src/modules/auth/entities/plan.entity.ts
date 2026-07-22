@@ -11,7 +11,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'plans', schema: 'public' })
+@Entity({ name: 'plans', schema: 'security' })
 export class Plan {
   @PrimaryGeneratedColumn('uuid')
   id: string;

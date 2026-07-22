@@ -15,7 +15,7 @@ import { ChannelType } from '@/modules/channels/entities/channel-type.entity';
 import { ChannelCredential } from '@/modules/channels/entities/channel-credential.entity';
 import { ChannelStatus } from '@/modules/channels/enums/channel-status.enum';
 
-@Entity({ name: 'channels', schema: 'public' })
+@Entity({ name: 'channels', schema: 'channels' })
 @Index(
   'uq_channel_per_business_type_name',
   ['businessId', 'channelTypeId', 'name'],

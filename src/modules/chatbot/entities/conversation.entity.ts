@@ -14,7 +14,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'conversations', schema: 'messaging' })
+@Entity({ name: 'conversations', schema: 'inbox' })
 @Index('idx_conv_business_last_msg', ['businessId', 'lastMessageAt'])
 @Index('idx_conv_business_status', ['businessId', 'status'])
 export class Conversation {

@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'businesses', schema: 'public' })
+@Entity({ name: 'businesses', schema: 'security' })
 export class Business {
   @PrimaryGeneratedColumn('uuid')
   id: string;

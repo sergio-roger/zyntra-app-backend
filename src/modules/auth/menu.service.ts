@@ -62,7 +62,7 @@ export class MenuService {
       if (planId) {
         // Castear a clave-valor del módulo para resolver tipos al poblar el mapa de accesos
         const planModules = (await conn.query(
-          `SELECT menu_key, access_level FROM public.plan_modules WHERE plan_id = $1`,
+          `SELECT menu_key, access_level FROM security.plan_modules WHERE plan_id = $1`,
           [planId],
         )) as { menu_key: string; access_level: string }[];
         for (const pm of planModules) {
