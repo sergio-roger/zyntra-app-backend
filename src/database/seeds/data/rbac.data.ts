@@ -223,7 +223,7 @@ export const MENUS_DATA = [
   },
   {
     key: 'agents_team',
-    label: 'Agentes',
+    label: 'Equipo de Agentes',
     path: '/agents/team',
     parent_key: 'agents_ia',
     description: 'Gestión de agentes del equipo de marketing.',
@@ -307,17 +307,9 @@ export const MENUS_DATA = [
     label: 'Configuración del negocio',
     path: '/settings/configuracion-negocio',
     parent_key: 'settings',
-    description:
-      'Configuraciones específicas del negocio: ciclo de vida y agentes.',
+    description: 'Configuraciones específicas del negocio: ciclo de vida.',
   },
   // Ajustes generales → hijos (tercer nivel, sin descripción)
-  {
-    key: 'settings_config',
-    label: 'Configuración',
-    path: '/settings/configuracion',
-    parent_key: 'settings_general',
-    description: null,
-  },
   {
     key: 'settings_my_account',
     label: 'Mi cuenta',
@@ -337,6 +329,14 @@ export const MENUS_DATA = [
     label: 'Planes',
     path: '/settings/plans',
     parent_key: 'settings_general',
+    description: null,
+  },
+  // Configuración del negocio → hijos (tercer nivel, sin descripción)
+  {
+    key: 'settings_config',
+    label: 'Configuración',
+    path: '/settings/configuracion',
+    parent_key: 'settings_business',
     description: null,
   },
   // Equipo y accesos → hijos (tercer nivel, sin descripción)
@@ -383,13 +383,6 @@ export const MENUS_DATA = [
     parent_key: 'settings_business',
     description: null,
   },
-  {
-    key: 'settings_agents',
-    label: 'Agentes',
-    path: '/settings/agents',
-    parent_key: 'settings_business',
-    description: null,
-  },
   // Automatizaciones subitems
   {
     key: 'automations_workflows',
@@ -400,7 +393,7 @@ export const MENUS_DATA = [
   },
   {
     key: 'automations_agents',
-    label: 'Agentes',
+    label: 'Agentes de Flujo',
     path: '/automations/agents',
     parent_key: 'automations',
     description:
@@ -475,6 +468,7 @@ export const AGENT_MENUS = [
   'inbox_conversations',
   'settings',
   'settings_general',
+  'settings_business',
   'settings_config',
   'settings_my_account',
 ];

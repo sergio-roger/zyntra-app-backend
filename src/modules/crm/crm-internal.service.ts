@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Business } from '@auth/entities/business.entity';
-import { Contact } from '@crm/entities/contact.entity';
-import { ContactSource } from '@crm/enums/contact-source.enum';
 import { ContactsService } from '@crm/contacts.service';
 import { CrmTasksService } from '@crm/crm-tasks.service';
 import { InternalCreateLeadDto } from '@crm/dto/internal/internal-create-lead.dto';
 import { InternalCreateTaskDto } from '@crm/dto/internal/internal-create-task.dto';
+import { Contact } from '@crm/entities/contact.entity';
+import { ContactSource } from '@crm/enums/contact-source.enum';
 import { TaskResponse } from '@crm/interfaces/task-response.interface';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class CrmInternalService {

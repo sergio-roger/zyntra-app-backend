@@ -44,7 +44,7 @@ export const PLANS_DATA = [
       agents_projects: ModuleAccessLevel.LOCKED,
       agents_team: ModuleAccessLevel.LOCKED,
       inbox: ModuleAccessLevel.LOCKED,
-      drive: ModuleAccessLevel.LOCKED,
+      drive: ModuleAccessLevel.FULL,
       // ai_agent_limit: 0 -> sin agentes en este plan, los 5 sub-módulos
       // quedan LOCKED igual que el módulo padre automations_agents.
       automations_agents_identity: ModuleAccessLevel.LOCKED,
@@ -60,7 +60,6 @@ export const PLANS_DATA = [
       settings_lifecycle: ModuleAccessLevel.READ_ONLY,
       settings_channels: ModuleAccessLevel.LOCKED,
       settings_my_channels: ModuleAccessLevel.LOCKED,
-      settings_agents: ModuleAccessLevel.LOCKED,
       automations: ModuleAccessLevel.LOCKED,
       automations_workflows: ModuleAccessLevel.LOCKED,
       automations_agents: ModuleAccessLevel.LOCKED,
@@ -101,7 +100,7 @@ export const PLANS_DATA = [
       agents_projects: ModuleAccessLevel.FULL,
       agents_team: ModuleAccessLevel.FULL,
       inbox: ModuleAccessLevel.FULL,
-      drive: ModuleAccessLevel.LOCKED,
+      drive: ModuleAccessLevel.FULL,
       // ai_agent_limit: 1 -> el plan permite crear/configurar ese agente,
       // así que los 5 sub-módulos van FULL (antes LOCKED por error, lo que
       // bloqueaba por completo el flujo de creación de agentes).
