@@ -35,7 +35,7 @@ describe('SystemAgentsService', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  it('devuelve el catálogo completo ordenado por createdAt, sin filtrar por status', async () => {
+  it('devuelve el catálogo completo ordenado por categoría y createdAt, sin filtrar por status', async () => {
     const agents = [
       makeAgent('marketing-strategist', 'active'),
       makeAgent('seo-specialist', 'coming_soon'),
@@ -44,7 +44,10 @@ describe('SystemAgentsService', () => {
 
     const result = await service.findAll();
 
-    expect(repo.find).toHaveBeenCalledWith({ order: { createdAt: 'ASC' } });
+    expect(repo.find).toHaveBeenCalledWith({
+      relations: ['category'],
+      order: { category: { sortOrder: 'ASC' }, createdAt: 'ASC' },
+    });
     expect(result).toEqual(agents);
     expect(result.some((a) => a.status === 'coming_soon')).toBe(true);
   });

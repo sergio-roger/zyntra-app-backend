@@ -13,6 +13,9 @@ export class SystemAgentsService {
   // Sin gating por plan todavía — catálogo igual para todos los negocios
   // (ver AI_AGENTS_MENU_REBUILD_PLAN.md, decisión explícita, deuda anotada).
   findAll(): Promise<SystemAgent[]> {
-    return this.systemAgentsRepo.find({ order: { createdAt: 'ASC' } });
+    return this.systemAgentsRepo.find({
+      relations: ['category'],
+      order: { category: { sortOrder: 'ASC' }, createdAt: 'ASC' },
+    });
   }
 }
