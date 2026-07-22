@@ -25,23 +25,50 @@
 -- starting the backend against an existing dev database, so synchronize
 -- doesn't create empty duplicates.
 
-CREATE SCHEMA IF NOT EXISTS channels;
-CREATE SCHEMA IF NOT EXISTS lifecycle;
+-- Guarded so replaying the full migration history (run-migrations.ts
+-- always runs the whole ordered list) is a no-op once applied — every
+-- step here has since been superseded by later migrations moving these
+-- same tables further (channels/lifecycle -> settings, etc.), so a
+-- plain unguarded ALTER would just error on replay.
 
-ALTER TABLE public.channels SET SCHEMA channels;
-ALTER TABLE public.channel_credentials SET SCHEMA channels;
-ALTER TABLE public.channel_types SET SCHEMA channels;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'channels') THEN
+    EXECUTE 'CREATE SCHEMA IF NOT EXISTS channels';
+    EXECUTE 'ALTER TABLE public.channels SET SCHEMA channels';
+    EXECUTE 'ALTER TABLE public.channel_credentials SET SCHEMA channels';
+    EXECUTE 'ALTER TABLE public.channel_types SET SCHEMA channels';
+  END IF;
+END $$;
 
-ALTER TABLE public.lifecycle_history SET SCHEMA lifecycle;
-ALTER TABLE public.lifecycle_stages SET SCHEMA lifecycle;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'lifecycle_history') THEN
+    EXECUTE 'CREATE SCHEMA IF NOT EXISTS lifecycle';
+    EXECUTE 'ALTER TABLE public.lifecycle_history SET SCHEMA lifecycle';
+    EXECUTE 'ALTER TABLE public.lifecycle_stages SET SCHEMA lifecycle';
+  END IF;
+END $$;
 
-ALTER SCHEMA messaging RENAME TO inbox;
-ALTER TABLE security.settings SET SCHEMA inbox;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'messaging') THEN
+    EXECUTE 'ALTER SCHEMA messaging RENAME TO inbox';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'security' AND table_name = 'settings') THEN
+    EXECUTE 'ALTER TABLE security.settings SET SCHEMA inbox';
+  END IF;
+END $$;
 
-ALTER TABLE public.businesses SET SCHEMA security;
-ALTER TABLE public.plans SET SCHEMA security;
-ALTER TABLE public.plan_descriptions SET SCHEMA security;
-ALTER TABLE public.plan_modules SET SCHEMA security;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'businesses') THEN
+    EXECUTE 'ALTER TABLE public.businesses SET SCHEMA security';
+    EXECUTE 'ALTER TABLE public.plans SET SCHEMA security';
+    EXECUTE 'ALTER TABLE public.plan_descriptions SET SCHEMA security';
+    EXECUTE 'ALTER TABLE public.plan_modules SET SCHEMA security';
+  END IF;
+END $$;
 
 -- ============================================================
 -- DOWN (rollback, run manually if needed):

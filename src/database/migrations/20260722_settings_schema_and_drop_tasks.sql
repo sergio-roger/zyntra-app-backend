@@ -7,13 +7,27 @@
 -- once lifecycle-*.entity.ts / agent-task.entity.ts declare their new
 -- schema — run this BEFORE starting the backend against an existing
 -- dev database, so synchronize doesn't create empty duplicates.
+--
+-- Guarded on both steps so replaying the full migration history
+-- (run-migrations.ts always runs the whole ordered list) is a no-op
+-- once applied, instead of erroring on an already-renamed schema.
 
-ALTER SCHEMA lifecycle RENAME TO settings;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'lifecycle') THEN
+    EXECUTE 'ALTER SCHEMA lifecycle RENAME TO settings';
+  END IF;
+END $$;
 
-ALTER TYPE tasks.agent_tasks_type_enum SET SCHEMA workflows;
-ALTER TYPE tasks.agent_tasks_status_enum SET SCHEMA workflows;
-ALTER TABLE tasks.agent_tasks SET SCHEMA workflows;
-DROP SCHEMA IF EXISTS tasks;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'tasks') THEN
+    EXECUTE 'ALTER TYPE tasks.agent_tasks_type_enum SET SCHEMA workflows';
+    EXECUTE 'ALTER TYPE tasks.agent_tasks_status_enum SET SCHEMA workflows';
+    EXECUTE 'ALTER TABLE tasks.agent_tasks SET SCHEMA workflows';
+    EXECUTE 'DROP SCHEMA IF EXISTS tasks';
+  END IF;
+END $$;
 
 -- ============================================================
 -- DOWN (rollback, run manually if needed):

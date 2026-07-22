@@ -206,6 +206,20 @@ export const MENUS_DATA = [
     description:
       'Gestión de plantillas y automatización de respuestas rápidas.',
   },
+  {
+    key: 'inbox_channels',
+    label: 'Canales',
+    path: '/settings/channels',
+    parent_key: 'inbox',
+    description: 'Catálogo y gestión de canales.',
+  },
+  {
+    key: 'inbox_my_channels',
+    label: 'Mis Canales',
+    path: '/settings/my-channels',
+    parent_key: 'inbox',
+    description: 'Canales conectados a tu negocio.',
+  },
   // Marketing (agents_ia) subitems
   {
     key: 'agents_store',

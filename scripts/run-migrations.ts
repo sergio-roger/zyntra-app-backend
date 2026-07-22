@@ -66,6 +66,7 @@ async function run() {
   await runMigration(c, '20260721_realign_module_schemas.sql');
   await runMigration(c, '20260721_create_tasks_schema.sql');
   await runMigration(c, '20260722_settings_schema_and_drop_tasks.sql');
+  await runMigration(c, '20260722_move_channels_to_settings.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();
