@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
 import { Business } from '@auth/entities/business.entity';
 import { CompaniesService } from '@crm/companies.service';
 import { ContactsService } from '@crm/contacts.service';
@@ -49,7 +48,7 @@ describe('FormSubmissionsService', () => {
 
   const submissionRepo = {
     create: jest.fn((x: unknown) => x),
-    save: jest.fn(async (x: any) => ({ ...x, id: 'submission-uuid' })),
+    save: jest.fn((x: any) => Promise.resolve({ ...x, id: 'submission-uuid' })),
     findAndCount: jest.fn(),
   };
   const contactRepo = {
@@ -83,7 +82,10 @@ describe('FormSubmissionsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FormSubmissionsService,
-        { provide: getRepositoryToken(FormSubmission), useValue: submissionRepo },
+        {
+          provide: getRepositoryToken(FormSubmission),
+          useValue: submissionRepo,
+        },
         { provide: getRepositoryToken(Contact), useValue: contactRepo },
         { provide: getRepositoryToken(Company), useValue: companyRepo },
         { provide: getRepositoryToken(CustomField), useValue: customFieldRepo },
@@ -104,7 +106,12 @@ describe('FormSubmissionsService', () => {
       formTemplatesService.findOne.mockResolvedValue(template);
       formTemplatesService.findFields.mockResolvedValue([
         makeField({ fieldKey: 'email', mapsTo: 'contact.email' }),
-        makeField({ id: 'f2', fieldKey: 'name', mapsTo: 'contact.name', position: 1 }),
+        makeField({
+          id: 'f2',
+          fieldKey: 'name',
+          mapsTo: 'contact.name',
+          position: 1,
+        }),
       ]);
       contactRepo.findOne.mockResolvedValue(null);
       contactsService.create.mockResolvedValue({ id: 'contact-uuid' });
@@ -218,8 +225,18 @@ describe('FormSubmissionsService', () => {
       formTemplatesService.findOne.mockResolvedValue(template);
       formTemplatesService.findFields.mockResolvedValue([
         makeField({ fieldKey: 'email', mapsTo: 'contact.email' }),
-        makeField({ id: 'f2', fieldKey: 'empresa', mapsTo: 'company.name', position: 1 }),
-        makeField({ id: 'f3', fieldKey: 'monto', mapsTo: 'deal.value', position: 2 }),
+        makeField({
+          id: 'f2',
+          fieldKey: 'empresa',
+          mapsTo: 'company.name',
+          position: 1,
+        }),
+        makeField({
+          id: 'f3',
+          fieldKey: 'monto',
+          mapsTo: 'deal.value',
+          position: 2,
+        }),
       ]);
       contactRepo.findOne.mockResolvedValue(null);
       companyRepo.findOne.mockResolvedValue(null);
@@ -244,7 +261,9 @@ describe('FormSubmissionsService', () => {
 
   describe('submit — ramas de submitAction', () => {
     it('webhook_only no toca el CRM pero persiste el submission', async () => {
-      const template = makeTemplate({ submitAction: FormSubmitAction.WEBHOOK_ONLY });
+      const template = makeTemplate({
+        submitAction: FormSubmitAction.WEBHOOK_ONLY,
+      });
       formTemplatesService.findOne.mockResolvedValue(template);
       formTemplatesService.findFields.mockResolvedValue([
         makeField({ fieldKey: 'email', mapsTo: 'contact.email' }),
@@ -305,11 +324,17 @@ describe('FormSubmissionsService', () => {
       formTemplatesService.findOne.mockResolvedValue(template);
       formTemplatesService.findFields.mockResolvedValue([]);
 
-      const result = await service.submitPublic(mockBusiness.id, template.slug, {
-        data: {},
-      });
+      const result = await service.submitPublic(
+        mockBusiness.id,
+        template.slug,
+        {
+          data: {},
+        },
+      );
 
-      expect(businessRepo.findOneBy).toHaveBeenCalledWith({ id: mockBusiness.id });
+      expect(businessRepo.findOneBy).toHaveBeenCalledWith({
+        id: mockBusiness.id,
+      });
       expect(formTemplatesService.findPublishedBySlug).toHaveBeenCalledWith(
         mockBusiness.id,
         template.slug,

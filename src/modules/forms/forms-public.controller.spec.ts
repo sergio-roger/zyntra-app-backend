@@ -54,7 +54,11 @@ describe('FormsPublicController', () => {
       const submissionResult = { submissionId: 'submission-uuid' };
       mockSubmissionsService.submitPublic.mockResolvedValue(submissionResult);
 
-      const result = await controller.submit('biz-uuid', 'contacto', dto as any);
+      const result = await controller.submit(
+        'biz-uuid',
+        'contacto',
+        dto as any,
+      );
 
       expect(mockSubmissionsService.submitPublic).toHaveBeenCalledWith(
         'biz-uuid',

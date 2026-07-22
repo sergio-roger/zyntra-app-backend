@@ -1,4 +1,9 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 // Separada de Agent (User Agents, business_id NOT NULL) — un System Agent
 // es global, no pertenece a ningún negocio. Ver

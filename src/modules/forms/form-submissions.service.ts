@@ -124,7 +124,12 @@ export class FormSubmissionsService {
     templateId: string,
     page = 1,
     limit = 20,
-  ): Promise<{ items: FormSubmission[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    items: FormSubmission[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     await this.formTemplatesService.findOne(business, templateId); // valida pertenencia
 
     const [items, total] = await this.submissionRepo.findAndCount({

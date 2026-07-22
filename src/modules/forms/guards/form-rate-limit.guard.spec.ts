@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { ConfigService } from '@nestjs/config';
 import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 import { FormRateLimitGuard } from './form-rate-limit.guard';
@@ -46,7 +46,9 @@ describe('FormRateLimitGuard', () => {
   it('does not reset the expiry on subsequent hits within the window', async () => {
     redis.incr.mockResolvedValue(2);
 
-    await guard.canActivate(makeContext({ businessId: 'biz-1', slug: 'contacto' }));
+    await guard.canActivate(
+      makeContext({ businessId: 'biz-1', slug: 'contacto' }),
+    );
 
     expect(redis.expire).not.toHaveBeenCalled();
   });

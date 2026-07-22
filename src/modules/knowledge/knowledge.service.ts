@@ -137,7 +137,8 @@ export class KnowledgeService {
       await this.documentRepo.save(document);
     } catch (error) {
       document.status = KnowledgeDocumentStatus.FAILED;
-      document.errorMessage = 'No se pudo subir el archivo al servicio de storage';
+      document.errorMessage =
+        'No se pudo subir el archivo al servicio de storage';
       await this.documentRepo.save(document);
       this.logger.error(
         `Fallo subiendo documento ${document.id} a zyntra-storage: ${error}`,
@@ -226,7 +227,12 @@ export class KnowledgeService {
       }
     }
 
-    return { url, fileName: document.fileName, fileType: document.fileType, content };
+    return {
+      url,
+      fileName: document.fileName,
+      fileType: document.fileType,
+      content,
+    };
   }
 
   async remove(
@@ -323,8 +329,7 @@ export class KnowledgeService {
 
     return {
       documentsUsed: Number(count ?? 0),
-      storageUsedMb:
-        Math.round((Number(sum ?? 0) / (1024 * 1024)) * 100) / 100,
+      storageUsedMb: Math.round((Number(sum ?? 0) / (1024 * 1024)) * 100) / 100,
       uploadsThisMonth,
       limits: {
         kbMaxDocumentsPerAgent: plan.kbMaxDocumentsPerAgent,
@@ -342,7 +347,8 @@ export class KnowledgeService {
     document.status = dto.status;
     if (dto.chunkCount !== undefined) document.chunkCount = dto.chunkCount;
     if (dto.tokenCount !== undefined) document.tokenCount = dto.tokenCount;
-    if (dto.errorMessage !== undefined) document.errorMessage = dto.errorMessage;
+    if (dto.errorMessage !== undefined)
+      document.errorMessage = dto.errorMessage;
     document.processedAt = new Date();
 
     await this.documentRepo.save(document);

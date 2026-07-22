@@ -418,9 +418,7 @@ export class CrmSeeder implements Seeder {
         );
         console.log(`  ✅ Extra user created: soporte1@${usersDomain}`);
       } else {
-        console.log(
-          `  ℹ️  Extra user already exists: soporte1@${usersDomain}`,
-        );
+        console.log(`  ℹ️  Extra user already exists: soporte1@${usersDomain}`);
       }
 
       const allBusinessUsers = [

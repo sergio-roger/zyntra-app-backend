@@ -48,7 +48,9 @@ export class KnowledgeDocumentsController {
       properties: { file: { type: 'string', format: 'binary' } },
     },
   })
-  @ApiOperation({ summary: 'Sube un documento a la base de conocimiento del agente' })
+  @ApiOperation({
+    summary: 'Sube un documento a la base de conocimiento del agente',
+  })
   @ApiCreatedResponse({ description: 'Documento creado en estado pending' })
   upload(
     @Req() req: RequestWithUser,
@@ -90,7 +92,9 @@ export class KnowledgeDocumentsController {
   }
 
   @Get(':id/preview-url')
-  @ApiOperation({ summary: 'Obtiene una URL firmada para previsualizar el documento' })
+  @ApiOperation({
+    summary: 'Obtiene una URL firmada para previsualizar el documento',
+  })
   getPreviewUrl(
     @Req() req: RequestWithUser,
     @Param('businessId', ParseUUIDPipe) businessId: string,

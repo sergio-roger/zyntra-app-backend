@@ -37,7 +37,12 @@ export class Tag {
   @Column('text', { nullable: true })
   description: string | null;
 
-  @Column({ name: 'entity_type', type: 'varchar', length: 50, default: 'contact' })
+  @Column({
+    name: 'entity_type',
+    type: 'varchar',
+    length: 50,
+    default: 'contact',
+  })
   entityType: string;
 
   @CreateDateColumn({ name: 'created_at' })

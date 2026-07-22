@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Business } from '@auth/entities/business.entity';
 import { CustomFieldType } from '@crm/enums/custom-field-type.enum';
 import { ConflictException, NotFoundException } from '@nestjs/common';
@@ -100,7 +100,9 @@ describe('FormTemplatesService', () => {
       const template = makeTemplate();
       templateRepo.findOne
         .mockResolvedValueOnce(template) // lookup inside findOne()
-        .mockResolvedValueOnce(makeTemplate({ id: 'other', slug: 'nuevo-slug' })); // collision check
+        .mockResolvedValueOnce(
+          makeTemplate({ id: 'other', slug: 'nuevo-slug' }),
+        ); // collision check
 
       await expect(
         service.update(mockBusiness, template.id, {

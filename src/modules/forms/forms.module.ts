@@ -28,11 +28,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     CrmModule,
   ],
   controllers: [FormTemplatesController, FormsPublicController],
-  providers: [
-    FormTemplatesService,
-    FormSubmissionsService,
-    FormRateLimitGuard,
-  ],
+  providers: [FormTemplatesService, FormSubmissionsService, FormRateLimitGuard],
   exports: [FormTemplatesService, FormSubmissionsService],
 })
 export class FormsModule {}

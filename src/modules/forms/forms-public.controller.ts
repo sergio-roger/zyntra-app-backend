@@ -3,15 +3,13 @@ import { SubmitFormDto } from '@/modules/forms/dto/submit-form.dto';
 import { FormSubmissionsService } from '@/modules/forms/form-submissions.service';
 import { FormTemplatesService } from '@/modules/forms/form-templates.service';
 import { FormRateLimitGuard } from '@/modules/forms/guards/form-rate-limit.guard';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('forms-public')
 @Public()

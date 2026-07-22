@@ -21,7 +21,10 @@ export class FormRateLimitGuard implements CanActivate {
     config: ConfigService,
   ) {
     this.max = config.get<number>('FORM_SUBMIT_RATE_LIMIT_MAX', 20);
-    this.windowSec = config.get<number>('FORM_SUBMIT_RATE_LIMIT_WINDOW_SEC', 60);
+    this.windowSec = config.get<number>(
+      'FORM_SUBMIT_RATE_LIMIT_WINDOW_SEC',
+      60,
+    );
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

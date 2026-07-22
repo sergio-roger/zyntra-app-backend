@@ -1,5 +1,10 @@
 import { Controller, Get, Param, ParseUUIDPipe, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { RequiresModule } from '@common/decorators/requires-module.decorator';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 import { KnowledgeService } from '@/modules/knowledge/knowledge.service';

@@ -192,7 +192,10 @@ export class AgentsService {
     agent: Agent,
     message: string,
   ): Promise<string | null> {
-    if (!agent.tools?.includes(AgentTool.KNOWLEDGE_BASE) || !agent.knowledgeCollection) {
+    if (
+      !agent.tools?.includes(AgentTool.KNOWLEDGE_BASE) ||
+      !agent.knowledgeCollection
+    ) {
       return null;
     }
 

@@ -25,9 +25,9 @@ describe('OrchestratorController — ownership rules', () => {
 
   it('create() rechaza cuando el businessId del path no coincide con el del JWT', () => {
     const req = makeReq('biz-A');
-    expect(() =>
-      controller.create(req, 'biz-B', { goal: 'x' }),
-    ).toThrow(ForbiddenException);
+    expect(() => controller.create(req, 'biz-B', { goal: 'x' })).toThrow(
+      ForbiddenException,
+    );
     expect(service.enqueueRun).not.toHaveBeenCalled();
   });
 
@@ -42,9 +42,9 @@ describe('OrchestratorController — ownership rules', () => {
 
   it('findOne() rechaza cuando el businessId del path no coincide con el del JWT', () => {
     const req = makeReq('biz-A');
-    expect(() =>
-      controller.findOne(req, 'biz-B', 'run-1'),
-    ).toThrow(ForbiddenException);
+    expect(() => controller.findOne(req, 'biz-B', 'run-1')).toThrow(
+      ForbiddenException,
+    );
     expect(service.findOneForBusiness).not.toHaveBeenCalled();
   });
 });

@@ -28,7 +28,8 @@ export class FormFieldDto {
   @IsNotEmpty()
   @MaxLength(60)
   @Matches(/^[a-z][a-z0-9_]*$/, {
-    message: 'fieldKey debe ser snake_case (minúsculas, números y guiones bajos)',
+    message:
+      'fieldKey debe ser snake_case (minúsculas, números y guiones bajos)',
   })
   fieldKey: string;
 

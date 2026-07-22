@@ -149,7 +149,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!messages) return { ok: false, error: 'not_found' };
 
     this.attachToConversation(client, payload.conversationId);
-    return { ok: true, room: `conversation:${payload.conversationId}`, messages };
+    return {
+      ok: true,
+      room: `conversation:${payload.conversationId}`,
+      messages,
+    };
   }
 
   /** Agent joins a conversation room to see live messages. */

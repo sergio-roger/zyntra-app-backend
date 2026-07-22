@@ -29,7 +29,8 @@ export class CrmInternalService {
 
   async createLead(dto: InternalCreateLeadDto): Promise<Contact> {
     const business = await this.getBusinessOrThrow(dto.businessId);
-    const { businessId: _businessId, ...contactData } = dto;
+    const { businessId, ...contactData } = dto;
+    void businessId;
 
     return this.contactsService.create(
       business,
@@ -40,7 +41,8 @@ export class CrmInternalService {
 
   async createTask(dto: InternalCreateTaskDto): Promise<TaskResponse> {
     const business = await this.getBusinessOrThrow(dto.businessId);
-    const { businessId: _businessId, agentId, ...taskData } = dto;
+    const { businessId, agentId, ...taskData } = dto;
+    void businessId;
 
     return this.crmTasksService.createFromAgent(business, taskData, agentId);
   }

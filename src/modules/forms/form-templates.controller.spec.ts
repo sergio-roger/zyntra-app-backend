@@ -72,7 +72,9 @@ describe('FormTemplatesController', () => {
   describe('findOne', () => {
     it('merges the template with its ordered fields', async () => {
       mockTemplatesService.findOne.mockResolvedValue(mockTemplate);
-      mockTemplatesService.findFields.mockResolvedValue([{ fieldKey: 'email' }]);
+      mockTemplatesService.findFields.mockResolvedValue([
+        { fieldKey: 'email' },
+      ]);
 
       const result = await controller.findOne(mockBusiness, mockTemplate.id);
 
@@ -84,7 +86,10 @@ describe('FormTemplatesController', () => {
         mockBusiness,
         mockTemplate.id,
       );
-      expect(result).toEqual({ ...mockTemplate, fields: [{ fieldKey: 'email' }] });
+      expect(result).toEqual({
+        ...mockTemplate,
+        fields: [{ fieldKey: 'email' }],
+      });
     });
   });
 

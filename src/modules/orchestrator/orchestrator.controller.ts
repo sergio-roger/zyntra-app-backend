@@ -8,7 +8,12 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { RequestWithUser } from '@common/interfaces/request-with-user.interface';
 import { OrchestratorService } from '@/modules/orchestrator/orchestrator.service';
 import { CreateWorkflowRunDto } from '@/modules/orchestrator/dto/create-workflow-run.dto';
@@ -20,7 +25,9 @@ export class OrchestratorController {
   constructor(private readonly orchestratorService: OrchestratorService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Dispara una corrida del Orchestrator (Planner + System Agent)' })
+  @ApiOperation({
+    summary: 'Dispara una corrida del Orchestrator (Planner + System Agent)',
+  })
   create(
     @Req() req: RequestWithUser,
     @Param('businessId', ParseUUIDPipe) businessId: string,

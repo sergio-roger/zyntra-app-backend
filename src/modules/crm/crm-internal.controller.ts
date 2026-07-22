@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '@common/decorators/public.decorator';
 import { ServiceTokenGuard } from '@common/guards/service-token.guard';
@@ -16,7 +23,8 @@ export class CrmInternalController {
   @Post('leads')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Tool createLead (Tool Registry, System Agents) — crea un contact con source=agent',
+    summary:
+      'Tool createLead (Tool Registry, System Agents) — crea un contact con source=agent',
   })
   createLead(@Body() dto: InternalCreateLeadDto) {
     return this.crmInternalService.createLead(dto);
@@ -25,7 +33,8 @@ export class CrmInternalController {
   @Post('tasks')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Tool createTask (Tool Registry, System Agents) — crea una task con created_by_agent_id',
+    summary:
+      'Tool createTask (Tool Registry, System Agents) — crea una task con created_by_agent_id',
   })
   createTask(@Body() dto: InternalCreateTaskDto) {
     return this.crmInternalService.createTask(dto);

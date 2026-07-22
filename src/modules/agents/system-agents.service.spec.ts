@@ -3,8 +3,19 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { SystemAgentsService } from './system-agents.service';
 import { SystemAgent } from './entities/system-agent.entity';
 
-const makeAgent = (slug: string, status: 'active' | 'coming_soon'): SystemAgent =>
-  ({ id: `${slug}-uuid`, slug, name: slug, role: slug, description: '', status, model: 'x' }) as SystemAgent;
+const makeAgent = (
+  slug: string,
+  status: 'active' | 'coming_soon',
+): SystemAgent =>
+  ({
+    id: `${slug}-uuid`,
+    slug,
+    name: slug,
+    role: slug,
+    description: '',
+    status,
+    model: 'x',
+  }) as SystemAgent;
 
 describe('SystemAgentsService', () => {
   let service: SystemAgentsService;

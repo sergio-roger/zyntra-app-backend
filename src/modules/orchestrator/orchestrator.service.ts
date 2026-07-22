@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -45,7 +49,10 @@ export class OrchestratorService {
     return run;
   }
 
-  async findOneForBusiness(businessId: string, id: string): Promise<WorkflowRun> {
+  async findOneForBusiness(
+    businessId: string,
+    id: string,
+  ): Promise<WorkflowRun> {
     const run = await this.findOne(id);
     if (run.businessId !== businessId) {
       throw new ForbiddenException('No tienes acceso a este recurso');
@@ -53,19 +60,14 @@ export class OrchestratorService {
     return run;
   }
 
-  async handleCallback(
-    dto: WorkflowRunCallbackDto,
-  ): Promise<{ ok: boolean }> {
+  async handleCallback(dto: WorkflowRunCallbackDto): Promise<{ ok: boolean }> {
     const run = await this.findOne(dto.workflowRunId);
 
     run.status = dto.status;
     if (dto.steps !== undefined) run.steps = dto.steps;
     if (dto.errorMessage !== undefined) run.errorMessage = dto.errorMessage;
 
-    if (
-      dto.status === WorkflowRunStatus.RUNNING &&
-      run.startedAt === null
-    ) {
+    if (dto.status === WorkflowRunStatus.RUNNING && run.startedAt === null) {
       run.startedAt = new Date();
     }
     if (

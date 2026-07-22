@@ -22,7 +22,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     // toda la colección kb_<agentId> cuando se borra el agente completo.
     BullModule.registerQueue({ name: 'kb-deletion' }),
   ],
-  controllers: [AgentsController, InternalAgentConfigController, SystemAgentsController],
+  controllers: [
+    AgentsController,
+    InternalAgentConfigController,
+    SystemAgentsController,
+  ],
   providers: [AgentsService, SystemAgentsService],
   exports: [AgentsService, TypeOrmModule],
 })
