@@ -4,13 +4,11 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { AgentTask, AgentTaskDocument } from './schemas/agent-task.schema';
+import { AgentTask } from './entities/agent-task.entity';
 import { AgentTaskStatus } from './enums/agent-task-status.enum';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Business } from '../auth/entities/business.entity';
@@ -20,8 +18,8 @@ export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
   constructor(
-    @InjectModel(AgentTask.name)
-    private taskModel: Model<AgentTaskDocument>,
+    @InjectRepository(AgentTask)
+    private taskRepo: Repository<AgentTask>,
     @InjectRepository(Business)
     private businessRepo: Repository<Business>,
     @InjectQueue('agent-tasks')
@@ -54,9 +52,8 @@ export class TasksService {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const tasksThisMonth = await this.taskModel.countDocuments({
-        businessId,
-        createdAt: { $gte: startOfMonth },
+      const tasksThisMonth = await this.taskRepo.count({
+        where: { businessId, createdAt: MoreThanOrEqual(startOfMonth) },
       });
 
       if (tasksThisMonth >= limit) {
@@ -66,15 +63,17 @@ export class TasksService {
       }
     }
 
-    // 3. Crear la tarea en MongoDB
-    const task = await this.taskModel.create({
-      businessId,
-      type: dto.type,
-      status: AgentTaskStatus.PENDING,
-      input: dto.input as unknown,
-    });
+    // 3. Crear la tarea
+    const task = await this.taskRepo.save(
+      this.taskRepo.create({
+        businessId,
+        type: dto.type,
+        status: AgentTaskStatus.PENDING,
+        input: dto.input as unknown,
+      }),
+    );
     this.logger.debug(
-      `Tarea creada en MongoDB: id=${task._id.toString()} business_id=${businessId} type=${dto.type}`,
+      `Tarea creada: id=${task.id} business_id=${businessId} type=${dto.type}`,
     );
 
     // 4. Construir el BusinessContext para el worker Mastra (marketing-agents)
@@ -95,14 +94,14 @@ export class TasksService {
     await this.tasksQueue.add(
       'execute-agent-task',
       {
-        task_id: task._id.toString(),
+        task_id: task.id,
         task_type: task.type,
         task_input: task.input as unknown,
         business_context: businessContext,
       },
 
       {
-        jobId: task._id.toString(),
+        jobId: task.id,
         removeOnComplete: false,
         removeOnFail: false,
       },
@@ -112,17 +111,16 @@ export class TasksService {
   }
 
   async findAll(businessId: string): Promise<AgentTask[]> {
-    return this.taskModel
-      .find({ businessId })
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .exec();
+    return this.taskRepo.find({
+      where: { businessId },
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
   }
 
   async findOne(id: string, businessId: string): Promise<AgentTask> {
-    const task = await this.taskModel.findOne({
-      _id: id,
-      businessId,
+    const task = await this.taskRepo.findOne({
+      where: { id, businessId },
     });
     if (!task) {
       throw new NotFoundException('Tarea no encontrada');

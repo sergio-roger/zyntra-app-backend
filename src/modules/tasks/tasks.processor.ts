@@ -3,9 +3,9 @@ import {
   QueueEventsHost,
   QueueEventsListener,
 } from '@nestjs/bullmq';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { AgentTask, AgentTaskDocument } from './schemas/agent-task.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AgentTask } from './entities/agent-task.entity';
 import { AgentTaskStatus } from './enums/agent-task-status.enum';
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -15,8 +15,8 @@ export class TasksProcessor extends QueueEventsHost {
   private readonly logger = new Logger(TasksProcessor.name);
 
   constructor(
-    @InjectModel(AgentTask.name)
-    private taskModel: Model<AgentTaskDocument>,
+    @InjectRepository(AgentTask)
+    private taskRepo: Repository<AgentTask>,
   ) {
     super();
   }
@@ -24,7 +24,7 @@ export class TasksProcessor extends QueueEventsHost {
   @OnQueueEvent('active')
   async onActive({ jobId }: { jobId: string }) {
     this.logger.log(`Job ${jobId} detectado como ACTIVO`);
-    await this.taskModel.findByIdAndUpdate(jobId, {
+    await this.taskRepo.update(jobId, {
       status: AgentTaskStatus.RUNNING,
       startedAt: new Date(),
     });
@@ -60,16 +60,16 @@ export class TasksProcessor extends QueueEventsHost {
         : parsed;
 
     try {
-      await this.taskModel.findByIdAndUpdate(jobId, {
+      await this.taskRepo.update(jobId, {
         status: AgentTaskStatus.COMPLETED,
         completedAt: new Date(),
         output:
           typeof output === 'object' ? JSON.stringify(output, null, 2) : output,
       });
-      this.logger.log(`MongoDB actualizado: tarea ${jobId} → COMPLETED`);
+      this.logger.log(`Tarea ${jobId} → COMPLETED`);
     } catch (e) {
       this.logger.error(
-        `Error actualizando MongoDB para tarea ${jobId}: ${(e as Error).message}`,
+        `Error actualizando tarea ${jobId}: ${(e as Error).message}`,
       );
     }
   }
@@ -83,7 +83,7 @@ export class TasksProcessor extends QueueEventsHost {
     failedReason: string;
   }) {
     this.logger.error(`Job ${jobId} detectado como FALLIDO: ${failedReason}`);
-    await this.taskModel.findByIdAndUpdate(jobId, {
+    await this.taskRepo.update(jobId, {
       status: AgentTaskStatus.FAILED,
       error: failedReason,
     });

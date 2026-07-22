@@ -1,19 +1,15 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { TasksService } from './tasks.service';
 import { TasksController } from './tasks.controller';
 import { TasksProcessor } from './tasks.processor';
-import { AgentTask, AgentTaskSchema } from './schemas/agent-task.schema';
+import { AgentTask } from './entities/agent-task.entity';
 import { Business } from '../auth/entities/business.entity';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: AgentTask.name, schema: AgentTaskSchema },
-    ]),
-    TypeOrmModule.forFeature([Business]),
+    TypeOrmModule.forFeature([AgentTask, Business]),
     BullModule.registerQueue({
       name: 'agent-tasks',
     }),

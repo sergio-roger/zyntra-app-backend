@@ -11,7 +11,7 @@ import {
 import { Business } from '@auth/entities/business.entity';
 import { LifecycleStageType } from '@/modules/lifecycle/enums/lifecycle-stage-type.enum';
 
-@Entity({ name: 'lifecycle_stages', schema: 'lifecycle' })
+@Entity({ name: 'lifecycle_stages', schema: 'settings' })
 @Index(['businessId', 'position'])
 export class LifecycleStage {
   @PrimaryGeneratedColumn('uuid')
