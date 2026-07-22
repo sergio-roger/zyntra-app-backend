@@ -17,6 +17,12 @@ export class SystemAgent {
   @Column()
   role: string;
 
+  @Column({ default: '' })
+  description: string;
+
+  @Column({ default: 'coming_soon' })
+  status: 'active' | 'coming_soon';
+
   @Column({ default: 'gemini-flash-lite-latest' })
   model: string;
 

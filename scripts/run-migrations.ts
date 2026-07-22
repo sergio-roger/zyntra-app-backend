@@ -62,6 +62,7 @@ async function run() {
   await runMigration(c, '20260721_create_workflow_runs.sql');
   await runMigration(c, '20260721_add_agent_traceability_to_crm.sql');
   await runMigration(c, '20260721_create_system_agents.sql');
+  await runMigration(c, '20260721_add_status_to_system_agents.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

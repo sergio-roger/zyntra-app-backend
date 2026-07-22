@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -42,6 +42,14 @@ export class OrchestratorService {
   async findOne(id: string): Promise<WorkflowRun> {
     const run = await this.workflowRunRepo.findOne({ where: { id } });
     if (!run) throw new NotFoundException('Workflow run no encontrado');
+    return run;
+  }
+
+  async findOneForBusiness(businessId: string, id: string): Promise<WorkflowRun> {
+    const run = await this.findOne(id);
+    if (run.businessId !== businessId) {
+      throw new ForbiddenException('No tienes acceso a este recurso');
+    }
     return run;
   }
 

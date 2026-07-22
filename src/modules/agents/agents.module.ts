@@ -1,6 +1,8 @@
 import { AgentsController } from '@/modules/agents/agents.controller';
 import { InternalAgentConfigController } from '@/modules/agents/internal-agent-config.controller';
+import { SystemAgentsController } from '@/modules/agents/system-agents.controller';
 import { AgentsService } from '@/modules/agents/agents.service';
+import { SystemAgentsService } from '@/modules/agents/system-agents.service';
 import { Agent } from '@/modules/agents/entities/agent.entity';
 import { SystemAgent } from '@/modules/agents/entities/system-agent.entity';
 import { ChannelsModule } from '@/modules/channels/channels.module';
@@ -20,8 +22,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     // toda la colección kb_<agentId> cuando se borra el agente completo.
     BullModule.registerQueue({ name: 'kb-deletion' }),
   ],
-  controllers: [AgentsController, InternalAgentConfigController],
-  providers: [AgentsService],
+  controllers: [AgentsController, InternalAgentConfigController, SystemAgentsController],
+  providers: [AgentsService, SystemAgentsService],
   exports: [AgentsService, TypeOrmModule],
 })
 export class AgentsModule {}

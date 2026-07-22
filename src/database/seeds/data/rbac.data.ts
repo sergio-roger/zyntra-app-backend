@@ -68,8 +68,7 @@ export const MENUS_DATA = [
     label: 'Agentes IA',
     path: '/agents',
     parent_key: null,
-    description:
-      'Suite de Inteligencia Artificial para la planificación y optimización del negocio.',
+    description: 'Tus agentes de IA trabajando para alcanzar tus objetivos.',
   },
   {
     key: 'inbox',
@@ -190,29 +189,6 @@ export const MENUS_DATA = [
     parent_key: 'crm',
     description:
       'Listas dinámicas inteligentes automatizadas según filtros avanzados.',
-  },
-  // Agentes IA subitems
-  {
-    key: 'agents_strategy',
-    label: 'Estrategia',
-    path: '/agents/strategy',
-    parent_key: 'agents_ia',
-    description: 'Planificador estratégico y generación de planes de marca.',
-  },
-  {
-    key: 'agents_content',
-    label: 'Contenido',
-    path: '/agents/content',
-    parent_key: 'agents_ia',
-    description:
-      'Generador inteligente de contenidos para copys, posts y correos.',
-  },
-  {
-    key: 'agents_analysis',
-    label: 'Análisis',
-    path: '/agents/analysis',
-    parent_key: 'agents_ia',
-    description: 'Analizador automático de métricas e insights sugeridos.',
   },
   // Inbox subitems
   {
