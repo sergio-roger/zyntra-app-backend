@@ -22,6 +22,9 @@ import { WidgetSessionService } from '@/modules/widget-session/widget-session.se
 import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget-session-payload.interface';
 import { ChatGateway } from '../chat.gateway';
 import { MessageEncryptionService } from '../services/message-encryption.service';
+import { getQueueToken } from '@nestjs/bullmq';
+import { ContactsService } from '@crm/contacts.service';
+import { AgentsService } from '@/modules/agents/agents.service';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -137,6 +140,25 @@ async function buildModule() {
           verify: jest.fn().mockReturnValue({}),
         },
       },
+      {
+        provide: ContactsService,
+        useValue: {
+          findOne: jest.fn(),
+          create: jest.fn(),
+        },
+      },
+      {
+        provide: AgentsService,
+        useValue: {
+          findOne: jest.fn(),
+        },
+      },
+      {
+        provide: getQueueToken('agent-response'),
+        useValue: {
+          add: jest.fn(),
+        },
+      },
     ],
   }).compile();
 
@@ -199,7 +221,7 @@ describe('ChatService.processChat() — no automatic reply is ever injected', ()
     );
   });
 
-  it('behaves the same even when the channel has an agentId (no code path consumes it yet)', async () => {
+  it('adds a job to agentResponseQueue and returns pending: true when channel has an agentId', async () => {
     (channelsService.findByChannelId as jest.Mock).mockResolvedValue(
       WEB_CHAT_CHANNEL_WITH_AGENT,
     );
@@ -207,7 +229,7 @@ describe('ChatService.processChat() — no automatic reply is ever injected', ()
       { message: 'Hola' },
       WIDGET_SESSION,
     );
-    expect(result.pending).toBe(false);
+    expect(result.pending).toBe(true);
     expect(result.message).toBe('');
   });
 });

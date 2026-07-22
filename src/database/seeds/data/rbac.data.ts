@@ -65,8 +65,8 @@ export const MENUS_DATA = [
   },
   {
     key: 'agents_ia',
-    label: 'Agentes IA',
-    path: '/agents',
+    label: 'Marketing',
+    path: '/agents/store',
     parent_key: null,
     description: 'Tus agentes de IA trabajando para alcanzar tus objetivos.',
   },
@@ -79,12 +79,11 @@ export const MENUS_DATA = [
       'Bandeja centralizada de comunicación multicanal y respuestas rápidas.',
   },
   {
-    key: 'funnels',
-    label: 'Embudos',
-    path: '/funnels',
+    key: 'drive',
+    label: 'Drive',
+    path: '/drive',
     parent_key: null,
-    description:
-      'Acceso y control de los embudos de venta, páginas de aterrizaje y analítica.',
+    description: 'Administra los archivos y recursos de tu negocio.',
   },
   {
     key: 'avatar',
@@ -207,56 +206,27 @@ export const MENUS_DATA = [
     description:
       'Gestión de plantillas y automatización de respuestas rápidas.',
   },
+  // Marketing (agents_ia) subitems
   {
-    key: 'inbox_channels',
-    label: 'Canales',
-    path: '/inbox/channels',
-    parent_key: 'inbox',
-    description: 'Conexión y vinculación de redes sociales de entrada al chat.',
-  },
-  // Embudos subitems
-  {
-    key: 'funnels_dashboard',
-    label: 'Dashboard',
-    path: '/funnels/dashboard',
-    parent_key: 'funnels',
-    description: 'Estadísticas exclusivas de rendimiento y clics del embudo.',
+    key: 'agents_store',
+    label: 'Tienda Agentes',
+    path: '/agents/store',
+    parent_key: 'agents_ia',
+    description: 'Catálogo de agentes de IA disponibles.',
   },
   {
-    key: 'funnels_builder',
-    label: 'Constructor',
-    path: '/funnels/builder',
-    parent_key: 'funnels',
-    description: 'Constructor visual de páginas de captura y ventas.',
+    key: 'agents_projects',
+    label: 'Proyectos',
+    path: '/agents/projects',
+    parent_key: 'agents_ia',
+    description: 'Gestión de proyectos de marketing.',
   },
   {
-    key: 'funnels_templates',
-    label: 'Plantillas',
-    path: '/funnels/templates',
-    parent_key: 'funnels',
-    description: 'Acceso a la galería de embudos preconfigurados.',
-  },
-  {
-    key: 'funnels_automations',
-    label: 'Automatizaciones',
-    path: '/funnels/automations',
-    parent_key: 'funnels',
-    description:
-      'Reglas lógicas para disparar correos o acciones en el embudo.',
-  },
-  {
-    key: 'funnels_leads',
-    label: 'Leads',
-    path: '/funnels/leads',
-    parent_key: 'funnels',
-    description: 'Prospectos exclusivos capturados a través de los embudos.',
-  },
-  {
-    key: 'funnels_analytics',
-    label: 'Analítica',
-    path: '/funnels/analytics',
-    parent_key: 'funnels',
-    description: 'Gráficos detallados de conversión y valor de tráfico.',
+    key: 'agents_team',
+    label: 'Agentes',
+    path: '/agents/team',
+    parent_key: 'agents_ia',
+    description: 'Gestión de agentes del equipo de marketing.',
   },
   // Avatar subitems
   {
@@ -338,7 +308,7 @@ export const MENUS_DATA = [
     path: '/settings/configuracion-negocio',
     parent_key: 'settings',
     description:
-      'Configuraciones específicas del negocio: ciclo de vida y canales.',
+      'Configuraciones específicas del negocio: ciclo de vida y agentes.',
   },
   // Ajustes generales → hijos (tercer nivel, sin descripción)
   {
@@ -503,8 +473,6 @@ export const AGENT_MENUS = [
   'crm_segments',
   'inbox',
   'inbox_conversations',
-  'funnels',
-  'funnels_leads',
   'settings',
   'settings_general',
   'settings_config',

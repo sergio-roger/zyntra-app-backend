@@ -40,8 +40,11 @@ export const PLANS_DATA = [
       crm_fields: ModuleAccessLevel.LOCKED,
       crm_segments: ModuleAccessLevel.LOCKED,
       agents_ia: ModuleAccessLevel.LOCKED,
+      agents_store: ModuleAccessLevel.LOCKED,
+      agents_projects: ModuleAccessLevel.LOCKED,
+      agents_team: ModuleAccessLevel.LOCKED,
       inbox: ModuleAccessLevel.LOCKED,
-      funnels: ModuleAccessLevel.LOCKED,
+      drive: ModuleAccessLevel.LOCKED,
       // ai_agent_limit: 0 -> sin agentes en este plan, los 5 sub-módulos
       // quedan LOCKED igual que el módulo padre automations_agents.
       automations_agents_identity: ModuleAccessLevel.LOCKED,
@@ -94,9 +97,11 @@ export const PLANS_DATA = [
       dashboard_home: ModuleAccessLevel.FULL,
       crm: ModuleAccessLevel.FULL,
       agents_ia: ModuleAccessLevel.FULL,
+      agents_store: ModuleAccessLevel.FULL,
+      agents_projects: ModuleAccessLevel.FULL,
+      agents_team: ModuleAccessLevel.FULL,
       inbox: ModuleAccessLevel.FULL,
-      inbox_channels: ModuleAccessLevel.READ_ONLY,
-      funnels: ModuleAccessLevel.LOCKED,
+      drive: ModuleAccessLevel.LOCKED,
       // ai_agent_limit: 1 -> el plan permite crear/configurar ese agente,
       // así que los 5 sub-módulos van FULL (antes LOCKED por error, lo que
       // bloqueaba por completo el flujo de creación de agentes).
@@ -143,8 +148,11 @@ export const PLANS_DATA = [
       dashboard: ModuleAccessLevel.FULL,
       crm: ModuleAccessLevel.FULL,
       agents_ia: ModuleAccessLevel.FULL,
+      agents_store: ModuleAccessLevel.FULL,
+      agents_projects: ModuleAccessLevel.FULL,
+      agents_team: ModuleAccessLevel.FULL,
       inbox: ModuleAccessLevel.FULL,
-      funnels: ModuleAccessLevel.FULL,
+      drive: ModuleAccessLevel.FULL,
       // ai_agent_limit: 10 -> plan tope, los 5 sub-módulos van FULL.
       automations_agents_identity: ModuleAccessLevel.FULL,
       automations_agents_tools: ModuleAccessLevel.FULL,

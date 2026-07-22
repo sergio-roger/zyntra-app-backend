@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { getQueueToken } from '@nestjs/bullmq';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 import { ObjectLiteral, Repository } from 'typeorm';
 
 import { AgentsService } from '../agents.service';
@@ -79,8 +81,31 @@ describe('AgentsService', () => {
         { provide: getRepositoryToken(Channel), useValue: channelRepo },
         { provide: getQueueToken('kb-deletion'), useValue: kbDeletionQueue },
         { provide: AiService, useValue: aiService },
+        {
+          provide: HttpService,
+          useValue: {
+            post: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn(),
+          },
+        },
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        // Fallback for any other dependencies if needed, or we can just specify them exactly
+        if (typeof token === 'function' && token.name === 'HttpService') {
+          return { post: jest.fn() };
+        }
+        if (typeof token === 'function' && token.name === 'ConfigService') {
+          return { get: jest.fn() };
+        }
+        return null;
+      })
+      .compile();
 
     service = module.get<AgentsService>(AgentsService);
   });

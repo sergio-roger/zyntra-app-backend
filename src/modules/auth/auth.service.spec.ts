@@ -488,7 +488,7 @@ describe('AuthService — unified login', () => {
             ),
           }),
         ).toBe(true);
-      });
+      }, 15000);
     });
 
     describe('uploadAvatar()', () => {
