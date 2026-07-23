@@ -4,6 +4,7 @@ import { PlansSeeder } from '../src/database/seeds/01-plans.seed';
 import { RbacSeeder } from '../src/database/seeds/02-rbac.seed';
 import { CrmSeeder } from '../src/database/seeds/03-crm.seed';
 import { ChannelsSeeder } from '../src/database/seeds/04-channels.seed';
+import { BusinessProfilesSeeder } from '../src/database/seeds/05-business-profiles.seed';
 import { Seeder } from '../src/database/seeds/seeder.interface';
 import { SeedModule } from './seed.module';
 
@@ -18,6 +19,7 @@ async function bootstrap() {
     new RbacSeeder(),
     new CrmSeeder(),
     new ChannelsSeeder(),
+    new BusinessProfilesSeeder(),
   ];
 
   try {
