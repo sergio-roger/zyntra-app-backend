@@ -5,6 +5,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { sign } from 'jsonwebtoken';
 import * as argon2 from 'argon2';
+import { promises as fs } from 'fs';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { Repository } from 'typeorm';
@@ -156,6 +157,12 @@ describe('Settings → Business (e2e)', () => {
     await userRepo.delete({ id: adminB.id });
     await businessRepo.delete({ id: businessA.id });
     await businessRepo.delete({ id: businessB.id });
+    await fs
+      .rm(process.cwd() + '/uploads/logos', { recursive: true, force: true })
+      .catch(() => undefined);
+    await fs
+      .rm(process.cwd() + '/uploads/covers', { recursive: true, force: true })
+      .catch(() => undefined);
     await app.close();
   });
 
@@ -171,11 +178,14 @@ describe('Settings → Business (e2e)', () => {
       expect(body.data.name).toBe('E2E Business A');
     });
 
-    it('rechaza a un usuario que no es admin', async () => {
-      await request(app.getHttpServer())
+    it('un usuario que no es admin también puede leer los datos (modo lectura)', async () => {
+      const res = await request(app.getHttpServer())
         .get('/api/settings/business')
         .set('Authorization', `Bearer ${tokenAgentA}`)
-        .expect(403);
+        .expect(200);
+
+      const body = res.body as BusinessResponseBody;
+      expect(body.data.id).toBe(businessA.id);
     });
 
     it('rechaza sin token', async () => {
@@ -245,6 +255,59 @@ describe('Settings → Business (e2e)', () => {
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .send({ website: 'not-a-url' })
         .expect(400);
+    });
+  });
+
+  describe('Logo y portada — solo el admin puede modificarlos', () => {
+    const tinyPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+
+    it('un usuario no admin no puede subir el logo', async () => {
+      await request(app.getHttpServer())
+        .post('/api/settings/business/logo')
+        .set('Authorization', `Bearer ${tokenAgentA}`)
+        .attach('file', tinyPng, 'logo.png')
+        .expect(403);
+    });
+
+    it('un usuario no admin no puede eliminar el logo', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/settings/business/logo')
+        .set('Authorization', `Bearer ${tokenAgentA}`)
+        .expect(403);
+    });
+
+    it('un usuario no admin no puede subir la portada', async () => {
+      await request(app.getHttpServer())
+        .post('/api/settings/business/cover')
+        .set('Authorization', `Bearer ${tokenAgentA}`)
+        .attach('file', tinyPng, 'cover.png')
+        .expect(403);
+    });
+
+    it('un usuario no admin no puede eliminar la portada', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/settings/business/cover')
+        .set('Authorization', `Bearer ${tokenAgentA}`)
+        .expect(403);
+    });
+
+    it('el admin sí puede subir el logo y la portada', async () => {
+      const logoRes = await request(app.getHttpServer())
+        .post('/api/settings/business/logo')
+        .set('Authorization', `Bearer ${tokenAdminA}`)
+        .attach('file', tinyPng, 'logo.png')
+        .expect(201);
+      expect(logoRes.body.data.logoUrl).toBeTruthy();
+
+      const coverRes = await request(app.getHttpServer())
+        .post('/api/settings/business/cover')
+        .set('Authorization', `Bearer ${tokenAdminA}`)
+        .attach('file', tinyPng, 'cover.png')
+        .expect(201);
+      expect(coverRes.body.data.coverUrl).toBeTruthy();
     });
   });
 });
