@@ -36,6 +36,9 @@ export class Business {
   @Column({ name: 'logo_url', nullable: true })
   logoUrl: string;
 
+  @Column({ name: 'cover_url', nullable: true })
+  coverUrl: string;
+
   @Column({ name: 'plan_id', nullable: true })
   planId: string;
 

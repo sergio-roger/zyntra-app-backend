@@ -62,4 +62,21 @@ export class BusinessController {
     await this.businessService.removeLogo(business.id);
     return { message: 'Logo eliminado correctamente' };
   }
+
+  @Post('cover')
+  @ApiOperation({ summary: 'Upload or replace the business cover image' })
+  @UseInterceptors(FileInterceptor('file'))
+  uploadCover(
+    @CurrentBusiness() business: Business,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.businessService.uploadCover(business.id, file);
+  }
+
+  @Delete('cover')
+  @ApiOperation({ summary: 'Remove the business cover image' })
+  async removeCover(@CurrentBusiness() business: Business) {
+    await this.businessService.removeCover(business.id);
+    return { message: 'Portada eliminada correctamente' };
+  }
 }

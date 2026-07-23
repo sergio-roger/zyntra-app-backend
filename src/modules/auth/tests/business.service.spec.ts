@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { BusinessService } from '@auth/business.service';
 import { Business } from '@auth/entities/business.entity';
 import { LogoStorageService } from '@auth/logo-storage.service';
+import { CoverStorageService } from '@auth/cover-storage.service';
 import type { UploadableFile } from '@auth/interfaces/uploadable-file.interface';
 
 const mockBusinessRepo = () =>
@@ -11,11 +12,11 @@ const mockBusinessRepo = () =>
     save: jest.fn((v: Business) => Promise.resolve(v)),
   }) as unknown as jest.Mocked<Repository<Business>>;
 
-const mockLogoStorage = () =>
+const mockImageStorage = () =>
   ({
     save: jest.fn(),
     delete: jest.fn(),
-  }) as unknown as jest.Mocked<LogoStorageService>;
+  }) as unknown as jest.Mocked<LogoStorageService | CoverStorageService>;
 
 const buildBusiness = (
   overrides: Partial<Record<keyof Business, unknown>> = {},
@@ -29,18 +30,21 @@ const buildBusiness = (
     taxId: null,
     website: null,
     logoUrl: null,
+    coverUrl: null,
     ...overrides,
   }) as Business;
 
 describe('BusinessService', () => {
   let businessRepo: jest.Mocked<Repository<Business>>;
   let logoStorage: jest.Mocked<LogoStorageService>;
+  let coverStorage: jest.Mocked<CoverStorageService>;
   let service: BusinessService;
 
   beforeEach(() => {
     businessRepo = mockBusinessRepo();
-    logoStorage = mockLogoStorage();
-    service = new BusinessService(businessRepo, logoStorage);
+    logoStorage = mockImageStorage() as jest.Mocked<LogoStorageService>;
+    coverStorage = mockImageStorage() as jest.Mocked<CoverStorageService>;
+    service = new BusinessService(businessRepo, logoStorage, coverStorage);
   });
 
   describe('findOne', () => {
@@ -158,6 +162,78 @@ describe('BusinessService', () => {
       await service.removeLogo('business-1');
 
       expect(logoStorage.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('uploadCover', () => {
+    const validFile: UploadableFile = {
+      mimetype: 'image/webp',
+      size: 1024,
+      buffer: Buffer.from('fake'),
+    } as UploadableFile;
+
+    it('rechaza si no se envía archivo', async () => {
+      await expect(
+        service.uploadCover('business-1', undefined),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rechaza archivos que superan el tamaño máximo de portada', async () => {
+      await expect(
+        service.uploadCover('business-1', {
+          ...validFile,
+          size: 6 * 1024 * 1024,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('guarda la portada nueva y borra la anterior', async () => {
+      const business = buildBusiness({ coverUrl: 'https://old-cover.png' });
+      businessRepo.findOneBy.mockResolvedValue(business);
+      coverStorage.save.mockResolvedValue('https://new-cover.png');
+
+      const result = await service.uploadCover('business-1', validFile);
+
+      expect(result).toEqual({ coverUrl: 'https://new-cover.png' });
+      expect(coverStorage.delete).toHaveBeenCalledWith(
+        'https://old-cover.png',
+      );
+    });
+
+    it('no afecta el logo al subir una portada', async () => {
+      const business = buildBusiness({
+        logoUrl: 'https://logo.png',
+        coverUrl: null,
+      });
+      businessRepo.findOneBy.mockResolvedValue(business);
+      coverStorage.save.mockResolvedValue('https://new-cover.png');
+
+      await service.uploadCover('business-1', validFile);
+
+      expect(business.logoUrl).toBe('https://logo.png');
+    });
+  });
+
+  describe('removeCover', () => {
+    it('limpia coverUrl y borra el archivo almacenado', async () => {
+      const business = buildBusiness({ coverUrl: 'https://old-cover.png' });
+      businessRepo.findOneBy.mockResolvedValue(business);
+
+      await service.removeCover('business-1');
+
+      expect(business.coverUrl).toBeNull();
+      expect(coverStorage.delete).toHaveBeenCalledWith(
+        'https://old-cover.png',
+      );
+    });
+
+    it('no falla si no había portada', async () => {
+      const business = buildBusiness({ coverUrl: null });
+      businessRepo.findOneBy.mockResolvedValue(business);
+
+      await service.removeCover('business-1');
+
+      expect(coverStorage.delete).not.toHaveBeenCalled();
     });
   });
 });

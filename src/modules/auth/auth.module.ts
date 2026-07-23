@@ -20,6 +20,7 @@ import { UserPreferencesService } from '@auth/user-preferences.service';
 import { UserPreferencesController } from '@auth/user-preferences.controller';
 import { AvatarStorageService } from '@auth/avatar-storage.service';
 import { LogoStorageService } from '@auth/logo-storage.service';
+import { CoverStorageService } from '@auth/cover-storage.service';
 import { BusinessService } from '@auth/business.service';
 import { BusinessController } from '@auth/business.controller';
 import { StorageClientModule } from '@/storage-client/storage-client.module';
@@ -62,6 +63,7 @@ import { MenuService } from '@auth/menu.service';
     UserPreferencesService,
     AvatarStorageService,
     LogoStorageService,
+    CoverStorageService,
     BusinessService,
   ],
   controllers: [
