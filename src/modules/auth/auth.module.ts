@@ -23,6 +23,9 @@ import { LogoStorageService } from '@auth/logo-storage.service';
 import { CoverStorageService } from '@auth/cover-storage.service';
 import { BusinessService } from '@auth/business.service';
 import { BusinessController } from '@auth/business.controller';
+import { BusinessProfileService } from '@auth/business-profile.service';
+import { BusinessProfileController } from '@auth/business-profile.controller';
+import { BusinessProfile } from '@auth/entities/business-profile.entity';
 import { StorageClientModule } from '@/storage-client/storage-client.module';
 import { UserService } from '@auth/user.service';
 import { RoleService } from '@auth/role.service';
@@ -41,6 +44,7 @@ import { MenuService } from '@auth/menu.service';
       Permission,
       PlanModule,
       UserPreference,
+      BusinessProfile,
     ]),
     PassportModule,
     StorageClientModule,
@@ -65,12 +69,14 @@ import { MenuService } from '@auth/menu.service';
     LogoStorageService,
     CoverStorageService,
     BusinessService,
+    BusinessProfileService,
   ],
   controllers: [
     AuthController,
     SettingsPermissionsController,
     UserPreferencesController,
     BusinessController,
+    BusinessProfileController,
   ],
   exports: [AuthService],
 })

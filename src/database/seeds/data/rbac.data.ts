@@ -465,7 +465,13 @@ export const MENUS_DATA = [
 export const ADMIN_MENUS = MENUS_DATA.map((m) => m.key);
 
 export const MANAGER_MENUS = MENUS_DATA.filter(
-  (m) => !['billing', 'settings_users', 'settings_my_company'].includes(m.key),
+  (m) =>
+    ![
+      'billing',
+      'settings_users',
+      'settings_my_company',
+      'settings_config',
+    ].includes(m.key),
 ).map((m) => m.key);
 
 export const AGENT_MENUS = [
@@ -483,7 +489,6 @@ export const AGENT_MENUS = [
   'settings',
   'settings_general',
   'settings_business',
-  'settings_config',
   'settings_my_account',
 ];
 
