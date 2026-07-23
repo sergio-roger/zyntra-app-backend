@@ -1,6 +1,6 @@
 import { Business } from '@auth/entities/business.entity';
-import { UpdateCompanyDto } from '@auth/dto/update-company.dto';
-import { CompanyService } from '@auth/company.service';
+import { UpdateBusinessDto } from '@auth/dto/update-business.dto';
+import { BusinessService } from '@auth/business.service';
 import { CurrentBusiness } from '@common/decorators/current-business.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { UserRole } from '@crm/enums/user-role.enum';
@@ -22,41 +22,44 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-@ApiTags('settings-company')
+@ApiTags('settings-business')
 @ApiBearerAuth()
 @Roles(UserRole.ADMIN)
-@Controller('settings/company')
-export class CompanyController {
-  constructor(private readonly companyService: CompanyService) {}
+@Controller('settings/business')
+export class BusinessController {
+  constructor(private readonly businessService: BusinessService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get current business company data' })
-  @ApiOkResponse({ description: 'Company data' })
+  @ApiOperation({ summary: 'Get current business data' })
+  @ApiOkResponse({ description: 'Business data' })
   get(@CurrentBusiness() business: Business) {
-    return this.companyService.findOne(business.id);
+    return this.businessService.findOne(business.id);
   }
 
   @Patch()
-  @ApiOperation({ summary: 'Update current business company data' })
-  @ApiOkResponse({ description: 'Company updated' })
-  update(@CurrentBusiness() business: Business, @Body() dto: UpdateCompanyDto) {
-    return this.companyService.update(business.id, dto);
+  @ApiOperation({ summary: 'Update current business data' })
+  @ApiOkResponse({ description: 'Business updated' })
+  update(
+    @CurrentBusiness() business: Business,
+    @Body() dto: UpdateBusinessDto,
+  ) {
+    return this.businessService.update(business.id, dto);
   }
 
   @Post('logo')
-  @ApiOperation({ summary: 'Upload or replace the company logo' })
+  @ApiOperation({ summary: 'Upload or replace the business logo' })
   @UseInterceptors(FileInterceptor('file'))
   uploadLogo(
     @CurrentBusiness() business: Business,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.companyService.uploadLogo(business.id, file);
+    return this.businessService.uploadLogo(business.id, file);
   }
 
   @Delete('logo')
-  @ApiOperation({ summary: 'Remove the company logo' })
+  @ApiOperation({ summary: 'Remove the business logo' })
   async removeLogo(@CurrentBusiness() business: Business) {
-    await this.companyService.removeLogo(business.id);
+    await this.businessService.removeLogo(business.id);
     return { message: 'Logo eliminado correctamente' };
   }
 }

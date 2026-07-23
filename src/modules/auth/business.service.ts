@@ -2,7 +2,7 @@ import {
   ALLOWED_LOGO_MIME_TYPES,
   MAX_LOGO_SIZE_BYTES,
 } from '@auth/constants/logo-storage.constants';
-import { UpdateCompanyDto } from '@auth/dto/update-company.dto';
+import { UpdateBusinessDto } from '@auth/dto/update-business.dto';
 import { Business } from '@auth/entities/business.entity';
 import type { UploadableFile } from '@auth/interfaces/uploadable-file.interface';
 import { LogoStorageService } from '@auth/logo-storage.service';
@@ -15,7 +15,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 @Injectable()
-export class CompanyService {
+export class BusinessService {
   constructor(
     @InjectRepository(Business)
     private readonly businessRepository: Repository<Business>,
@@ -32,13 +32,16 @@ export class CompanyService {
     return business;
   }
 
-  async update(businessId: string, dto: UpdateCompanyDto): Promise<Business> {
+  async update(
+    businessId: string,
+    dto: UpdateBusinessDto,
+  ): Promise<Business> {
     const business = await this.findOne(businessId);
     if (dto.name !== undefined) business.name = dto.name;
     if (dto.email !== undefined) business.email = dto.email;
     if (dto.phone !== undefined) business.phone = dto.phone;
     if (dto.address !== undefined) business.address = dto.address;
-    if (dto.tax_id !== undefined) business.taxId = dto.tax_id;
+    if (dto.taxId !== undefined) business.taxId = dto.taxId;
     if (dto.website !== undefined) business.website = dto.website;
     return this.businessRepository.save(business);
   }

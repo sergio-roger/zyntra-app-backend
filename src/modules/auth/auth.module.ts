@@ -20,8 +20,8 @@ import { UserPreferencesService } from '@auth/user-preferences.service';
 import { UserPreferencesController } from '@auth/user-preferences.controller';
 import { AvatarStorageService } from '@auth/avatar-storage.service';
 import { LogoStorageService } from '@auth/logo-storage.service';
-import { CompanyService } from '@auth/company.service';
-import { CompanyController } from '@auth/company.controller';
+import { BusinessService } from '@auth/business.service';
+import { BusinessController } from '@auth/business.controller';
 import { StorageClientModule } from '@/storage-client/storage-client.module';
 import { UserService } from '@auth/user.service';
 import { RoleService } from '@auth/role.service';
@@ -62,13 +62,13 @@ import { MenuService } from '@auth/menu.service';
     UserPreferencesService,
     AvatarStorageService,
     LogoStorageService,
-    CompanyService,
+    BusinessService,
   ],
   controllers: [
     AuthController,
     SettingsPermissionsController,
     UserPreferencesController,
-    CompanyController,
+    BusinessController,
   ],
   exports: [AuthService],
 })

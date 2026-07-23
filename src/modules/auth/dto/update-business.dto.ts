@@ -7,7 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export class UpdateCompanyDto {
+export class UpdateBusinessDto {
   @ApiPropertyOptional({ example: 'My Business Name', maxLength: 150 })
   @IsOptional()
   @IsString()
@@ -38,7 +38,7 @@ export class UpdateCompanyDto {
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  tax_id?: string;
+  taxId?: string;
 
   @ApiPropertyOptional({ example: 'https://mybusiness.com' })
   @IsOptional()
