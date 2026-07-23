@@ -7,6 +7,9 @@ import { FormTemplatesController } from './form-templates.controller';
 import { FormTemplatesService } from './form-templates.service';
 import { FormSubmissionsService } from './form-submissions.service';
 import { FormStatus } from './enums/form-status.enum';
+import { CreateFormTemplateDto } from './dto/create-form-template.dto';
+import { UpdateFormTemplateDto } from './dto/update-form-template.dto';
+import { ReplaceFormFieldsDto } from './dto/replace-form-fields.dto';
 
 const mockBusiness = { id: 'biz-uuid' } as Business;
 
@@ -98,7 +101,10 @@ describe('FormTemplatesController', () => {
       const dto = { name: 'Contacto', slug: 'contacto' };
       mockTemplatesService.create.mockResolvedValue({ id: 'new-uuid', ...dto });
 
-      const result = await controller.create(mockBusiness, dto as any);
+      const result = await controller.create(
+        mockBusiness,
+        dto as CreateFormTemplateDto,
+      );
 
       expect(templatesService.create).toHaveBeenCalledWith(mockBusiness, dto);
       expect(result).toHaveProperty('id');
@@ -116,7 +122,7 @@ describe('FormTemplatesController', () => {
       const result = await controller.update(
         mockBusiness,
         mockTemplate.id,
-        dto as any,
+        dto as UpdateFormTemplateDto,
       );
 
       expect(templatesService.update).toHaveBeenCalledWith(
@@ -147,7 +153,7 @@ describe('FormTemplatesController', () => {
       const result = await controller.replaceFields(
         mockBusiness,
         mockTemplate.id,
-        dto as any,
+        dto as ReplaceFormFieldsDto,
       );
 
       expect(templatesService.replaceFields).toHaveBeenCalledWith(

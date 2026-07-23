@@ -25,7 +25,7 @@ describe('BusinessSystemAgentsService', () => {
   const systemAgentsRepo = { findOne: jest.fn() };
   const businessSystemAgentsRepo = {
     findOne: jest.fn(),
-    find: jest.fn(),
+    find: jest.fn<unknown, [{ where: { businessId: string } }]>(),
     create: jest.fn((x: unknown) => x),
     save: jest.fn(),
   };
@@ -34,7 +34,10 @@ describe('BusinessSystemAgentsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BusinessSystemAgentsService,
-        { provide: getRepositoryToken(SystemAgent), useValue: systemAgentsRepo },
+        {
+          provide: getRepositoryToken(SystemAgent),
+          useValue: systemAgentsRepo,
+        },
         {
           provide: getRepositoryToken(BusinessSystemAgent),
           useValue: businessSystemAgentsRepo,
@@ -103,7 +106,11 @@ describe('BusinessSystemAgentsService', () => {
   describe('findImported', () => {
     it('devuelve solo los agentes importados por el businessId pedido', async () => {
       const rows = [
-        { id: 'link-uuid', businessId: BUSINESS_ID, systemAgentId: 'agent-uuid' },
+        {
+          id: 'link-uuid',
+          businessId: BUSINESS_ID,
+          systemAgentId: 'agent-uuid',
+        },
       ];
       businessSystemAgentsRepo.find.mockResolvedValue(rows);
 
@@ -115,9 +122,8 @@ describe('BusinessSystemAgentsService', () => {
         order: { importedAt: 'DESC' },
       });
       expect(result).toEqual(rows);
-      expect(
-        businessSystemAgentsRepo.find.mock.calls[0][0].where.businessId,
-      ).not.toBe(OTHER_BUSINESS_ID);
+      const findArgs = businessSystemAgentsRepo.find.mock.calls[0][0];
+      expect(findArgs.where.businessId).not.toBe(OTHER_BUSINESS_ID);
     });
   });
 });

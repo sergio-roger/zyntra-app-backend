@@ -3,6 +3,7 @@ import { FormRateLimitGuard } from './guards/form-rate-limit.guard';
 import { FormsPublicController } from './forms-public.controller';
 import { FormSubmissionsService } from './form-submissions.service';
 import { FormTemplatesService } from './form-templates.service';
+import { SubmitFormDto } from './dto/submit-form.dto';
 
 describe('FormsPublicController', () => {
   let controller: FormsPublicController;
@@ -57,7 +58,7 @@ describe('FormsPublicController', () => {
       const result = await controller.submit(
         'biz-uuid',
         'contacto',
-        dto as any,
+        dto as SubmitFormDto,
       );
 
       expect(mockSubmissionsService.submitPublic).toHaveBeenCalledWith(

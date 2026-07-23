@@ -1,4 +1,13 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Req,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -20,7 +29,9 @@ export class BusinessSystemAgentsController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'System Agents importados por el negocio (Equipo de Agentes)' })
+  @ApiOperation({
+    summary: 'System Agents importados por el negocio (Equipo de Agentes)',
+  })
   @ApiOkResponse({ description: 'Array de agentes importados' })
   findImported(
     @Req() req: RequestWithUser,
@@ -32,7 +43,9 @@ export class BusinessSystemAgentsController {
 
   @Post(':systemAgentId/import')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Importa un System Agent al Equipo de Agentes del negocio' })
+  @ApiOperation({
+    summary: 'Importa un System Agent al Equipo de Agentes del negocio',
+  })
   @ApiCreatedResponse({ description: 'Agente importado' })
   importAgent(
     @Req() req: RequestWithUser,

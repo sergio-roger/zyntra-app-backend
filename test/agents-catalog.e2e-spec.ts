@@ -25,6 +25,14 @@ const argonOptions = {
   ),
 };
 
+interface CatalogResponseBody {
+  data: SystemAgent[];
+}
+
+interface TeamResponseBody {
+  data: BusinessSystemAgent[];
+}
+
 describe('Agents Catalog → Importar → Equipo de Agentes (e2e)', () => {
   let app: INestApplication<App>;
   let businessRepo: Repository<Business>;
@@ -169,10 +177,9 @@ describe('Agents Catalog → Importar → Equipo de Agentes (e2e)', () => {
         .set('Authorization', `Bearer ${tokenA}`)
         .expect(200);
 
-      expect(Array.isArray(res.body.data)).toBe(true);
-      const found = res.body.data.find(
-        (a: SystemAgent) => a.id === activeAgent.id,
-      );
+      const body = res.body as CatalogResponseBody;
+      expect(Array.isArray(body.data)).toBe(true);
+      const found = body.data.find((a) => a.id === activeAgent.id);
       expect(found).toBeDefined();
       expect(found).toHaveProperty('category');
     });
@@ -206,10 +213,9 @@ describe('Agents Catalog → Importar → Equipo de Agentes (e2e)', () => {
         .set('Authorization', `Bearer ${tokenA}`)
         .expect(200);
 
+      const body = res.body as TeamResponseBody;
       expect(
-        res.body.data.some(
-          (row: BusinessSystemAgent) => row.systemAgentId === activeAgent.id,
-        ),
+        body.data.some((row) => row.systemAgentId === activeAgent.id),
       ).toBe(true);
     });
 
@@ -233,10 +239,9 @@ describe('Agents Catalog → Importar → Equipo de Agentes (e2e)', () => {
         .set('Authorization', `Bearer ${tokenB}`)
         .expect(200);
 
+      const body = res.body as TeamResponseBody;
       expect(
-        res.body.data.some(
-          (row: BusinessSystemAgent) => row.systemAgentId === activeAgent.id,
-        ),
+        body.data.some((row) => row.systemAgentId === activeAgent.id),
       ).toBe(false);
     });
 
