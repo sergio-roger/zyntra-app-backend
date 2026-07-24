@@ -27,6 +27,7 @@ import { BusinessProfileService } from '@auth/business-profile.service';
 import { BusinessProfileController } from '@auth/business-profile.controller';
 import { BusinessProfile } from '@auth/entities/business-profile.entity';
 import { StorageClientModule } from '@/storage-client/storage-client.module';
+import { DriveModule } from '@/modules/drive/drive.module';
 import { UserService } from '@auth/user.service';
 import { RoleService } from '@auth/role.service';
 import { PermissionService } from '@auth/permission.service';
@@ -48,6 +49,7 @@ import { MenuService } from '@auth/menu.service';
     ]),
     PassportModule,
     StorageClientModule,
+    DriveModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

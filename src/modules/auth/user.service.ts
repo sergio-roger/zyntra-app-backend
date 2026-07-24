@@ -1,3 +1,5 @@
+import { DriveService } from '@/modules/drive/drive.service';
+import { OwnerType } from '@/storage-client/enums/owner-type.enum';
 import { StorageClientService } from '@/storage-client/storage-client.service';
 import { AvatarStorageService } from '@auth/avatar-storage.service';
 import {
@@ -29,6 +31,7 @@ export class UserService {
     private userRepository: Repository<User>,
     private avatarStorage: AvatarStorageService,
     private storageClient: StorageClientService,
+    private driveService: DriveService,
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
@@ -182,12 +185,7 @@ export class UserService {
       multerFile.originalname = 'avatar';
     }
 
-    const storageFile = await this.storageClient.uploadFile(
-      user.businessId,
-      multerFile,
-      'users',
-      user.id,
-    );
+    const storageFile = await this.uploadAvatarToDrive(user, multerFile);
 
     user.avatarFileId = storageFile.id;
     user.avatarUrl = null;
@@ -203,6 +201,29 @@ export class UserService {
     ]);
 
     return { avatarUrl, avatarFileId: storageFile.id };
+  }
+
+  private async uploadAvatarToDrive(
+    user: User,
+    multerFile: Express.Multer.File,
+  ) {
+    const profileFolderId = await this.driveService.getOrCreateProfileFolderId(
+      user.businessId,
+      user.id,
+    );
+    return this.storageClient.uploadFile(
+      user.businessId,
+      multerFile,
+      'profile',
+      user.id,
+      {
+        folderId: profileFolderId,
+        ownerType: OwnerType.USER,
+        ownerId: user.id,
+        businessFriendlyKey: user.business?.driveFriendlyKey ?? undefined,
+        ownerFriendlyKey: user.driveFriendlyKey ?? undefined,
+      },
+    );
   }
 
   async removeAvatar(userId: string): Promise<void> {

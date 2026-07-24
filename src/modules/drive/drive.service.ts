@@ -1,6 +1,10 @@
 import { Business } from '@auth/entities/business.entity';
 import { User } from '@auth/entities/user.entity';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRole } from '@crm/enums/user-role.enum';
 import { Repository } from 'typeorm';
@@ -18,6 +22,7 @@ import { StorageFolder } from '@/storage-client/interfaces/storage-folder.interf
 import { StorageClientService } from '@/storage-client/storage-client.service';
 
 const ROOT_FOLDER_NAME = 'Raiz';
+const PROFILE_FOLDER_NAME = 'Perfil';
 const COMPANY_MUTATION_ROLES = [
   UserRole.ADMIN,
   UserRole.MANAGER,
@@ -215,6 +220,48 @@ export class DriveService {
     return this.storageClient.getDownloadUrl(businessId, fileId);
   }
 
+  async getOrCreateProfileFolderId(
+    businessId: string,
+    userId: string,
+  ): Promise<string> {
+    const rootFolderId = await this.resolveRootFolderId(
+      businessId,
+      userId,
+      DriveScope.ME,
+    );
+    return this.findOrCreateNamedChild(
+      businessId,
+      OwnerType.USER,
+      userId,
+      rootFolderId,
+      PROFILE_FOLDER_NAME,
+    );
+  }
+
+  private async findOrCreateNamedChild(
+    businessId: string,
+    ownerType: OwnerType,
+    ownerId: string,
+    parentId: string,
+    name: string,
+  ): Promise<string> {
+    const children = await this.storageClient.listFolderChildren(
+      businessId,
+      ownerType,
+      ownerId,
+      parentId,
+    );
+    const existing = children.folders.find((folder) => folder.name === name);
+    if (existing) return existing.id;
+    const folder = await this.storageClient.createFolder(businessId, {
+      name,
+      ownerType,
+      ownerId,
+      parentId,
+    });
+    return folder.id;
+  }
+
   private resolveOwner(
     businessId: string,
     userId: string,
@@ -273,7 +320,12 @@ export class DriveService {
     ownerId: string,
   ): Promise<string> {
     const entity = await repo.findOneBy({ id: entityId } as never);
-    if (entity?.driveRootFolderId) return entity.driveRootFolderId;
+    if (
+      entity?.driveRootFolderId &&
+      (await this.folderExists(businessId, entity.driveRootFolderId))
+    ) {
+      return entity.driveRootFolderId;
+    }
     const folder = await this.storageClient.createFolder(businessId, {
       name: ROOT_FOLDER_NAME,
       ownerType,
@@ -287,6 +339,19 @@ export class DriveService {
       } as never,
     );
     return folder.id;
+  }
+
+  private async folderExists(
+    businessId: string,
+    folderId: string,
+  ): Promise<boolean> {
+    try {
+      await this.storageClient.getFolder(businessId, folderId);
+      return true;
+    } catch (error) {
+      if (error instanceof NotFoundException) return false;
+      throw error;
+    }
   }
 
   private assertScopeMutationAllowed(scope: DriveScope, role: UserRole): void {

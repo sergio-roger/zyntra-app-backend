@@ -23,6 +23,7 @@ import { RoleService } from './role.service';
 import { PermissionService } from './permission.service';
 import { MenuService } from './menu.service';
 import { StorageClientService } from '@/storage-client/storage-client.service';
+import { DriveService } from '@/modules/drive/drive.service';
 
 // AuthService ahora delega login/register/perfil a UserService y la gestión de
 // roles a RoleService — se instancian reales aquí (con sus repos mockeados)
@@ -120,6 +121,10 @@ describe('AuthService — unified login', () => {
     deleteFile: jest.fn().mockResolvedValue(undefined),
   };
 
+  const driveService = {
+    getOrCreateProfileFolderId: jest.fn().mockResolvedValue('folder-id-1'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -134,6 +139,7 @@ describe('AuthService — unified login', () => {
         { provide: JwtService, useValue: jwtService },
         { provide: AvatarStorageService, useValue: avatarStorage },
         { provide: StorageClientService, useValue: storageClient },
+        { provide: DriveService, useValue: driveService },
         { provide: PermissionService, useValue: {} },
         { provide: MenuService, useValue: {} },
       ],
