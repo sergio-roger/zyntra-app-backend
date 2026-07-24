@@ -63,12 +63,17 @@ async function run() {
   await runMigration(c, '20260721_add_agent_traceability_to_crm.sql');
   await runMigration(c, '20260721_create_system_agents.sql');
   await runMigration(c, '20260721_add_status_to_system_agents.sql');
+  await runMigration(c, '20260721_create_agent_categories.sql');
+  await runMigration(c, '20260721_add_category_and_stats_to_system_agents.sql');
+  await runMigration(c, '20260721_create_business_system_agents.sql');
   await runMigration(c, '20260721_realign_module_schemas.sql');
   await runMigration(c, '20260721_create_tasks_schema.sql');
   await runMigration(c, '20260722_settings_schema_and_drop_tasks.sql');
   await runMigration(c, '20260722_move_channels_to_settings.sql');
   await runMigration(c, '20260722_add_cover_url_to_businesses.sql');
   await runMigration(c, '20260722_create_business_profiles.sql');
+  await runMigration(c, '20260723_add_drive_root_folder_id.sql');
+  await runMigration(c, '20260724_add_drive_friendly_key.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

@@ -22,6 +22,7 @@ import { KnowledgeDocumentStatus } from '@/modules/agents/enums/knowledge-docume
 import { KnowledgeCallbackDto } from '@/modules/knowledge/dto/knowledge-callback.dto';
 import { detectKnowledgeMimeType } from '@/modules/knowledge/utils/detect-knowledge-mime.util';
 import { StorageClientService } from '@/storage-client/storage-client.service';
+import { OwnerType } from '@/storage-client/enums/owner-type.enum';
 import {
   KB_INGESTION_QUEUE,
   KB_DELETION_QUEUE,
@@ -115,6 +116,8 @@ export class KnowledgeService {
       form.append('businessId', businessId);
       form.append('module', 'agent_knowledge');
       form.append('entityId', document.id);
+      form.append('ownerType', OwnerType.AGENT);
+      form.append('ownerId', agentId);
       form.append('file', file.buffer, {
         filename: file.originalname,
         contentType: detectedMime,
