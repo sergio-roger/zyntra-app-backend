@@ -1,4 +1,14 @@
+import { OwnerType } from '@/storage-client/enums/owner-type.enum';
+import { BreadcrumbItem } from '@/storage-client/interfaces/breadcrumb-item.interface';
+import { CreateFolderRequest } from '@/storage-client/interfaces/create-folder-request.interface';
+import { FolderChildrenResponse } from '@/storage-client/interfaces/folder-children-response.interface';
+import { MoveOrRenameFileRequest } from '@/storage-client/interfaces/move-or-rename-file-request.interface';
+import { StorageFileRecord } from '@/storage-client/interfaces/storage-file-record.interface';
 import { StorageFileResponse } from '@/storage-client/interfaces/storage-file-response.interface';
+import { StorageFolder } from '@/storage-client/interfaces/storage-folder.interface';
+import { StorageUploadResponseDto } from '@/storage-client/interfaces/storage-upload-response.interface';
+import { UpdateFolderRequest } from '@/storage-client/interfaces/update-folder-request.interface';
+import { UploadDriveMeta } from '@/storage-client/interfaces/upload-drive-meta.interface';
 import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
@@ -44,66 +54,26 @@ export class StorageClientService {
     file: Express.Multer.File,
     moduleName: string,
     entityId: string,
+    driveMeta?: UploadDriveMeta,
   ): Promise<StorageFileResponse> {
-    const form = new FormData();
-    form.append('file', file.buffer, {
-      filename: file.originalname,
-      contentType: file.mimetype,
-    });
-    form.append('businessId', companyId);
-    form.append('module', moduleName);
-    form.append('entityId', entityId);
-
+    const form = this.buildUploadForm(
+      file,
+      companyId,
+      moduleName,
+      entityId,
+      driveMeta,
+    );
     const url = `${this.baseUrl}/storage/upload`;
     const headers = this.buildHeaders(companyId, form.getHeaders());
 
     try {
       const response = await firstValueFrom(
-        this.httpService.post<{
-          id: string;
-          original_name: string;
-          size: number;
-          mime_type: string;
-          created_at: string;
-        }>(url, form, { headers }),
+        this.httpService.post<StorageUploadResponseDto>(url, form, { headers }),
       );
-      const data = response.data;
-      return {
-        id: data.id,
-        originalName: data.original_name,
-        size: data.size,
-        mimeType: data.mime_type,
-        createdAt: data.created_at,
-      };
+      return this.mapUploadResponse(response.data);
     } catch (error: unknown) {
-      const isAxios = axios.isAxiosError(error);
-      const msg = isAxios
-        ? error.message
-        : error instanceof Error
-          ? error.message
-          : String(error);
-      const stack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(
-        `Error uploading file to storage service: ${msg}`,
-        stack,
-      );
-      if (isAxios && error.response) {
-        const status = error.response.status;
-        if (status === 400) {
-          const data = error.response.data as
-            | Record<string, unknown>
-            | null
-            | undefined;
-          const errMsg =
-            data && typeof data === 'object' && typeof data.message === 'string'
-              ? data.message
-              : 'Validación fallida en el servicio de almacenamiento';
-          throw new BadRequestException(errMsg);
-        }
-      }
-      throw new ServiceUnavailableException(
-        'El servicio de archivos no está disponible, intenta de nuevo en unos segundos',
-      );
+      this.logStorageError('uploading file to storage service', error);
+      throw this.mapBadRequestOrUnavailable(error);
     }
   }
 
@@ -117,23 +87,10 @@ export class StorageClientService {
       );
       return response.data.url;
     } catch (error: unknown) {
-      const isAxios = axios.isAxiosError(error);
-      const msg = isAxios
-        ? error.message
-        : error instanceof Error
-          ? error.message
-          : String(error);
-      this.logger.error(`Error getting signed URL: ${msg}`);
-      if (isAxios && error.response) {
-        const { status } = error.response;
-        if (status === 404) {
-          throw new NotFoundException(
-            'Archivo no encontrado en el servicio de almacenamiento',
-          );
-        }
-      }
-      throw new ServiceUnavailableException(
-        'El servicio de archivos no está disponible, intenta de nuevo en unos segundos',
+      this.logStorageError('getting signed URL', error);
+      throw this.mapNotFoundOrUnavailable(
+        error,
+        'Archivo no encontrado en el servicio de almacenamiento',
       );
     }
   }
@@ -149,23 +106,318 @@ export class StorageClientService {
     try {
       await firstValueFrom(this.httpService.delete(url, { headers }));
     } catch (error: unknown) {
-      const isAxios = axios.isAxiosError(error);
-      const msg = isAxios
-        ? error.message
-        : error instanceof Error
-          ? error.message
-          : String(error);
-      this.logger.error(`Error deleting file: ${msg}`);
-      if (isAxios && error.response) {
-        const { status } = error.response;
-        if (status === 404) {
-          // Idempotent: 404 is ignored
-          return;
-        }
+      this.logStorageError('deleting file', error);
+      if (this.getAxiosStatus(error) === 404) {
+        return;
       }
-      throw new ServiceUnavailableException(
-        'El servicio de archivos no está disponible, intenta de nuevo en unos segundos',
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async getFile(companyId: string, fileId: string): Promise<StorageFileRecord> {
+    const url = `${this.baseUrl}/storage/files/${fileId}`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<StorageFileRecord>(url, { headers }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('getting file record', error);
+      throw this.mapNotFoundOrUnavailable(
+        error,
+        'Archivo no encontrado en el servicio de almacenamiento',
       );
     }
+  }
+
+  async listFiles(
+    companyId: string,
+    ownerType: OwnerType,
+    ownerId: string,
+    options: { trashed?: boolean; recent?: boolean } = {},
+  ): Promise<StorageFileRecord[]> {
+    const url = `${this.baseUrl}/storage/files`;
+    const headers = this.buildHeaders(companyId);
+    const params = { ownerType, ownerId, ...options };
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<StorageFileRecord[]>(url, { headers, params }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('listing files', error);
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async moveOrRenameFile(
+    companyId: string,
+    fileId: string,
+    request: MoveOrRenameFileRequest,
+  ): Promise<StorageFileRecord> {
+    const url = `${this.baseUrl}/storage/files/${fileId}`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.patch<StorageFileRecord>(url, request, { headers }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('moving or renaming file', error);
+      throw this.mapNotFoundOrUnavailable(
+        error,
+        'Archivo no encontrado en el servicio de almacenamiento',
+      );
+    }
+  }
+
+  async restoreFile(
+    companyId: string,
+    fileId: string,
+  ): Promise<StorageFileRecord> {
+    const url = `${this.baseUrl}/storage/files/${fileId}/restore`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<StorageFileRecord>(url, {}, { headers }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('restoring file', error);
+      throw this.mapNotFoundOrUnavailable(
+        error,
+        'Archivo no encontrado en el servicio de almacenamiento',
+      );
+    }
+  }
+
+  async permanentlyDeleteFile(
+    companyId: string,
+    fileId: string,
+  ): Promise<void> {
+    const url = `${this.baseUrl}/storage/files/${fileId}/permanent`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      await firstValueFrom(this.httpService.delete(url, { headers }));
+    } catch (error: unknown) {
+      this.logStorageError('permanently deleting file', error);
+      if (this.getAxiosStatus(error) === 404) {
+        return;
+      }
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async createFolder(
+    companyId: string,
+    request: CreateFolderRequest,
+  ): Promise<StorageFolder> {
+    const url = `${this.baseUrl}/storage/folders`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<StorageFolder>(url, request, { headers }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('creating folder', error);
+      throw this.mapFolderMutationError(error);
+    }
+  }
+
+  async getFolder(companyId: string, folderId: string): Promise<StorageFolder> {
+    const url = `${this.baseUrl}/storage/folders/${folderId}`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<StorageFolder>(url, { headers }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('getting folder record', error);
+      throw this.mapNotFoundOrUnavailable(
+        error,
+        'Carpeta no encontrada en el servicio de almacenamiento',
+      );
+    }
+  }
+
+  async listFolderChildren(
+    companyId: string,
+    ownerType: OwnerType,
+    ownerId: string,
+    parentId: string,
+  ): Promise<FolderChildrenResponse> {
+    const url = `${this.baseUrl}/storage/folders/children`;
+    const headers = this.buildHeaders(companyId);
+    const params = { ownerType, ownerId, parentId };
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<FolderChildrenResponse>(url, { headers, params }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('listing folder children', error);
+      throw this.mapNotFoundOrUnavailable(
+        error,
+        'Carpeta no encontrada en el servicio de almacenamiento',
+      );
+    }
+  }
+
+  async getFolderBreadcrumb(
+    companyId: string,
+    folderId: string,
+  ): Promise<BreadcrumbItem[]> {
+    const url = `${this.baseUrl}/storage/folders/${folderId}/breadcrumb`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<BreadcrumbItem[]>(url, { headers }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('getting folder breadcrumb', error);
+      throw this.mapNotFoundOrUnavailable(
+        error,
+        'Carpeta no encontrada en el servicio de almacenamiento',
+      );
+    }
+  }
+
+  async updateFolder(
+    companyId: string,
+    folderId: string,
+    request: UpdateFolderRequest,
+  ): Promise<StorageFolder> {
+    const url = `${this.baseUrl}/storage/folders/${folderId}`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.patch<StorageFolder>(url, request, { headers }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logStorageError('updating folder', error);
+      throw this.mapFolderMutationError(error);
+    }
+  }
+
+  async deleteFolder(companyId: string, folderId: string): Promise<void> {
+    const url = `${this.baseUrl}/storage/folders/${folderId}`;
+    const headers = this.buildHeaders(companyId);
+
+    try {
+      await firstValueFrom(this.httpService.delete(url, { headers }));
+    } catch (error: unknown) {
+      this.logStorageError('deleting folder', error);
+      if (this.getAxiosStatus(error) === 404) {
+        return;
+      }
+      throw this.serviceUnavailable();
+    }
+  }
+
+  private buildUploadForm(
+    file: Express.Multer.File,
+    companyId: string,
+    moduleName: string,
+    entityId: string,
+    driveMeta?: UploadDriveMeta,
+  ): FormData {
+    const form = new FormData();
+    form.append('file', file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+    });
+    form.append('businessId', companyId);
+    form.append('module', moduleName);
+    form.append('entityId', entityId);
+    if (driveMeta?.folderId) form.append('folderId', driveMeta.folderId);
+    if (driveMeta?.ownerType) form.append('ownerType', driveMeta.ownerType);
+    if (driveMeta?.ownerId) form.append('ownerId', driveMeta.ownerId);
+    return form;
+  }
+
+  private mapUploadResponse(
+    data: StorageUploadResponseDto,
+  ): StorageFileResponse {
+    return {
+      id: data.id,
+      originalName: data.original_name,
+      size: data.size,
+      mimeType: data.mime_type,
+      createdAt: data.created_at,
+    };
+  }
+
+  private mapBadRequestOrUnavailable(error: unknown): Error {
+    if (this.getAxiosStatus(error) === 400) {
+      return new BadRequestException(this.extractBadRequestMessage(error));
+    }
+    return this.serviceUnavailable();
+  }
+
+  private mapNotFoundOrUnavailable(
+    error: unknown,
+    notFoundMessage: string,
+  ): Error {
+    if (this.getAxiosStatus(error) === 404) {
+      return new NotFoundException(notFoundMessage);
+    }
+    return this.serviceUnavailable();
+  }
+
+  private mapFolderMutationError(error: unknown): Error {
+    const status = this.getAxiosStatus(error);
+    if (status === 400) {
+      return new BadRequestException(this.extractBadRequestMessage(error));
+    }
+    if (status === 404) {
+      return new NotFoundException(
+        'Carpeta no encontrada en el servicio de almacenamiento',
+      );
+    }
+    return this.serviceUnavailable();
+  }
+
+  private extractBadRequestMessage(error: unknown): string {
+    const data = axios.isAxiosError(error)
+      ? (error.response?.data as Record<string, unknown> | undefined)
+      : undefined;
+    return data && typeof data.message === 'string'
+      ? data.message
+      : 'Validación fallida en el servicio de almacenamiento';
+  }
+
+  private getAxiosStatus(error: unknown): number | undefined {
+    return axios.isAxiosError(error) ? error.response?.status : undefined;
+  }
+
+  private serviceUnavailable(): ServiceUnavailableException {
+    return new ServiceUnavailableException(
+      'El servicio de archivos no está disponible, intenta de nuevo en unos segundos',
+    );
+  }
+
+  private logStorageError(action: string, error: unknown): void {
+    const stack = error instanceof Error ? error.stack : undefined;
+    const msg = axios.isAxiosError(error)
+      ? error.message
+      : error instanceof Error
+        ? error.message
+        : String(error);
+    this.logger.error(`Error ${action}: ${msg}`, stack);
   }
 }

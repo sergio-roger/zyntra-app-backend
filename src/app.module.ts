@@ -1,6 +1,7 @@
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { AgentsModule } from '@/modules/agents/agents.module';
+import { DriveModule } from '@/modules/drive/drive.module';
 import { FormsModule } from '@/modules/forms/forms.module';
 import { KnowledgeModule } from '@/modules/knowledge/knowledge.module';
 import { OrchestratorModule } from '@/modules/orchestrator/orchestrator.module';
@@ -37,21 +38,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       timeout: 30000,
       maxRedirects: 5,
     }),
-
     AuthModule,
-
     CrmModule,
     LifecycleModule,
     ChatbotModule,
-
     AiModule,
-
     TasksModule,
     ChannelsModule,
     AgentsModule,
     KnowledgeModule,
     OrchestratorModule,
     FormsModule,
+    DriveModule,
 
     BullModule.forRootAsync({
       inject: [ConfigService],

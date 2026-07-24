@@ -51,6 +51,9 @@ export class User {
   @Column({ name: 'avatar_file_id', type: 'uuid', nullable: true })
   avatarFileId: string | null;
 
+  @Column({ name: 'drive_root_folder_id', type: 'uuid', nullable: true })
+  driveRootFolderId: string | null;
+
   @Column({ nullable: true })
   phone: string;
 

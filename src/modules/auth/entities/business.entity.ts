@@ -39,6 +39,9 @@ export class Business {
   @Column({ name: 'cover_url', nullable: true })
   coverUrl: string;
 
+  @Column({ name: 'drive_root_folder_id', type: 'uuid', nullable: true })
+  driveRootFolderId: string | null;
+
   @Column({ name: 'plan_id', nullable: true })
   planId: string;
 
