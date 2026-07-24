@@ -116,6 +116,11 @@ export class DriveService {
     const owner = this.resolveOwner(businessId, userId, scope);
     const resolvedFolderId =
       folderId ?? (await this.resolveRootFolderId(businessId, userId, scope));
+    const friendlyKeys = await this.resolveFriendlyKeys(
+      businessId,
+      userId,
+      scope,
+    );
     return this.storageClient.uploadFile(
       businessId,
       file,
@@ -125,6 +130,7 @@ export class DriveService {
         folderId: resolvedFolderId,
         ownerType: owner.ownerType,
         ownerId: owner.ownerId,
+        ...friendlyKeys,
       },
     );
   }
@@ -240,6 +246,23 @@ export class DriveService {
       OwnerType.USER,
       userId,
     );
+  }
+
+  private async resolveFriendlyKeys(
+    businessId: string,
+    userId: string,
+    scope: DriveScope,
+  ): Promise<{ businessFriendlyKey?: string; ownerFriendlyKey?: string }> {
+    const business = await this.businessRepo.findOneBy({ id: businessId });
+    const businessFriendlyKey = business?.driveFriendlyKey ?? undefined;
+    if (scope !== DriveScope.ME) {
+      return { businessFriendlyKey };
+    }
+    const user = await this.userRepo.findOneBy({ id: userId });
+    return {
+      businessFriendlyKey,
+      ownerFriendlyKey: user?.driveFriendlyKey ?? undefined,
+    };
   }
 
   private async getOrCreateRoot(

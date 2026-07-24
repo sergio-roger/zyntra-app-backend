@@ -347,6 +347,12 @@ export class StorageClientService {
     if (driveMeta?.folderId) form.append('folderId', driveMeta.folderId);
     if (driveMeta?.ownerType) form.append('ownerType', driveMeta.ownerType);
     if (driveMeta?.ownerId) form.append('ownerId', driveMeta.ownerId);
+    if (driveMeta?.businessFriendlyKey) {
+      form.append('businessFriendlyKey', driveMeta.businessFriendlyKey);
+    }
+    if (driveMeta?.ownerFriendlyKey) {
+      form.append('ownerFriendlyKey', driveMeta.ownerFriendlyKey);
+    }
     return form;
   }
 

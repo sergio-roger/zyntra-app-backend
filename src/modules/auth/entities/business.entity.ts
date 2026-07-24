@@ -42,6 +42,9 @@ export class Business {
   @Column({ name: 'drive_root_folder_id', type: 'uuid', nullable: true })
   driveRootFolderId: string | null;
 
+  @Column({ name: 'drive_friendly_key', type: 'varchar', nullable: true })
+  driveFriendlyKey: string | null;
+
   @Column({ name: 'plan_id', nullable: true })
   planId: string;
 

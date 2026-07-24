@@ -22,6 +22,7 @@ import { CrmTask } from '../../modules/crm/entities/task.entity';
 import { TaskStatus } from '../../modules/crm/enums/task-status.enum';
 import { TaskPriority } from '../../modules/crm/enums/task-priority.enum';
 import { LifecycleStage } from '../../modules/lifecycle/entities/lifecycle-stage.entity';
+import { slugify } from '../../common/utils/slugify.util';
 import {
   BUSINESSES_DATA,
   DEFAULT_EMPRESAS,
@@ -31,6 +32,9 @@ import {
   DEFAULT_TAGS,
 } from './data/crm.data';
 import { Seeder } from './seeder.interface';
+
+const userDriveFriendlyKey = (businessName: string, userName: string) =>
+  `${slugify(businessName)}-${slugify(userName)}`;
 
 export class CrmSeeder implements Seeder {
   async run(ds: DataSource): Promise<void> {
@@ -80,11 +84,17 @@ export class CrmSeeder implements Seeder {
             planId: plan.id,
             planStatus: PlanStatus.ACTIVE,
             trialEndsAt: trialEndsAt,
+            driveFriendlyKey: slugify(entry.business.name),
           }),
         );
         console.log(`  o. Business created: ${business.name}`);
       } else {
         console.log(`  "️  Business already exists: ${business.name}`);
+        if (!business.driveFriendlyKey) {
+          await businessRepo.update(business.id, {
+            driveFriendlyKey: slugify(business.name),
+          });
+        }
       }
 
       // Admin user
@@ -111,6 +121,10 @@ export class CrmSeeder implements Seeder {
             isActive: true,
             isAccountActivated: true,
             activatedAt: new Date(),
+            driveFriendlyKey: userDriveFriendlyKey(
+              business.name,
+              entry.adminUser.name,
+            ),
           }),
         );
         console.log(`  ✅ Admin user created: ${entry.adminUser.email}`);
@@ -118,6 +132,14 @@ export class CrmSeeder implements Seeder {
         console.log(
           `  ℹ️  Admin user already exists: ${entry.adminUser.email}`,
         );
+        if (!existingAdmin.driveFriendlyKey) {
+          await userRepo.update(existingAdmin.id, {
+            driveFriendlyKey: userDriveFriendlyKey(
+              business.name,
+              entry.adminUser.name,
+            ),
+          });
+        }
       }
 
       // Agent user
@@ -144,6 +166,10 @@ export class CrmSeeder implements Seeder {
             isActive: true,
             isAccountActivated: true,
             activatedAt: new Date(),
+            driveFriendlyKey: userDriveFriendlyKey(
+              business.name,
+              entry.agentUser.name,
+            ),
           }),
         );
         console.log(`  ✅ Agent user created: ${entry.agentUser.email}`);
@@ -151,6 +177,14 @@ export class CrmSeeder implements Seeder {
         console.log(
           `  ℹ️  Agent user already exists: ${entry.agentUser.email}`,
         );
+        if (!agentUser.driveFriendlyKey) {
+          await userRepo.update(agentUser.id, {
+            driveFriendlyKey: userDriveFriendlyKey(
+              business.name,
+              entry.agentUser.name,
+            ),
+          });
+        }
       }
 
       agentUserMap[entry.business.name] = agentUser;
@@ -167,6 +201,7 @@ export class CrmSeeder implements Seeder {
           name: 'Zyntra Global Admin',
           planStatus: PlanStatus.ACTIVE,
           trialEndsAt: trialEndsAt,
+          driveFriendlyKey: slugify('Zyntra Global Admin'),
         }),
       );
       console.log(`  ✅ Superadmin Business created: ${superBusiness.name}`);
@@ -174,6 +209,11 @@ export class CrmSeeder implements Seeder {
       console.log(
         `  ℹ️  Superadmin Business already exists: ${superBusiness.name}`,
       );
+      if (!superBusiness.driveFriendlyKey) {
+        await businessRepo.update(superBusiness.id, {
+          driveFriendlyKey: slugify(superBusiness.name),
+        });
+      }
     }
 
     if (!superBusiness) {
@@ -201,6 +241,10 @@ export class CrmSeeder implements Seeder {
           isActive: true,
           isAccountActivated: true,
           activatedAt: new Date(),
+          driveFriendlyKey: userDriveFriendlyKey(
+            superBusiness.name,
+            'Super Admin',
+          ),
         }),
       );
       console.log(`  ✅ Super Admin user created: superuser@zyntra.com`);
@@ -208,6 +252,14 @@ export class CrmSeeder implements Seeder {
       console.log(
         `  ℹ️  Super Admin user already exists: superuser@zyntra.com`,
       );
+      if (!existingSuperUser.driveFriendlyKey) {
+        await userRepo.update(existingSuperUser.id, {
+          driveFriendlyKey: userDriveFriendlyKey(
+            superBusiness.name,
+            'Super Admin',
+          ),
+        });
+      }
     }
 
     // Seeding lifecycle stages & tags for superBusiness
@@ -386,11 +438,23 @@ export class CrmSeeder implements Seeder {
             isActive: true,
             isAccountActivated: true,
             activatedAt: new Date(),
+            driveFriendlyKey: userDriveFriendlyKey(
+              business.name,
+              'Vendedor Especialista',
+            ),
           }),
         );
         console.log(`  ✅ Extra user created: ventas1@${usersDomain}`);
       } else {
         console.log(`  ℹ️  Extra user already exists: ventas1@${usersDomain}`);
+        if (!extraUser1.driveFriendlyKey) {
+          await userRepo.update(extraUser1.id, {
+            driveFriendlyKey: userDriveFriendlyKey(
+              business.name,
+              'Vendedor Especialista',
+            ),
+          });
+        }
       }
 
       let extraUser2 = await userRepo.findOne({
@@ -414,11 +478,23 @@ export class CrmSeeder implements Seeder {
             isActive: true,
             isAccountActivated: true,
             activatedAt: new Date(),
+            driveFriendlyKey: userDriveFriendlyKey(
+              business.name,
+              'Soporte Nivel 1',
+            ),
           }),
         );
         console.log(`  ✅ Extra user created: soporte1@${usersDomain}`);
       } else {
         console.log(`  ℹ️  Extra user already exists: soporte1@${usersDomain}`);
+        if (!extraUser2.driveFriendlyKey) {
+          await userRepo.update(extraUser2.id, {
+            driveFriendlyKey: userDriveFriendlyKey(
+              business.name,
+              'Soporte Nivel 1',
+            ),
+          });
+        }
       }
 
       const allBusinessUsers = [

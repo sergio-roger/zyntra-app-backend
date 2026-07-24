@@ -4,4 +4,6 @@ export interface UploadDriveMeta {
   folderId?: string;
   ownerId?: string;
   ownerType?: OwnerType;
+  businessFriendlyKey?: string;
+  ownerFriendlyKey?: string;
 }
