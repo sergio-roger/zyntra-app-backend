@@ -74,6 +74,7 @@ async function run() {
   await runMigration(c, '20260722_create_business_profiles.sql');
   await runMigration(c, '20260723_add_drive_root_folder_id.sql');
   await runMigration(c, '20260724_add_drive_friendly_key.sql');
+  await runMigration(c, '20260723_add_tools_to_system_agents.sql');
 
   console.log('\n✅ All migrations completed!');
   await c.end();

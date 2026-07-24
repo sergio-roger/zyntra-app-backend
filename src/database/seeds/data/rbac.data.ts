@@ -250,8 +250,15 @@ export const MENUS_DATA = [
   },
   // Marketing (agents_ia) subitems
   {
+    key: 'agents_chat',
+    label: 'Chat con el Equipo',
+    path: '/agents/chat',
+    parent_key: 'agents_ia',
+    description: 'Habla con tu equipo de agentes y definí tus objetivos.',
+  },
+  {
     key: 'agents_store',
-    label: 'Tienda Agentes',
+    label: 'Catálogo de Agentes',
     path: '/agents/store',
     parent_key: 'agents_ia',
     description: 'Catálogo de agentes de IA disponibles.',

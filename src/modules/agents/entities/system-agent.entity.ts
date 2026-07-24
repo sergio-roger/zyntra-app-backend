@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { AgentCategory } from '@/modules/agents/entities/agent-category.entity';
+import { AgentTool } from '@/modules/agents/enums/agent-tool.enum';
 
 // Separada de Agent (User Agents, business_id NOT NULL) — un System Agent
 // es global, no pertenece a ningún negocio. Ver
@@ -33,6 +34,11 @@ export class SystemAgent {
 
   @Column({ default: 'gemini-flash-lite-latest' })
   model: string;
+
+  // Catálogo global, fijado por rol — no editable por el negocio (a
+  // diferencia de Agent.tools). Ver 20260723_add_tools_to_system_agents.sql.
+  @Column('simple-array', { default: '' })
+  tools: AgentTool[];
 
   @Column({ name: 'category_id', type: 'uuid', nullable: true })
   categoryId: string | null;

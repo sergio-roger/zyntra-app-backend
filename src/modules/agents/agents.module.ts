@@ -1,5 +1,6 @@
 import { AgentsController } from '@/modules/agents/agents.controller';
 import { InternalAgentConfigController } from '@/modules/agents/internal-agent-config.controller';
+import { InternalSystemAgentConfigController } from '@/modules/agents/internal-system-agent-config.controller';
 import { SystemAgentsController } from '@/modules/agents/system-agents.controller';
 import { BusinessSystemAgentsController } from '@/modules/agents/business-system-agents.controller';
 import { AgentsService } from '@/modules/agents/agents.service';
@@ -34,6 +35,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   controllers: [
     AgentsController,
     InternalAgentConfigController,
+    InternalSystemAgentConfigController,
     SystemAgentsController,
     BusinessSystemAgentsController,
   ],

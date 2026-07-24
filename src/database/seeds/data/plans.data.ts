@@ -43,6 +43,7 @@ export const PLANS_DATA = [
       agents_store: ModuleAccessLevel.LOCKED,
       agents_projects: ModuleAccessLevel.LOCKED,
       agents_team: ModuleAccessLevel.LOCKED,
+      agents_chat: ModuleAccessLevel.LOCKED,
       inbox: ModuleAccessLevel.LOCKED,
       drive: ModuleAccessLevel.FULL,
       // ai_agent_limit: 0 -> sin agentes en este plan, los 5 sub-módulos
@@ -101,6 +102,7 @@ export const PLANS_DATA = [
       agents_store: ModuleAccessLevel.FULL,
       agents_projects: ModuleAccessLevel.FULL,
       agents_team: ModuleAccessLevel.FULL,
+      agents_chat: ModuleAccessLevel.FULL,
       inbox: ModuleAccessLevel.FULL,
       drive: ModuleAccessLevel.FULL,
       // ai_agent_limit: 1 -> el plan permite crear/configurar ese agente,
@@ -152,6 +154,7 @@ export const PLANS_DATA = [
       agents_store: ModuleAccessLevel.FULL,
       agents_projects: ModuleAccessLevel.FULL,
       agents_team: ModuleAccessLevel.FULL,
+      agents_chat: ModuleAccessLevel.FULL,
       inbox: ModuleAccessLevel.FULL,
       drive: ModuleAccessLevel.FULL,
       // ai_agent_limit: 10 -> plan tope, los 5 sub-módulos van FULL.
