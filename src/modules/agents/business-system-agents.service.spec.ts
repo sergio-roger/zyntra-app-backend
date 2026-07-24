@@ -25,9 +25,7 @@ describe('BusinessSystemAgentsService', () => {
   const systemAgentsRepo = { findOne: jest.fn() };
   const businessSystemAgentsRepo = {
     findOne: jest.fn(),
-    find: jest.fn<
-      (criteria: { where: { businessId: string } }) => Promise<unknown>
-    >(),
+    find: jest.fn<Promise<unknown>, [{ where: { businessId: string } }]>(),
     create: jest.fn((x: unknown) => x),
     save: jest.fn(),
   };
