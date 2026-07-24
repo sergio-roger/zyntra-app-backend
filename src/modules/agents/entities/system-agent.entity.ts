@@ -29,6 +29,20 @@ export class SystemAgent {
   @Column({ default: '' })
   description: string;
 
+  @Column({ name: 'avatar_object_key', type: 'varchar', nullable: true })
+  avatarObjectKey: string | null;
+
+  // Mini-prompt de personalidad para mostrar en el catálogo/modal —
+  // no se usa como instrucción real del runtime (eso sigue fijo en
+  // marketing-agents).
+  @Column({ name: 'persona_prompt', default: '' })
+  personaPrompt: string;
+
+  // Lista descriptiva de tareas que el agente realiza, solo para UI —
+  // independiente de `tools` (enum funcional del runtime).
+  @Column('simple-array', { default: '' })
+  functions: string[];
+
   @Column({ default: 'coming_soon' })
   status: 'active' | 'coming_soon';
 

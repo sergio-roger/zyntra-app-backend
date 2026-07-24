@@ -95,6 +95,24 @@ export class StorageClientService {
     }
   }
 
+  async getSharedAssetSignedUrl(objectKey: string): Promise<string> {
+    const url = `${this.baseUrl}/storage/shared/signed-url`;
+    const token = this.configService.get<string>('STORAGE_SERVICE_TOKEN') || '';
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<{ url: string }>(url, {
+          headers: { 'x-service-token': token },
+          params: { key: objectKey },
+        }),
+      );
+      return response.data.url;
+    } catch (error: unknown) {
+      this.logStorageError('getting shared asset signed URL', error);
+      throw this.serviceUnavailable();
+    }
+  }
+
   getDownloadUrl(companyId: string, fileId: string): string {
     return `${this.baseUrl}/storage/download/${fileId}`;
   }

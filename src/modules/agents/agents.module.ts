@@ -11,6 +11,7 @@ import { SystemAgent } from '@/modules/agents/entities/system-agent.entity';
 import { AgentCategory } from '@/modules/agents/entities/agent-category.entity';
 import { BusinessSystemAgent } from '@/modules/agents/entities/business-system-agent.entity';
 import { ChannelsModule } from '@/modules/channels/channels.module';
+import { StorageClientModule } from '@/storage-client/storage-client.module';
 import { AiModule } from '@ai/ai.module';
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
@@ -27,6 +28,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     ]),
     AiModule,
     ChannelsModule,
+    StorageClientModule,
     HttpModule,
     // Mismo nombre de cola que KnowledgeModule ('kb-deletion') — se borra
     // toda la colección kb_<agentId> cuando se borra el agente completo.
