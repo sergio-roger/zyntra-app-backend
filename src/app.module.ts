@@ -11,6 +11,7 @@ import { KnowledgeModule } from '@/modules/knowledge/knowledge.module';
 import { LifecycleModule } from '@/modules/lifecycle/lifecycle.module';
 import { OrchestratorModule } from '@/modules/orchestrator/orchestrator.module';
 import { TasksModule } from '@/modules/tasks/tasks.module';
+import { YoutubeAnalyticsModule } from '@/modules/youtube-analytics/youtube-analytics.module';
 import { GLOBAL_PROVIDERS } from '@/providers/global.providers';
 import { AiModule } from '@ai/ai.module';
 import { AuthModule } from '@auth/auth.module';
@@ -42,6 +43,7 @@ import { ConfigModule } from '@nestjs/config';
     OrchestratorModule,
     FormsModule,
     DriveModule,
+    YoutubeAnalyticsModule,
     bullModuleConfig,
     typeOrmModuleConfig,
   ],

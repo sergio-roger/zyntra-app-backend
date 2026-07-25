@@ -17,6 +17,7 @@ export const PLANS_DATA = [
     pipeline_limit: 0,
     kb_max_documents_per_agent: 4,
     kb_max_file_size_mb: 10,
+    youtube_competitor_limit: 0,
     descriptions: [
       'Diagnóstico del modelo de negocio',
       'Creación y configuración de redes sociales (Facebook, Instagram, TikTok)',
@@ -65,6 +66,9 @@ export const PLANS_DATA = [
       automations_workflows: ModuleAccessLevel.LOCKED,
       automations_agents: ModuleAccessLevel.LOCKED,
       automations_forms: ModuleAccessLevel.LOCKED,
+      // youtube_competitor_limit: 0 -> módulo completo bloqueado en este plan.
+      redes_sociales: ModuleAccessLevel.LOCKED,
+      redes_sociales_youtube: ModuleAccessLevel.LOCKED,
     },
   },
   {
@@ -82,6 +86,7 @@ export const PLANS_DATA = [
     pipeline_limit: 2,
     kb_max_documents_per_agent: 4,
     kb_max_file_size_mb: 10,
+    youtube_competitor_limit: 3,
     descriptions: [
       'Calendario Editorial',
       'Creación de Contenido',
@@ -118,6 +123,8 @@ export const PLANS_DATA = [
       automations_workflows: ModuleAccessLevel.LOCKED,
       automations_agents: ModuleAccessLevel.FULL,
       automations_forms: ModuleAccessLevel.FULL,
+      redes_sociales: ModuleAccessLevel.FULL,
+      redes_sociales_youtube: ModuleAccessLevel.FULL,
     },
   },
   {
@@ -135,6 +142,7 @@ export const PLANS_DATA = [
     pipeline_limit: 5,
     kb_max_documents_per_agent: 4,
     kb_max_file_size_mb: 10,
+    youtube_competitor_limit: 8,
     descriptions: [
       'Plan BrandStart incluido',
       'Plan Impulse Pro incluido',
@@ -168,6 +176,8 @@ export const PLANS_DATA = [
       automations_workflows: ModuleAccessLevel.FULL,
       automations_agents: ModuleAccessLevel.FULL,
       automations_forms: ModuleAccessLevel.FULL,
+      redes_sociales: ModuleAccessLevel.FULL,
+      redes_sociales_youtube: ModuleAccessLevel.FULL,
     },
   },
 ];

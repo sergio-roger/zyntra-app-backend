@@ -67,6 +67,10 @@ export class Plan {
   @Column({ name: 'kb_max_file_size_mb', default: 0 })
   kbMaxFileSizeMb: number;
 
+  // Canales de competencia monitoreables en YouTube Analytics (canal propio no cuenta).
+  @Column({ name: 'youtube_competitor_limit', default: 0 })
+  youtubeCompetitorLimit: number;
+
   @OneToMany(() => PlanDescription, (desc) => desc.plan, { cascade: true })
   descriptions: PlanDescription[];
 

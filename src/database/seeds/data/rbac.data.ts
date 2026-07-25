@@ -130,6 +130,14 @@ export const MENUS_DATA = [
       'Reportes avanzados de analítica de embudos, conversaciones y agentes.',
   },
   {
+    key: 'redes_sociales',
+    label: 'Redes Sociales',
+    path: '/redes-sociales',
+    parent_key: null,
+    description:
+      'Analítica centralizada de redes sociales: canal propio y competencia.',
+  },
+  {
     key: 'settings',
     label: 'Configuración',
     path: '/settings',
@@ -335,6 +343,15 @@ export const MENUS_DATA = [
     path: '/analytics/performance',
     parent_key: 'analytics',
     description: 'Rendimiento y conversión de los agentes de atención.',
+  },
+  // Redes Sociales subitems
+  {
+    key: 'redes_sociales_youtube',
+    label: 'YouTube',
+    path: '/redes-sociales/youtube',
+    parent_key: 'redes_sociales',
+    description:
+      'Analítica de YouTube: canal propio y canales de competencia.',
   },
   // Settings nivel 1 (grupos)
   {
