@@ -192,13 +192,6 @@ const CHILD_MENUS = [
     path: '/settings/lifecycle',
     parent_key: 'settings',
   },
-  {
-    id: 'm-settings-channels',
-    key: 'settings_channels',
-    label: 'Canales',
-    path: '/settings/channels',
-    parent_key: 'settings',
-  },
 ];
 
 const ALL_MENUS = [...ROOT_MENUS, ...CHILD_MENUS];
@@ -227,7 +220,6 @@ const PM_BRANDSTART = [
   { menu_key: 'settings_users', access_level: 'locked' },
   { menu_key: 'settings_teams', access_level: 'locked' },
   { menu_key: 'settings_lifecycle', access_level: 'read_only' },
-  { menu_key: 'settings_channels', access_level: 'locked' },
 ];
 
 const PM_IMPULSE_PRO = [

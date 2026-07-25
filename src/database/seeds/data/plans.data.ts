@@ -59,8 +59,6 @@ export const PLANS_DATA = [
       settings_users: ModuleAccessLevel.LOCKED,
       settings_teams: ModuleAccessLevel.LOCKED,
       settings_lifecycle: ModuleAccessLevel.READ_ONLY,
-      settings_channels: ModuleAccessLevel.LOCKED,
-      settings_my_channels: ModuleAccessLevel.LOCKED,
       inbox_channels: ModuleAccessLevel.LOCKED,
       inbox_my_channels: ModuleAccessLevel.LOCKED,
       automations: ModuleAccessLevel.LOCKED,

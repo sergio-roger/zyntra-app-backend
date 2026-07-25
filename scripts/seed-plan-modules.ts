@@ -29,7 +29,6 @@ const MODULE_MATRIX: Record<string, Record<string, ModuleAccessLevel>> = {
     settings_users: ModuleAccessLevel.LOCKED,
     settings_teams: ModuleAccessLevel.LOCKED,
     settings_lifecycle: ModuleAccessLevel.READ_ONLY,
-    settings_channels: ModuleAccessLevel.LOCKED,
   },
   'Impulse Pro': {
     dashboard: ModuleAccessLevel.FULL,
