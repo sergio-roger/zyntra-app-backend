@@ -34,7 +34,7 @@ describe('YoutubeAnalyticsService', () => {
     const httpMock = { get: jest.fn(), post: jest.fn(), delete: jest.fn() };
     const configMock = {
       get: jest.fn((key: string, fallback?: unknown) => {
-        if (key === 'YOUTUBE_SERVICE_URL') return 'http://localhost:3002';
+        if (key === 'YOUTUBE_SERVICE_URL') return 'http://localhost:3003';
         if (key === 'SERVICE_TOKEN') return 'test-token';
         return fallback;
       }),
@@ -80,7 +80,7 @@ describe('YoutubeAnalyticsService', () => {
       });
 
       expect(httpService.post).toHaveBeenCalledWith(
-        'http://localhost:3002/internal/competitors/business-1',
+        'http://localhost:3003/internal/competitors/business-1',
         { channelHandleOrUrl: '@competitor', competitorLimit: 3 },
         { headers: { 'x-service-token': 'test-token' } },
       );

@@ -25,10 +25,9 @@ export class YoutubeAnalyticsService {
   ) {}
 
   private get baseUrl(): string {
-    return this.configService.get<string>(
-      'YOUTUBE_SERVICE_URL',
-      'http://localhost:3002',
-    );
+    const url = this.configService.get<string>('YOUTUBE_SERVICE_URL');
+    if (!url) throw new Error('YOUTUBE_SERVICE_URL env var not set');
+    return url;
   }
 
   private get headers(): Record<string, string> {
@@ -37,7 +36,9 @@ export class YoutubeAnalyticsService {
     };
   }
 
-  async listCompetitors(business: Business): Promise<YoutubeCompetitorChannel[]> {
+  async listCompetitors(
+    business: Business,
+  ): Promise<YoutubeCompetitorChannel[]> {
     const url = `${this.baseUrl}/internal/competitors/${business.id}`;
 
     try {
