@@ -25,6 +25,11 @@ export class YoutubeOAuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  @Get('status')
+  getStatus(@CurrentBusiness() business: Business) {
+    return this.youtubeAnalyticsService.getOwnChannelStatus(business.id);
+  }
+
   @Get('connect')
   connect(@CurrentBusiness() business: Business, @Res() res: Response) {
     return res.redirect(this.youtubeOAuthService.buildConsentUrl(business.id));

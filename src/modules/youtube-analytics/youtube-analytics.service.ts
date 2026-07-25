@@ -1,7 +1,12 @@
 import { Business } from '@auth/entities/business.entity';
 import { CreateCompetitorChannelDto } from '@/modules/youtube-analytics/dto/create-competitor-channel.dto';
+import {
+  YoutubeCompetitorsDashboard,
+  YoutubeOwnChannelDashboard,
+} from '@/modules/youtube-analytics/interfaces/youtube-dashboard.interface';
 import { YoutubeCompetitorChannel } from '@/modules/youtube-analytics/interfaces/youtube-competitor-channel.interface';
 import { YoutubeOAuthTokens } from '@/modules/youtube-analytics/interfaces/youtube-oauth-tokens.interface';
+import { YoutubeOwnChannelStatus } from '@/modules/youtube-analytics/interfaces/youtube-own-channel-status.interface';
 import { HttpService } from '@nestjs/axios';
 import {
   HttpException,
@@ -118,6 +123,60 @@ export class YoutubeAnalyticsService {
     } catch (error: unknown) {
       this.logError('removing own youtube channel credentials', error);
       if (this.getAxiosStatus(error) === 404) return;
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async getOwnChannelStatus(
+    businessId: string,
+  ): Promise<YoutubeOwnChannelStatus | null> {
+    const url = `${this.baseUrl}/internal/channels/${businessId}/credentials/status`;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<YoutubeOwnChannelStatus | null>(url, {
+          headers: this.headers,
+        }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logError('getting own youtube channel status', error);
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async getOwnChannelDashboard(
+    businessId: string,
+  ): Promise<YoutubeOwnChannelDashboard> {
+    const url = `${this.baseUrl}/internal/dashboard/${businessId}/own-channel`;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<YoutubeOwnChannelDashboard>(url, {
+          headers: this.headers,
+        }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logError('getting own youtube channel dashboard', error);
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async getCompetitorsDashboard(
+    businessId: string,
+  ): Promise<YoutubeCompetitorsDashboard> {
+    const url = `${this.baseUrl}/internal/dashboard/${businessId}/competitors`;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<YoutubeCompetitorsDashboard>(url, {
+          headers: this.headers,
+        }),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      this.logError('getting youtube competitors dashboard', error);
       throw this.serviceUnavailable();
     }
   }
