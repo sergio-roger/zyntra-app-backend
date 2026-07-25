@@ -112,7 +112,7 @@ export class SettingsPermissionsController {
       role,
       business.id,
     );
-    return { role, menu_ids: menuIds };
+    return { role, menuIds };
   }
 
   @Put('permissions/:role')
@@ -120,7 +120,7 @@ export class SettingsPermissionsController {
   @ApiOkResponse({ description: 'Permissions updated' })
   async updatePermissionsByRole(
     @Param('role') role: string,
-    @Body() body: { menu_ids: string[] },
+    @Body() body: { menuIds: string[] },
     @CurrentBusiness() business: Business,
   ) {
     const exists = await this.authService.roleExists(role, business.id);
@@ -129,7 +129,7 @@ export class SettingsPermissionsController {
     }
     await this.authService.updatePermissionsByRole(
       role,
-      body.menu_ids,
+      body.menuIds,
       business.id,
     );
     return { success: true };

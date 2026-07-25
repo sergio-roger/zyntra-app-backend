@@ -11,7 +11,7 @@ async function bootstrap() {
   console.log('\n🗑️  Resetting database (dropping all tables)...\n');
 
   // Drop and recreate schemas to ensure a completely clean slate
-  const schemas = ['crm', 'security', 'public', 'workflows', 'settings', 'inbox'];
+  const schemas = ['crm', 'security', 'public', 'workflows', 'settings', 'inbox', 'marketing'];
 
   for (const schema of schemas) {
     await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
