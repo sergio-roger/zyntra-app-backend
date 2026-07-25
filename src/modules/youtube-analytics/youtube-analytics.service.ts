@@ -1,4 +1,5 @@
 import { Business } from '@auth/entities/business.entity';
+import { ApiResponse } from '@common/interfaces/api-response.interface';
 import { CreateCompetitorChannelDto } from '@/modules/youtube-analytics/dto/create-competitor-channel.dto';
 import {
   YoutubeCompetitorsDashboard,
@@ -17,7 +18,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
@@ -48,11 +49,11 @@ export class YoutubeAnalyticsService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get<YoutubeCompetitorChannel[]>(url, {
+        this.httpService.get<ApiResponse<YoutubeCompetitorChannel[]>>(url, {
           headers: this.headers,
         }),
       );
-      return response.data;
+      return this.unwrap(response);
     } catch (error: unknown) {
       this.logError('listing youtube competitor channels', error);
       throw this.serviceUnavailable();
@@ -68,13 +69,13 @@ export class YoutubeAnalyticsService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.post<YoutubeCompetitorChannel>(
+        this.httpService.post<ApiResponse<YoutubeCompetitorChannel>>(
           url,
           { ...dto, competitorLimit },
           { headers: this.headers },
         ),
       );
-      return response.data;
+      return this.unwrap(response);
     } catch (error: unknown) {
       this.logError('creating youtube competitor channel', error);
       throw this.mapPlanLimitOrUnavailable(error);
@@ -134,11 +135,12 @@ export class YoutubeAnalyticsService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get<YoutubeOwnChannelStatus | null>(url, {
-          headers: this.headers,
-        }),
+        this.httpService.get<ApiResponse<YoutubeOwnChannelStatus | null>>(
+          url,
+          { headers: this.headers },
+        ),
       );
-      return response.data;
+      return this.unwrap(response);
     } catch (error: unknown) {
       this.logError('getting own youtube channel status', error);
       throw this.serviceUnavailable();
@@ -152,11 +154,11 @@ export class YoutubeAnalyticsService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get<YoutubeOwnChannelDashboard>(url, {
+        this.httpService.get<ApiResponse<YoutubeOwnChannelDashboard>>(url, {
           headers: this.headers,
         }),
       );
-      return response.data;
+      return this.unwrap(response);
     } catch (error: unknown) {
       this.logError('getting own youtube channel dashboard', error);
       throw this.serviceUnavailable();
@@ -170,15 +172,19 @@ export class YoutubeAnalyticsService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get<YoutubeCompetitorsDashboard>(url, {
+        this.httpService.get<ApiResponse<YoutubeCompetitorsDashboard>>(url, {
           headers: this.headers,
         }),
       );
-      return response.data;
+      return this.unwrap(response);
     } catch (error: unknown) {
       this.logError('getting youtube competitors dashboard', error);
       throw this.serviceUnavailable();
     }
+  }
+
+  private unwrap<T>(response: AxiosResponse<ApiResponse<T>>): T {
+    return response.data.data;
   }
 
   private mapPlanLimitOrUnavailable(error: unknown): Error {

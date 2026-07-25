@@ -55,7 +55,9 @@ describe('YoutubeAnalyticsService', () => {
   describe('listCompetitors', () => {
     it('returns the competitors from youtube-service', async () => {
       const data = [{ id: '1', channelHandleOrUrl: '@a' }];
-      httpService.get.mockReturnValue(of({ data } as any));
+      httpService.get.mockReturnValue(
+        of({ data: { success: true, message: '', data, errors: [] } } as any),
+      );
 
       await expect(service.listCompetitors(business)).resolves.toEqual(data);
     });
@@ -73,7 +75,11 @@ describe('YoutubeAnalyticsService', () => {
 
   describe('createCompetitor', () => {
     it('sends the plan competitor limit resolved from business.plan_object', async () => {
-      httpService.post.mockReturnValue(of({ data: { id: 'new' } } as any));
+      httpService.post.mockReturnValue(
+        of({
+          data: { success: true, message: '', data: { id: 'new' }, errors: [] },
+        } as any),
+      );
 
       await service.createCompetitor(business, {
         channelHandleOrUrl: '@competitor',
