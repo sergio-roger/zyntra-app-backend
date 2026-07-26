@@ -136,6 +136,34 @@ describe('YoutubeAnalyticsService', () => {
     });
   });
 
+  describe('getCompetitorVideos', () => {
+    it('returns the deduped video list from youtube-service', async () => {
+      const data = [{ id: 'v1', videoId: 'vid-1' }];
+      httpService.get.mockReturnValue(
+        of({ data: { success: true, message: '', data, errors: [] } } as any),
+      );
+
+      await expect(
+        service.getCompetitorVideos(business.id, 'competitor-1'),
+      ).resolves.toEqual(data);
+
+      expect(httpService.get).toHaveBeenCalledWith(
+        'http://localhost:3003/internal/dashboard/competitors/competitor-1/videos',
+        { headers: { 'x-service-token': 'test-token' } },
+      );
+    });
+
+    it('degrades to ServiceUnavailableException on network failure', async () => {
+      httpService.get.mockReturnValue(
+        throwError(() => new Error('ECONNREFUSED')),
+      );
+
+      await expect(
+        service.getCompetitorVideos(business.id, 'competitor-1'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
   describe('getVideoInterests', () => {
     it('returns the catalog from youtube-service', async () => {
       const data = [{ id: '1', slug: 'gaming', name: 'Gaming' }];

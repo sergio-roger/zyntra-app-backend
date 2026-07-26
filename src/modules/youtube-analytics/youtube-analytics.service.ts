@@ -3,6 +3,7 @@ import { VideoInterest } from '@/modules/youtube-analytics/interfaces/video-inte
 import { YoutubeCompetitorChannel } from '@/modules/youtube-analytics/interfaces/youtube-competitor-channel.interface';
 import {
   YoutubeCompetitorsDashboard,
+  YoutubeCompetitorVideoStats,
   YoutubeOwnChannelDashboard,
 } from '@/modules/youtube-analytics/interfaces/youtube-dashboard.interface';
 import { YoutubeInterestVideo } from '@/modules/youtube-analytics/interfaces/youtube-interest-video.interface';
@@ -180,6 +181,25 @@ export class YoutubeAnalyticsService {
       return this.unwrap(response);
     } catch (error: unknown) {
       this.logError('getting youtube competitors dashboard', error);
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async getCompetitorVideos(
+    businessId: string,
+    competitorId: string,
+  ): Promise<YoutubeCompetitorVideoStats[]> {
+    const url = `${this.baseUrl}/internal/dashboard/competitors/${competitorId}/videos`;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<YoutubeCompetitorVideoStats[]>>(url, {
+          headers: this.headers,
+        }),
+      );
+      return this.unwrap(response);
+    } catch (error: unknown) {
+      this.logError('getting competitor videos', error);
       throw this.serviceUnavailable();
     }
   }
