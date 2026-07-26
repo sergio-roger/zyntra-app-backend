@@ -57,6 +57,7 @@ export class YoutubeOAuthController {
         businessId,
         tokens,
       );
+      await this.youtubeAnalyticsService.triggerInterestVideoScraping(businessId);
       return res.redirect(this.buildFrontendRedirectUrl('connected'));
     } catch {
       return res.redirect(this.buildFrontendRedirectUrl('error'));

@@ -25,4 +25,10 @@ export class YoutubeDashboardController {
   getCompetitors(@CurrentBusiness() business: Business) {
     return this.youtubeAnalyticsService.getCompetitorsDashboard(business.id);
   }
+
+  @Get('interest-videos')
+  @ApiOperation({ summary: 'Videos scrapeados según los intereses seleccionados' })
+  getInterestVideos(@CurrentBusiness() business: Business) {
+    return this.youtubeAnalyticsService.getInterestVideos(business.id);
+  }
 }
