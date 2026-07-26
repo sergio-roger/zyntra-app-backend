@@ -300,14 +300,16 @@ describe('Settings → Business (e2e)', () => {
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .attach('file', tinyPng, 'logo.png')
         .expect(201);
-      expect(logoRes.body.data.logoUrl).toBeTruthy();
+      const logoBody = logoRes.body as BusinessResponseBody;
+      expect(logoBody.data.logoUrl).toBeTruthy();
 
       const coverRes = await request(app.getHttpServer())
         .post('/api/settings/business/cover')
         .set('Authorization', `Bearer ${tokenAdminA}`)
         .attach('file', tinyPng, 'cover.png')
         .expect(201);
-      expect(coverRes.body.data.coverUrl).toBeTruthy();
+      const coverBody = coverRes.body as BusinessResponseBody;
+      expect(coverBody.data.coverUrl).toBeTruthy();
     });
   });
 });

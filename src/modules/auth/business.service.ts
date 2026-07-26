@@ -53,10 +53,7 @@ export class BusinessService {
     return business;
   }
 
-  async update(
-    businessId: string,
-    dto: UpdateBusinessDto,
-  ): Promise<Business> {
+  async update(businessId: string, dto: UpdateBusinessDto): Promise<Business> {
     const business = await this.findOne(businessId);
     if (dto.name !== undefined) business.name = dto.name;
     if (dto.email !== undefined) business.email = dto.email;

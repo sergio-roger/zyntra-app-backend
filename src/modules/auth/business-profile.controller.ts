@@ -22,14 +22,18 @@ export class BusinessProfileController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get the business brand/context profile (admin only)' })
+  @ApiOperation({
+    summary: 'Get the business brand/context profile (admin only)',
+  })
   @ApiOkResponse({ description: 'Business profile data' })
   get(@CurrentBusiness() business: Business) {
     return this.businessProfileService.findOrCreate(business.id);
   }
 
   @Patch()
-  @ApiOperation({ summary: 'Update the business brand/context profile (admin only)' })
+  @ApiOperation({
+    summary: 'Update the business brand/context profile (admin only)',
+  })
   @ApiOkResponse({ description: 'Business profile updated' })
   update(
     @CurrentBusiness() business: Business,

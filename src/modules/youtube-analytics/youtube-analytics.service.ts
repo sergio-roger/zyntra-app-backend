@@ -189,14 +189,25 @@ export class YoutubeAnalyticsService {
   private mapPlanLimitOrUnavailable(error: unknown): Error {
     const status = this.getAxiosStatus(error);
     if (status === HttpStatus.PAYMENT_REQUIRED) {
-      const data = axios.isAxiosError(error) ? error.response?.data : null;
-      return new HttpException(data, HttpStatus.PAYMENT_REQUIRED);
+      return new HttpException(
+        this.getAxiosData(error),
+        HttpStatus.PAYMENT_REQUIRED,
+      );
     }
     return this.serviceUnavailable();
   }
 
   private getAxiosStatus(error: unknown): number | undefined {
     return axios.isAxiosError(error) ? error.response?.status : undefined;
+  }
+
+  private getAxiosData(error: unknown): Record<string, unknown> | string {
+    if (!axios.isAxiosError(error)) return {};
+    const data = error.response?.data as
+      | Record<string, unknown>
+      | string
+      | undefined;
+    return data ?? {};
   }
 
   private serviceUnavailable(): ServiceUnavailableException {

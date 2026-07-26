@@ -114,7 +114,12 @@ export class BusinessProfile {
   })
   monthlyBudgetRange: BudgetRange | null;
 
-  @Column({ name: 'active_channels', type: 'text', array: true, default: () => "'{}'" })
+  @Column({
+    name: 'active_channels',
+    type: 'text',
+    array: true,
+    default: () => "'{}'",
+  })
   activeChannels: string[];
 
   @Column({ name: 'team_size', type: 'int', nullable: true })

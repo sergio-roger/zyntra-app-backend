@@ -30,13 +30,13 @@ export class SystemAgentsService {
   async toCatalogItem(
     systemAgent: SystemAgent,
   ): Promise<SystemAgentCatalogItem> {
-    const avatarUrl = await this.resolveAvatarUrl(
-      systemAgent.avatarObjectKey,
-    );
+    const avatarUrl = await this.resolveAvatarUrl(systemAgent.avatarObjectKey);
     return { ...systemAgent, avatarUrl };
   }
 
-  private resolveAvatarUrl(avatarObjectKey: string | null): Promise<string | null> {
+  private resolveAvatarUrl(
+    avatarObjectKey: string | null,
+  ): Promise<string | null> {
     if (!avatarObjectKey) {
       return Promise.resolve(null);
     }

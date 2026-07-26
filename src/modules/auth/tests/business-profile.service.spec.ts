@@ -53,9 +53,7 @@ describe('BusinessProfileService', () => {
       const profile = buildProfile();
       profileRepo.findOneBy.mockResolvedValue(profile);
 
-      await expect(service.findOrCreate('business-1')).resolves.toBe(
-        profile,
-      );
+      await expect(service.findOrCreate('business-1')).resolves.toBe(profile);
       expect(profileRepo.create).not.toHaveBeenCalled();
     });
 

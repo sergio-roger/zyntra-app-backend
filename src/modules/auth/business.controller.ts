@@ -29,7 +29,9 @@ export class BusinessController {
   constructor(private readonly businessService: BusinessService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get current business data (any authenticated role)' })
+  @ApiOperation({
+    summary: 'Get current business data (any authenticated role)',
+  })
   @ApiOkResponse({ description: 'Business data' })
   get(@CurrentBusiness() business: Business) {
     return this.businessService.findOne(business.id);

@@ -49,7 +49,11 @@ export const BUSINESS_PROFILES_DATA: BusinessProfileSeedData[] = [
     brandVoiceNotes:
       'Directo, orientado a resultados y datos. Evitar jerga de marketing vacía, siempre respaldar afirmaciones con métricas.',
     locale: 'es',
-    brandColors: { primary: '#6366f1', secondary: '#7c3aed', accent: '#b95f00' },
+    brandColors: {
+      primary: '#6366f1',
+      secondary: '#7c3aed',
+      accent: '#b95f00',
+    },
     primaryGoal: PrimaryGoal.LEADS,
     monthlyBudgetRange: BudgetRange.FROM_5000_TO_10000,
     activeChannels: ['web_chat', 'facebook', 'telegram'],
@@ -103,7 +107,11 @@ export const BUSINESS_PROFILES_DATA: BusinessProfileSeedData[] = [
     brandVoiceNotes:
       'Confiable y preciso, como un asesor financiero. Priorizar claridad sobre creatividad, evitar informalidades.',
     locale: 'es',
-    brandColors: { primary: '#0ea5e9', secondary: '#1e293b', accent: '#f59e0b' },
+    brandColors: {
+      primary: '#0ea5e9',
+      secondary: '#1e293b',
+      accent: '#f59e0b',
+    },
     primaryGoal: PrimaryGoal.RETENTION,
     monthlyBudgetRange: BudgetRange.FROM_500_TO_1000,
     activeChannels: ['web_chat', 'telegram'],

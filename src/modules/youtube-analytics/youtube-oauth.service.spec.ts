@@ -1,9 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { GenerateAuthUrlOptions } from '@/modules/youtube-analytics/interfaces/generate-auth-url-options.interface';
 import { YoutubeOAuthService } from '@/modules/youtube-analytics/youtube-oauth.service';
 
-const generateAuthUrlMock = jest.fn();
+const generateAuthUrlMock = jest.fn<string, [GenerateAuthUrlOptions]>();
 const getTokenMock = jest.fn();
 
 jest.mock('google-auth-library', () => ({
@@ -26,7 +27,8 @@ describe('YoutubeOAuthService', () => {
         const values: Record<string, string> = {
           GOOGLE_CLIENT_ID: 'client-id',
           GOOGLE_CLIENT_SECRET: 'client-secret',
-          GOOGLE_OAUTH_REDIRECT_URI: 'http://localhost:3000/api/youtube-analytics/oauth/callback',
+          GOOGLE_OAUTH_REDIRECT_URI:
+            'http://localhost:3000/api/youtube-analytics/oauth/callback',
           JWT_SECRET: 'test-jwt-secret',
         };
         return values[key];
@@ -39,7 +41,9 @@ describe('YoutubeOAuthService', () => {
 
   describe('buildConsentUrl', () => {
     it('requests offline access with the youtube read-only scopes and a signed state', () => {
-      generateAuthUrlMock.mockReturnValue('https://accounts.google.com/o/oauth2/auth?mock=1');
+      generateAuthUrlMock.mockReturnValue(
+        'https://accounts.google.com/o/oauth2/auth?mock=1',
+      );
 
       const url = service.buildConsentUrl('business-1');
 
@@ -53,9 +57,9 @@ describe('YoutubeOAuthService', () => {
           'https://www.googleapis.com/auth/yt-analytics.readonly',
         ],
       });
-      expect(jwtService.verify<{ businessId: string }>(options.state).businessId).toBe(
-        'business-1',
-      );
+      expect(
+        jwtService.verify<{ businessId: string }>(options.state).businessId,
+      ).toBe('business-1');
     });
   });
 
@@ -96,7 +100,9 @@ describe('YoutubeOAuthService', () => {
     });
 
     it('throws when Google does not return a refresh_token (already granted without prompt=consent)', async () => {
-      getTokenMock.mockResolvedValue({ tokens: { access_token: 'access-only' } });
+      getTokenMock.mockResolvedValue({
+        tokens: { access_token: 'access-only' },
+      });
 
       await expect(service.exchangeCodeForTokens('auth-code')).rejects.toThrow(
         BadRequestException,

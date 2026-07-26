@@ -350,8 +350,7 @@ export const MENUS_DATA = [
     label: 'YouTube',
     path: '/redes-sociales/youtube',
     parent_key: 'redes_sociales',
-    description:
-      'Analítica de YouTube: canal propio y canales de competencia.',
+    description: 'Analítica de YouTube: canal propio y canales de competencia.',
   },
   // Settings nivel 1 (grupos)
   {

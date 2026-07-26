@@ -44,7 +44,9 @@ export class YoutubeOAuthService {
       const payload = this.jwtService.verify<OAuthStatePayload>(state);
       return payload.businessId;
     } catch {
-      throw new BadRequestException('El enlace de conexión con Google expiró o es inválido');
+      throw new BadRequestException(
+        'El enlace de conexión con Google expiró o es inválido',
+      );
     }
   }
 

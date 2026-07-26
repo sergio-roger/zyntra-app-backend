@@ -95,9 +95,9 @@ describe('BusinessService', () => {
     } as UploadableFile;
 
     it('rechaza si no se envía archivo', async () => {
-      await expect(
-        service.uploadLogo('business-1', undefined),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.uploadLogo('business-1', undefined)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('rechaza mimetypes no permitidos', async () => {
@@ -126,9 +126,7 @@ describe('BusinessService', () => {
       const result = await service.uploadLogo('business-1', validFile);
 
       expect(result).toEqual({ logoUrl: 'https://new-logo.png' });
-      expect(logoStorage.delete).toHaveBeenCalledWith(
-        'https://old-logo.png',
-      );
+      expect(logoStorage.delete).toHaveBeenCalledWith('https://old-logo.png');
     });
 
     it('no intenta borrar nada si no había logo previo', async () => {
@@ -150,9 +148,7 @@ describe('BusinessService', () => {
       await service.removeLogo('business-1');
 
       expect(business.logoUrl).toBeNull();
-      expect(logoStorage.delete).toHaveBeenCalledWith(
-        'https://old-logo.png',
-      );
+      expect(logoStorage.delete).toHaveBeenCalledWith('https://old-logo.png');
     });
 
     it('no falla si no había logo', async () => {
@@ -195,9 +191,7 @@ describe('BusinessService', () => {
       const result = await service.uploadCover('business-1', validFile);
 
       expect(result).toEqual({ coverUrl: 'https://new-cover.png' });
-      expect(coverStorage.delete).toHaveBeenCalledWith(
-        'https://old-cover.png',
-      );
+      expect(coverStorage.delete).toHaveBeenCalledWith('https://old-cover.png');
     });
 
     it('no afecta el logo al subir una portada', async () => {
@@ -222,9 +216,7 @@ describe('BusinessService', () => {
       await service.removeCover('business-1');
 
       expect(business.coverUrl).toBeNull();
-      expect(coverStorage.delete).toHaveBeenCalledWith(
-        'https://old-cover.png',
-      );
+      expect(coverStorage.delete).toHaveBeenCalledWith('https://old-cover.png');
     });
 
     it('no falla si no había portada', async () => {
