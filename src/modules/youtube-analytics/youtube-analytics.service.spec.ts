@@ -31,7 +31,12 @@ describe('YoutubeAnalyticsService', () => {
   } as Business;
 
   beforeEach(async () => {
-    const httpMock = { get: jest.fn(), post: jest.fn(), delete: jest.fn() };
+    const httpMock = {
+      get: jest.fn(),
+      post: jest.fn(),
+      put: jest.fn(),
+      delete: jest.fn(),
+    };
     const configMock = {
       get: jest.fn((key: string, fallback?: unknown) => {
         if (key === 'YOUTUBE_SERVICE_URL') return 'http://localhost:3003';
@@ -128,6 +133,66 @@ describe('YoutubeAnalyticsService', () => {
       await expect(
         service.removeCompetitor(business, 'existing-id'),
       ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('getVideoInterests', () => {
+    it('returns the catalog from youtube-service', async () => {
+      const data = [{ id: '1', slug: 'gaming', name: 'Gaming' }];
+      httpService.get.mockReturnValue(
+        of({ data: { success: true, message: '', data, errors: [] } } as any),
+      );
+
+      await expect(service.getVideoInterests()).resolves.toEqual(data);
+    });
+  });
+
+  describe('saveVideoInterestSelection', () => {
+    it('PUTs the selection to youtube-service', async () => {
+      httpService.put.mockReturnValue(of({ data: undefined } as any));
+
+      await service.saveVideoInterestSelection('business-1', ['a', 'b', 'c']);
+
+      expect(httpService.put).toHaveBeenCalledWith(
+        'http://localhost:3003/internal/video-interests/business-1/selection',
+        { interestIds: ['a', 'b', 'c'] },
+        { headers: { 'x-service-token': 'test-token' } },
+      );
+    });
+  });
+
+  describe('getInterestVideos', () => {
+    it('returns the scraped videos from youtube-service', async () => {
+      const data = [{ id: 'v1', videoId: 'vid-1' }];
+      httpService.get.mockReturnValue(
+        of({ data: { success: true, message: '', data, errors: [] } } as any),
+      );
+
+      await expect(service.getInterestVideos('business-1')).resolves.toEqual(data);
+    });
+  });
+
+  describe('triggerInterestVideoScraping', () => {
+    it('fires the scraping request without throwing on failure', async () => {
+      httpService.post.mockReturnValue(
+        throwError(() => new Error('ECONNREFUSED')),
+      );
+
+      await expect(
+        service.triggerInterestVideoScraping('business-1'),
+      ).resolves.toBeUndefined();
+    });
+
+    it('POSTs to the trigger endpoint on success', async () => {
+      httpService.post.mockReturnValue(of({ data: undefined } as any));
+
+      await service.triggerInterestVideoScraping('business-1');
+
+      expect(httpService.post).toHaveBeenCalledWith(
+        'http://localhost:3003/internal/interest-videos/business-1',
+        {},
+        { headers: { 'x-service-token': 'test-token' } },
+      );
     });
   });
 });

@@ -1,9 +1,11 @@
 import { CreateCompetitorChannelDto } from '@/modules/youtube-analytics/dto/create-competitor-channel.dto';
+import { VideoInterest } from '@/modules/youtube-analytics/interfaces/video-interest.interface';
 import { YoutubeCompetitorChannel } from '@/modules/youtube-analytics/interfaces/youtube-competitor-channel.interface';
 import {
   YoutubeCompetitorsDashboard,
   YoutubeOwnChannelDashboard,
 } from '@/modules/youtube-analytics/interfaces/youtube-dashboard.interface';
+import { YoutubeInterestVideo } from '@/modules/youtube-analytics/interfaces/youtube-interest-video.interface';
 import { YoutubeOAuthTokens } from '@/modules/youtube-analytics/interfaces/youtube-oauth-tokens.interface';
 import { YoutubeOwnChannelStatus } from '@/modules/youtube-analytics/interfaces/youtube-own-channel-status.interface';
 import { Business } from '@auth/entities/business.entity';
@@ -179,6 +181,66 @@ export class YoutubeAnalyticsService {
     } catch (error: unknown) {
       this.logError('getting youtube competitors dashboard', error);
       throw this.serviceUnavailable();
+    }
+  }
+
+  async getVideoInterests(): Promise<VideoInterest[]> {
+    const url = `${this.baseUrl}/internal/video-interests`;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<VideoInterest[]>>(url, {
+          headers: this.headers,
+        }),
+      );
+      return this.unwrap(response);
+    } catch (error: unknown) {
+      this.logError('listing video interests', error);
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async saveVideoInterestSelection(
+    businessId: string,
+    interestIds: string[],
+  ): Promise<void> {
+    const url = `${this.baseUrl}/internal/video-interests/${businessId}/selection`;
+
+    try {
+      await firstValueFrom(
+        this.httpService.put(url, { interestIds }, { headers: this.headers }),
+      );
+    } catch (error: unknown) {
+      this.logError('saving video interest selection', error);
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async getInterestVideos(businessId: string): Promise<YoutubeInterestVideo[]> {
+    const url = `${this.baseUrl}/internal/interest-videos/${businessId}`;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<YoutubeInterestVideo[]>>(url, {
+          headers: this.headers,
+        }),
+      );
+      return this.unwrap(response);
+    } catch (error: unknown) {
+      this.logError('getting interest videos', error);
+      throw this.serviceUnavailable();
+    }
+  }
+
+  async triggerInterestVideoScraping(businessId: string): Promise<void> {
+    const url = `${this.baseUrl}/internal/interest-videos/${businessId}`;
+
+    try {
+      await firstValueFrom(
+        this.httpService.post(url, {}, { headers: this.headers }),
+      );
+    } catch (error: unknown) {
+      this.logError('triggering interest video scraping', error);
     }
   }
 
