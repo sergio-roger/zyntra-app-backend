@@ -1,7 +1,9 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { SystemAgentCatalogItem } from '@/modules/agents/interfaces/system-agent-catalog-item.interface';
 import { BusinessSystemAgentsService } from './business-system-agents.service';
+import { SystemAgentsService } from './system-agents.service';
 import { SystemAgent } from './entities/system-agent.entity';
 import { BusinessSystemAgent } from './entities/business-system-agent.entity';
 
@@ -29,6 +31,11 @@ describe('BusinessSystemAgentsService', () => {
     create: jest.fn((x: unknown) => x),
     save: jest.fn(),
   };
+  const systemAgentsService = {
+    toCatalogItem: jest.fn((agent: SystemAgent) =>
+      Promise.resolve(agent as unknown as SystemAgentCatalogItem),
+    ),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,6 +49,7 @@ describe('BusinessSystemAgentsService', () => {
           provide: getRepositoryToken(BusinessSystemAgent),
           useValue: businessSystemAgentsRepo,
         },
+        { provide: SystemAgentsService, useValue: systemAgentsService },
       ],
     }).compile();
 
@@ -91,6 +99,7 @@ describe('BusinessSystemAgentsService', () => {
         id: 'link-uuid',
         businessId: BUSINESS_ID,
         systemAgentId: agent.id,
+        importedAt: new Date('2026-01-01'),
         systemAgent: agent,
       };
       systemAgentsRepo.findOne.mockResolvedValue(agent);
@@ -98,18 +107,24 @@ describe('BusinessSystemAgentsService', () => {
 
       const result = await service.importAgent(BUSINESS_ID, agent.id);
 
-      expect(result).toEqual(existing);
+      expect(result).toEqual({
+        importedAt: existing.importedAt,
+        systemAgent: agent,
+      });
       expect(businessSystemAgentsRepo.save).not.toHaveBeenCalled();
     });
   });
 
   describe('findImported', () => {
     it('devuelve solo los agentes importados por el businessId pedido', async () => {
+      const agent = makeSystemAgent('active');
       const rows = [
         {
           id: 'link-uuid',
           businessId: BUSINESS_ID,
-          systemAgentId: 'agent-uuid',
+          systemAgentId: agent.id,
+          importedAt: new Date('2026-01-01'),
+          systemAgent: agent,
         },
       ];
       businessSystemAgentsRepo.find.mockResolvedValue(rows);
@@ -121,7 +136,9 @@ describe('BusinessSystemAgentsService', () => {
         relations: ['systemAgent', 'systemAgent.category'],
         order: { importedAt: 'DESC' },
       });
-      expect(result).toEqual(rows);
+      expect(result).toEqual([
+        { importedAt: rows[0].importedAt, systemAgent: agent },
+      ]);
       const findArgs = businessSystemAgentsRepo.find.mock.calls[0][0];
       expect(findArgs.where.businessId).not.toBe(OTHER_BUSINESS_ID);
     });

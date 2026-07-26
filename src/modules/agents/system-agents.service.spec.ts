@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { StorageClientService } from '@/storage-client/storage-client.service';
 import { SystemAgentsService } from './system-agents.service';
 import { SystemAgent } from './entities/system-agent.entity';
 import { AgentTool } from './enums/agent-tool.enum';
@@ -23,12 +24,14 @@ describe('SystemAgentsService', () => {
   let service: SystemAgentsService;
 
   const repo = { find: jest.fn(), findOne: jest.fn() };
+  const storageClientService = { getSharedAssetSignedUrl: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SystemAgentsService,
         { provide: getRepositoryToken(SystemAgent), useValue: repo },
+        { provide: StorageClientService, useValue: storageClientService },
       ],
     }).compile();
 
@@ -50,7 +53,9 @@ describe('SystemAgentsService', () => {
       relations: ['category'],
       order: { category: { sortOrder: 'ASC' }, createdAt: 'ASC' },
     });
-    expect(result).toEqual(agents);
+    expect(result).toEqual(
+      agents.map((agent) => ({ ...agent, avatarUrl: null })),
+    );
     expect(result.some((a) => a.status === 'coming_soon')).toBe(true);
   });
 
