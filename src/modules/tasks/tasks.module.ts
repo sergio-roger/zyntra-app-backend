@@ -6,12 +6,13 @@ import { TasksController } from './tasks.controller';
 import { TasksProcessor } from './tasks.processor';
 import { AgentTask } from './entities/agent-task.entity';
 import { Business } from '../auth/entities/business.entity';
+import { AGENT_TASKS_QUEUE } from '@/modules/tasks/constants/tasks.constants';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AgentTask, Business]),
     BullModule.registerQueue({
-      name: 'agent-tasks',
+      name: AGENT_TASKS_QUEUE,
     }),
   ],
   controllers: [TasksController],

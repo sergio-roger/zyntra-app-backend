@@ -18,6 +18,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
+import { KB_DELETION_QUEUE } from '@/modules/knowledge/constants/knowledge.constants';
 
 export interface AgentTestSource {
   documentId: string;
@@ -47,7 +48,7 @@ export class AgentsService {
     @InjectRepository(Channel)
     private readonly channelRepo: Repository<Channel>,
 
-    @InjectQueue('kb-deletion')
+    @InjectQueue(KB_DELETION_QUEUE)
     private readonly kbDeletionQueue: Queue,
 
     private readonly aiService: AiService,
@@ -201,7 +202,7 @@ export class AgentsService {
 
     const baseUrl = this.configService.get<string>(
       'MARKETING_AGENTS_URL',
-      'http://localhost:4111',
+      'http://localhost:3002',
     );
     const serviceToken = this.configService.get<string>('SERVICE_TOKEN', '');
 

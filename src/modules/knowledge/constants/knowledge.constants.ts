@@ -1,9 +1,9 @@
-export const KB_INGESTION_QUEUE = 'kb-ingestion';
+export const KB_INGESTION_QUEUE = 'kb-ingestion-quee';
 
 // Consumida por marketing-agents para borrar vectores en Qdrant cuando se
 // borra un documento (scope: 'document') o un agente completo (scope:
 // 'agent', dropea toda la colección kb_<agentId> de una).
-export const KB_DELETION_QUEUE = 'kb-deletion';
+export const KB_DELETION_QUEUE = 'kb-deletion-quee';
 
 // Debe ser un subconjunto de ALLOWED_MIME_TYPES en zyntra-storage — ver
 // zyntra-storage/.env.example. Defensa en profundidad: este backend valida

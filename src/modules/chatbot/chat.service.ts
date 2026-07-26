@@ -31,6 +31,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { FindOptionsWhere, Repository } from 'typeorm';
+import { AGENT_RESPONSE_QUEUE } from '@/modules/chatbot/constants/chatbot.constants';
 
 const SYSTEM_ASSIGNEE = { assignedTo: 'system', assignedToName: 'Sistema' };
 
@@ -53,7 +54,7 @@ export class ChatService {
     private readonly jwtService: JwtService,
     private readonly contactsService: ContactsService,
     private readonly agentsService: AgentsService,
-    @InjectQueue('agent-response')
+    @InjectQueue(AGENT_RESPONSE_QUEUE)
     private readonly agentResponseQueue: Queue,
   ) {
     this.serviceToken = config.get<string>('SERVICE_TOKEN', '');

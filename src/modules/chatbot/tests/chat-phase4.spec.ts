@@ -23,6 +23,7 @@ import { WidgetSessionPayload } from '@/modules/widget-session/interfaces/widget
 import { ChatGateway } from '../chat.gateway';
 import { MessageEncryptionService } from '../services/message-encryption.service';
 import { getQueueToken } from '@nestjs/bullmq';
+import { AGENT_RESPONSE_QUEUE } from '@/modules/chatbot/constants/chatbot.constants';
 import { ContactsService } from '@crm/contacts.service';
 import { AgentsService } from '@/modules/agents/agents.service';
 
@@ -154,7 +155,7 @@ async function buildModule() {
         },
       },
       {
-        provide: getQueueToken('agent-response'),
+        provide: getQueueToken(AGENT_RESPONSE_QUEUE),
         useValue: {
           add: jest.fn(),
         },

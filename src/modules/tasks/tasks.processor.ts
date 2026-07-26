@@ -8,9 +8,10 @@ import { Repository } from 'typeorm';
 import { AgentTask } from './entities/agent-task.entity';
 import { AgentTaskStatus } from './enums/agent-task-status.enum';
 import { Injectable, Logger } from '@nestjs/common';
+import { AGENT_TASKS_QUEUE } from '@/modules/tasks/constants/tasks.constants';
 
 @Injectable()
-@QueueEventsListener('agent-tasks')
+@QueueEventsListener(AGENT_TASKS_QUEUE)
 export class TasksProcessor extends QueueEventsHost {
   private readonly logger = new Logger(TasksProcessor.name);
 

@@ -20,6 +20,7 @@ import { WidgetSessionModule } from '@/modules/widget-session/widget-session.mod
 import { MessageEncryptionService } from './services/message-encryption.service';
 import { CrmModule } from '@/modules/crm/crm.module';
 import { AgentsModule } from '@/modules/agents/agents.module';
+import { AGENT_RESPONSE_QUEUE } from '@/modules/chatbot/constants/chatbot.constants';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { AgentsModule } from '@/modules/agents/agents.module';
     WidgetSessionModule,
     CrmModule,
     AgentsModule,
-    BullModule.registerQueue({ name: 'agent-response' }),
+    BullModule.registerQueue({ name: AGENT_RESPONSE_QUEUE }),
   ],
   controllers: [ChatController, InternalCallbackController, SettingsController],
   providers: [

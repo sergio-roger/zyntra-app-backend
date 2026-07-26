@@ -17,6 +17,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { HttpModule } from '@nestjs/axios';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { KB_DELETION_QUEUE } from '@/modules/knowledge/constants/knowledge.constants';
 
 @Module({
   imports: [
@@ -30,9 +31,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     ChannelsModule,
     StorageClientModule,
     HttpModule,
-    // Mismo nombre de cola que KnowledgeModule ('kb-deletion') — se borra
+    // Misma cola que KnowledgeModule (KB_DELETION_QUEUE) — se borra
     // toda la colección kb_<agentId> cuando se borra el agente completo.
-    BullModule.registerQueue({ name: 'kb-deletion' }),
+    BullModule.registerQueue({ name: KB_DELETION_QUEUE }),
   ],
   controllers: [
     AgentsController,

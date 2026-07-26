@@ -12,6 +12,7 @@ import { AgentTask } from './entities/agent-task.entity';
 import { AgentTaskStatus } from './enums/agent-task-status.enum';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Business } from '../auth/entities/business.entity';
+import { AGENT_TASKS_QUEUE } from '@/modules/tasks/constants/tasks.constants';
 
 @Injectable()
 export class TasksService {
@@ -22,7 +23,7 @@ export class TasksService {
     private taskRepo: Repository<AgentTask>,
     @InjectRepository(Business)
     private businessRepo: Repository<Business>,
-    @InjectQueue('agent-tasks')
+    @InjectQueue(AGENT_TASKS_QUEUE)
     private tasksQueue: Queue,
   ) {}
 

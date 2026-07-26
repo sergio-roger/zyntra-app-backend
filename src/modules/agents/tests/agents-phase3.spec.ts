@@ -22,6 +22,7 @@ import { Channel } from '@/modules/channels/entities/channel.entity';
 import { AiService } from '@/modules/ai/ai.service';
 import { ChatbotTone } from '@/modules/chatbot/enums/chatbot-tone.enum';
 import { ChatbotLocale } from '@/modules/chatbot/enums/chatbot-locale.enum';
+import { KB_DELETION_QUEUE } from '@/modules/knowledge/constants/knowledge.constants';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -79,7 +80,7 @@ describe('AgentsService', () => {
         AgentsService,
         { provide: getRepositoryToken(Agent), useValue: agentRepo },
         { provide: getRepositoryToken(Channel), useValue: channelRepo },
-        { provide: getQueueToken('kb-deletion'), useValue: kbDeletionQueue },
+        { provide: getQueueToken(KB_DELETION_QUEUE), useValue: kbDeletionQueue },
         { provide: AiService, useValue: aiService },
         {
           provide: HttpService,

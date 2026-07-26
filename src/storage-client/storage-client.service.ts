@@ -33,7 +33,8 @@ export class StorageClientService {
 
   private get baseUrl(): string {
     return (
-      this.configService.get<string>('STORAGE_SERVICE_URL') || 'localhost:3000'
+      this.configService.get<string>('STORAGE_SERVICE_URL') ||
+      'http://localhost:3001'
     );
   }
 
