@@ -1,13 +1,13 @@
-import { Business } from '@auth/entities/business.entity';
-import { ApiResponse } from '@common/interfaces/api-response.interface';
 import { CreateCompetitorChannelDto } from '@/modules/youtube-analytics/dto/create-competitor-channel.dto';
+import { YoutubeCompetitorChannel } from '@/modules/youtube-analytics/interfaces/youtube-competitor-channel.interface';
 import {
   YoutubeCompetitorsDashboard,
   YoutubeOwnChannelDashboard,
 } from '@/modules/youtube-analytics/interfaces/youtube-dashboard.interface';
-import { YoutubeCompetitorChannel } from '@/modules/youtube-analytics/interfaces/youtube-competitor-channel.interface';
 import { YoutubeOAuthTokens } from '@/modules/youtube-analytics/interfaces/youtube-oauth-tokens.interface';
 import { YoutubeOwnChannelStatus } from '@/modules/youtube-analytics/interfaces/youtube-own-channel-status.interface';
+import { Business } from '@auth/entities/business.entity';
+import { ApiResponse } from '@common/interfaces/api-response.interface';
 import { HttpService } from '@nestjs/axios';
 import {
   HttpException,
@@ -135,10 +135,9 @@ export class YoutubeAnalyticsService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get<ApiResponse<YoutubeOwnChannelStatus | null>>(
-          url,
-          { headers: this.headers },
-        ),
+        this.httpService.get<ApiResponse<YoutubeOwnChannelStatus | null>>(url, {
+          headers: this.headers,
+        }),
       );
       return this.unwrap(response);
     } catch (error: unknown) {
